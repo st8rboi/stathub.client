@@ -1,0 +1,13 @@
+{
+  "name": "stathub.client",
+  "private": true,
+  "packageManager": "pnpm@12.4.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter @stathub/web dev",
+    "dev:mobile": "pnpm --filter @stathub/mobile start",
+    "build:web": "pnpm --filter @stathub/web build"
+  }
+}
