@@ -1,0 +1,8 @@
+# dependencies
+node_modules/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
