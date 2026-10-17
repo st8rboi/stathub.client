@@ -1,11 +1,13 @@
 {
   "expo": {
-    "name": "Stathub",
+    "name": "Stathub Судья",
     "slug": "stathub",
     "version": "1.0.0",
+    "scheme": "stathub",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "plugins": ["expo-router"],
     "ios": {
       "supportsTablet": true
     },
@@ -19,6 +21,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
+      "bundler": "metro",
       "favicon": "./assets/favicon.png"
     }
   }
