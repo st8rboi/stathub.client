@@ -1,7 +1,14 @@
+import { Link } from 'react-router'
 import { stageFormatLabels } from '../labels'
 import type { Stage } from '../types'
 
-export function StagesTable({ stages }: { stages: Stage[] }) {
+type Props = {
+  leagueId: string
+  tournamentId: string
+  stages: Stage[]
+}
+
+export function StagesTable({ leagueId, tournamentId, stages }: Props) {
   if (stages.length === 0) return <p>Этапов пока нет.</p>
 
   return (
@@ -19,7 +26,9 @@ export function StagesTable({ stages }: { stages: Stage[] }) {
         {stages.map((s) => (
           <tr key={s.id}>
             <td>{s.order}</td>
-            <td>{s.name}</td>
+            <td>
+              <Link to={`/leagues/${leagueId}/tournaments/${tournamentId}/stages/${s.id}`}>{s.name}</Link>
+            </td>
             <td>{stageFormatLabels[s.formatType]}</td>
             <td>
               {s.winPoints} / {s.drawPoints} / {s.lossPoints}

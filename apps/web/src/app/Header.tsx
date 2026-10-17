@@ -10,6 +10,11 @@ export function Header() {
       <Link to="/" className="brand">
         Stathub | Администратор
       </Link>
+      <nav className="nav">
+        <Link to="/">Лиги</Link>
+        <Link to="/teams">Команды</Link>
+        <Link to="/players">Игроки</Link>
+      </nav>
       <label className="organizer">
         Организатор (ID)
         <input

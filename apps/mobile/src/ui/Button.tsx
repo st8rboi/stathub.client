@@ -12,6 +12,8 @@ type Props = {
   disabled?: boolean
   loading?: boolean
   large?: boolean
+  /** Компактная кнопка для горизонтальных рядов, где важна ширина, а не высота. */
+  compact?: boolean
   style?: StyleProp<ViewStyle>
 }
 
@@ -41,6 +43,7 @@ export function Button({
   disabled = false,
   loading = false,
   large = false,
+  compact = false,
   style,
 }: Props) {
   const isDisabled = disabled || loading
@@ -54,6 +57,7 @@ export function Button({
       style={({ pressed }) => [
         styles.base,
         large && styles.large,
+        compact && styles.compact,
         containerVariants[variant],
         pressed && !isDisabled && styles.pressed,
         isDisabled && styles.disabled,
@@ -65,7 +69,9 @@ export function Button({
           color={variant === 'primary' || variant === 'danger' ? colors.onPrimary : colors.primary}
         />
       ) : (
-        <Text style={[styles.label, labelVariants[variant]]}>{title}</Text>
+        <Text style={[styles.label, compact && styles.compactLabel, labelVariants[variant]]} numberOfLines={1}>
+          {title}
+        </Text>
       )}
     </Pressable>
   )
@@ -81,6 +87,13 @@ const styles = StyleSheet.create({
   },
   large: {
     minHeight: 60,
+  },
+  compact: {
+    minHeight: 46,
+    paddingHorizontal: spacing(2),
+  },
+  compactLabel: {
+    fontSize: 14,
   },
   pressed: {
     opacity: 0.82,

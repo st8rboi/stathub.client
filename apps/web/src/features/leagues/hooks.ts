@@ -29,3 +29,19 @@ function useLeagueMutation<TData, TVariables>(mutationFn: (variables: TVariables
 export const useCreateLeague = () => useLeagueMutation(leaguesApi.create)
 export const usePublishLeague = () => useLeagueMutation(leaguesApi.publish)
 export const useArchiveLeague = () => useLeagueMutation(leaguesApi.archive)
+
+export const useUploadLeagueLogo = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { id: string; file: File }) => leaguesApi.uploadLogo(input.id, input.file),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: leagueKeys.all }),
+  })
+}
+
+export const useDeleteLeagueLogo = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => leaguesApi.deleteLogo(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: leagueKeys.all }),
+  })
+}

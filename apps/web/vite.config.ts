@@ -19,6 +19,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // Логотипы раздаются бэкендом как статика — без прокси <img> не загрузится в dev.
+      '/uploads': {
+        target: 'http://localhost:5248',
+        changeOrigin: true,
+      },
     },
   },
 })

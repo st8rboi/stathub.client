@@ -4,6 +4,7 @@ import { StyleSheet, Text } from 'react-native'
 
 import { formatDateTime } from '../src/match/format'
 import { MatchRow } from '../src/match/MatchRow'
+import { useTeamNames } from '../src/hooks/useTeamNames'
 import { loadRecentMatches, type RecentMatch } from '../src/storage/recentMatches'
 import { colors, fontSize, spacing } from '../src/theme'
 import { Button } from '../src/ui/Button'
@@ -13,6 +14,11 @@ import { Screen } from '../src/ui/Screen'
 export default function HomeScreen() {
   const router = useRouter()
   const [recent, setRecent] = useState<RecentMatch[]>([])
+
+  // Названия команд подтягиваются пачкой на все недавние матчи, а не по строке.
+  const teamName = useTeamNames(
+    recent.flatMap((item) => [item.match.homeTeamId, item.match.awayTeamId]),
+  )
 
   // Кэш недавних матчей перечитывается при каждом возврате на экран:
   // после матча статус в списке уже обновлён.
@@ -58,6 +64,7 @@ export default function HomeScreen() {
             <MatchRow
               key={item.match.id}
               match={item.match}
+              teamName={teamName}
               meta={`Открыт ${formatDateTime(item.savedAt)}`}
               onPress={() => router.push(`/match/${item.match.id}`)}
             />

@@ -11,6 +11,7 @@ export interface League {
   region: string | null
   dataSource: LeagueDataSource
   status: LeagueStatus
+  logoUrl: string | null
   createdAtUtc: string
 }
 

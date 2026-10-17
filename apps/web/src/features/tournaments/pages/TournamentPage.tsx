@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router'
 import { ErrorText } from '@/shared/ui/ErrorText'
+import { TournamentTeamsSection } from '@/features/rosters/components/TournamentTeamsSection'
 import { AddStageForm } from '../components/AddStageForm'
 import { StagesTable } from '../components/StagesTable'
 import { useChangeTournamentStatus, useTournament } from '../hooks'
@@ -57,8 +58,11 @@ export default function TournamentPage() {
       </div>
       <ErrorText error={changeStatus.error} />
 
+      <h2>Участники</h2>
+      <TournamentTeamsSection leagueId={leagueId} tournamentId={tournamentId} />
+
       <h2>Этапы</h2>
-      <StagesTable stages={data.stages} />
+      <StagesTable leagueId={leagueId} tournamentId={tournamentId} stages={data.stages} />
 
       {data.status === 'Scheduled' ? (
         <>
