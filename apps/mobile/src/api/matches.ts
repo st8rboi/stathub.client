@@ -1,5 +1,5 @@
 import { request } from './client'
-import type { CreateMatchRequest, Match } from './types'
+import type { AppendEventsResult, CreateMatchRequest, Match, MatchState, NewMatchEvent } from './types'
 
 /**
  * Эндпоинты модуля Matches.
@@ -20,6 +20,13 @@ export const matchesApi = {
   resume: (id: string) => request<void>('POST', `/matches/${id}/resume`),
   nextPeriod: (id: string) => request<void>('POST', `/matches/${id}/next-period`),
   finish: (id: string) => request<void>('POST', `/matches/${id}/finish`),
+
+  /** Матч + протокол: независимый путь синхронизации, не зависящий от realtime-пуша. */
+  getState: (id: string) => request<MatchState>('GET', `/matches/${id}/state`),
+
+  /** Батч событий из офлайн-очереди; сервер идемпотентен по клиентскому UUID. */
+  appendEvents: (id: string, events: NewMatchEvent[]) =>
+    request<AppendEventsResult>('POST', `/matches/${id}/events`, { events }),
 }
 
 /**

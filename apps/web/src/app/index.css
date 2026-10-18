@@ -184,3 +184,71 @@ form button {
   padding: 10px 14px;
   border-radius: 4px;
 }
+
+/* Навигация в шапке: лиги / команды / игроки */
+header .nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  align-self: center;
+  margin-right: 16px;
+}
+
+header .nav a {
+  color: #2456d6;
+  text-decoration: none;
+}
+
+header .nav a:hover {
+  text-decoration: underline;
+}
+
+/* Идентификаторы в таблицах: моноширинный, приглушённый */
+.mono {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 12px;
+  color: #666;
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+}
+
+/* Логотипы команд и лиг */
+.logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.logo--lg {
+  width: 64px;
+  height: 64px;
+}
+
+.logo-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+input[type='file'] {
+  font-size: 13px;
+  max-width: 230px;
+}
+
+.muted {
+  color: #64748b;
+}

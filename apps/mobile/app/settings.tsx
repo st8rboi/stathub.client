@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Alert, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 
 import { matchesApi, pingServer } from '../src/api/matches'
 import { getApiBaseUrl } from '../src/api/client'
@@ -19,6 +19,7 @@ export default function SettingsScreen() {
 
   const [value, setValue] = useState(baseUrl)
   const [state, setState] = useState<CheckState>({ kind: 'idle' })
+  const [diagnostics, setDiagnostics] = useState<string | null>(null)
 
   const save = async () => {
     await saveBaseUrl(value)
@@ -48,7 +49,8 @@ export default function SettingsScreen() {
       matchCount = 'сервер ответил ошибкой (это нормально для пустого этапа)'
     }
 
-    Alert.alert('Диагностика', `Адрес: ${active}\nСписок матчей: ${matchCount}`)
+    // Alert на web не реализован, поэтому диагностика выводится текстом на экране.
+    setDiagnostics(`Адрес: ${active}\nСписок матчей: ${matchCount}`)
   }
 
   return (
@@ -85,6 +87,7 @@ export default function SettingsScreen() {
         <SectionTitle>Проверка</SectionTitle>
         <MutedText>Показать текущий адрес и ответ сервера на запрос списка матчей.</MutedText>
         <Button title="Диагностика" variant="secondary" onPress={() => void showDiagnostics()} />
+        {diagnostics ? <Text style={styles.diagnostics}>{diagnostics}</Text> : null}
       </Card>
 
       <View style={styles.footer}>
@@ -108,6 +111,11 @@ const styles = StyleSheet.create({
   },
   statusError: {
     color: colors.danger,
+  },
+  diagnostics: {
+    fontSize: fontSize.body,
+    lineHeight: 20,
+    color: colors.text,
   },
   footer: {
     gap: spacing(2),

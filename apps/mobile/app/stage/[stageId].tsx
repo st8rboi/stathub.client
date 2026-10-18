@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ActivityIndicator, StyleSheet, Text } from 'react-native'
 
 import { useStageMatchesQuery } from '../../src/hooks/useMatch'
+import { useTeamNames } from '../../src/hooks/useTeamNames'
 import { MatchRow } from '../../src/match/MatchRow'
 import { colors, fontSize } from '../../src/theme'
 import { Button } from '../../src/ui/Button'
@@ -13,6 +14,11 @@ export default function StageMatchesScreen() {
   const stageId = params.stageId ?? ''
   const router = useRouter()
   const query = useStageMatchesQuery(stageId)
+
+  // Названия команд для всего списка сразу: матч хранит только идентификаторы.
+  const teamName = useTeamNames(
+    (query.data ?? []).flatMap((match) => [match.homeTeamId, match.awayTeamId]),
+  )
 
   return (
     <Screen onRefresh={() => void query.refetch()} refreshing={query.isRefetching}>
@@ -34,7 +40,12 @@ export default function StageMatchesScreen() {
       ) : null}
 
       {query.data?.map((match) => (
-        <MatchRow key={match.id} match={match} onPress={() => router.push(`/match/${match.id}`)} />
+        <MatchRow
+          key={match.id}
+          match={match}
+          teamName={teamName}
+          onPress={() => router.push(`/match/${match.id}`)}
+        />
       ))}
     </Screen>
   )

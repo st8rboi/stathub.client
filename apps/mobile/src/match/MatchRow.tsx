@@ -11,10 +11,14 @@ type Props = {
   onPress: () => void
   /** Дополнительная строка под счётом (например, дата в списке недавних). */
   meta?: string
+  /** Названия команд: матч хранит только Id, имена подтягивает экран. */
+  teamName?: (teamId: string) => string
 }
 
 /** Строка матча в списках: команды, счёт и статус. */
-export function MatchRow({ match, onPress, meta }: Props) {
+export function MatchRow({ match, onPress, meta, teamName }: Props) {
+  const nameOf = teamName ?? ((teamId: string) => shortId(teamId))
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -23,7 +27,7 @@ export function MatchRow({ match, onPress, meta }: Props) {
     >
       <View style={styles.header}>
         <Text style={styles.title} numberOfLines={1}>
-          {shortId(match.homeTeamId)} — {shortId(match.awayTeamId)}
+          {nameOf(match.homeTeamId)} — {nameOf(match.awayTeamId)}
         </Text>
         <Badge label={statusLabels[match.status]} tone={statusTones[match.status]} />
       </View>

@@ -8,6 +8,8 @@
   "scripts": {
     "dev:web": "pnpm --filter @stathub/web dev",
     "dev:mobile": "pnpm --filter @stathub/mobile start",
-    "build:web": "pnpm --filter @stathub/web build"
+    "dev:public": "pnpm --filter @stathub/public dev",
+    "build:web": "pnpm --filter @stathub/web build",
+    "build:public": "pnpm --filter @stathub/public build"
   }
 }
