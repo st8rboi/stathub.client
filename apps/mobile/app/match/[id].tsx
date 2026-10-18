@@ -7,6 +7,7 @@ import { computeScore, eventTypeLabels, formatEventTime, mergeEvents } from '../
 import { useMatchActions } from '../../src/hooks/useMatch'
 import { useMatchEvents, useMatchStateQuery } from '../../src/hooks/useMatchEvents'
 import { useMatchRosters, type RosterPlayer } from '../../src/hooks/useMatchRosters'
+import { useStageBans } from '../../src/hooks/useStageBans'
 import { useTeamNames } from '../../src/hooks/useTeamNames'
 import { formatClock, formatDateTime, shortId } from '../../src/match/format'
 import { canStartNextPeriod, periodLabel, statusLabels, statusTones } from '../../src/match/status'
@@ -65,6 +66,8 @@ export default function MatchScreen() {
   const clock = useMatchClock(match ?? undefined)
   const teamLabel = useTeamNames(match ? [match.homeTeamId, match.awayTeamId] : [])
   const rosters = useMatchRosters(match ?? undefined)
+  // Дисквалификации этапа: все хуки — до раннего return, иначе меняется их число при загрузке матча.
+  const stageBans = useStageBans(match?.stageId ?? '')
 
   const busy =
     actions.start.isPending ||
@@ -114,6 +117,13 @@ export default function MatchScreen() {
   )
   const playerName = (playerId: string) => playerNameById.get(playerId) ?? shortId(playerId)
 
+  // Пометка дисквалифицированных: сервер отклонит событие, лучше предупредить заранее.
+  const bannedPlayerIds = new Set((stageBans.data ?? []).map((ban) => ban.playerId))
+  const playerLabel = (player: RosterPlayer) => {
+    const base = player.squadNumber ? `№${player.squadNumber} ${player.fullName}` : player.fullName
+    return bannedPlayerIds.has(player.playerId) ? `${base} · дисквалифицирован` : base
+  }
+
   const rosterFor = (teamId: string): RosterPlayer[] =>
     teamId === match.homeTeamId ? rosters.home : rosters.away
 
@@ -162,7 +172,7 @@ export default function MatchScreen() {
                 : 'Состав команды не найден — можно отметить гол без автора.',
           options: [
             ...roster.map((player) => ({
-              label: player.squadNumber ? `№${player.squadNumber} ${player.fullName}` : player.fullName,
+              label: playerLabel(player),
               onPress: () => {
                 // Ассистент необязателен, поэтому сначала спрашиваем второго игрока,
                 // но всегда даём выбор «без ассистента».
@@ -193,7 +203,7 @@ export default function MatchScreen() {
               : 'Состав не найден — ассистента можно не указывать.',
           options: [
             ...roster.map((player) => ({
-              label: player.squadNumber ? `№${player.squadNumber} ${player.fullName}` : player.fullName,
+              label: playerLabel(player),
               onPress: () => {
                 setSheet(null)
                 void events.enqueue({
@@ -236,7 +246,7 @@ export default function MatchScreen() {
                 : 'Состав команды не найден — карточка уйдёт команде.',
           options: [
             ...roster.map((player) => ({
-              label: player.squadNumber ? `№${player.squadNumber} ${player.fullName}` : player.fullName,
+              label: playerLabel(player),
               onPress: () => setSheet({ kind: 'card-type', teamId, playerId: player.playerId }),
             })),
             {
@@ -490,14 +500,6 @@ export default function MatchScreen() {
               style={styles.actionButton}
               disabled={eventsLocked}
               onPress={() => setSheet({ kind: 'card-team' })}
-            />
-            <Button
-              title="Обновить"
-              variant="secondary"
-              compact
-              style={styles.actionButton}
-              loading={stateQuery.isRefetching}
-              onPress={() => void stateQuery.refetch()}
             />
           </View>
 

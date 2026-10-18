@@ -1,32 +1,35 @@
-import { Link } from 'react-router'
-import { isGuid, useOrganizer } from '@/features/organizer/organizerContext'
+import { NavLink } from 'react-router'
+import { useAuth } from '@/features/auth/authContext'
 
+/**
+ * Шапка админки: организация и пользователь берутся из токена.
+ * Раньше здесь вводился organizerId руками — из-за этого можно было писать в чужой тенант.
+ */
 export function Header() {
-  const { organizerId, setOrganizerId } = useOrganizer()
-  const invalid = organizerId !== '' && !isGuid(organizerId)
+  const { user, logout } = useAuth()
 
   return (
     <header>
-      <Link to="/" className="brand">
+      <NavLink to="/" className="brand">
         Stathub | Администратор
-      </Link>
+      </NavLink>
+
       <nav className="nav">
-        <Link to="/">Лиги</Link>
-        <Link to="/teams">Команды</Link>
-        <Link to="/players">Игроки</Link>
+        <NavLink to="/" end>
+          Лиги
+        </NavLink>
+        <NavLink to="/teams">Команды</NavLink>
+        <NavLink to="/players">Игроки</NavLink>
+        <NavLink to="/accounts">Судьи</NavLink>
       </nav>
-      <label className="organizer">
-        Организатор (ID)
-        <input
-          value={organizerId}
-          onChange={(e) => setOrganizerId(e.target.value.trim())}
-          placeholder="GUID организатора"
-          aria-invalid={invalid}
-        />
-      </label>
-      <button type="button" onClick={() => setOrganizerId(crypto.randomUUID())}>
-        Сгенерировать
-      </button>
+
+      <div className="userbox">
+        <span className="userbox-org">{user?.tenantName ?? '—'}</span>
+        <span className="userbox-name">{user?.displayName ?? ''}</span>
+        <button type="button" className="userbox-logout" onClick={() => void logout()}>
+          Выйти
+        </button>
+      </div>
     </header>
   )
 }

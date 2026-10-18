@@ -1,8 +1,8 @@
 import { useTournamentTeams } from '@/features/rosters/hooks'
+import { RefereeAssign } from '@/features/accounts/components/RefereeAssign'
 import { useTeams } from '@/features/teams/hooks'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { useState, type SubmitEvent } from 'react'
-import { Link } from 'react-router'
 import { useCreateMatch, useStageMatches } from '../hooks'
 import { matchStatusLabels } from '../labels'
 
@@ -17,18 +17,11 @@ function defaultStartValue(): string {
  * Матчи этапа и создание нового. В выпадающих списках — только команды, заявленные
  * на этот турнир: так матч нельзя случайно создать с командой, которой в сезоне нет.
  */
-export function MatchesSection({
-  leagueId,
-  tournamentId,
-  stageId,
-}: {
-  leagueId: string
-  tournamentId: string
-  stageId: string
-}) {
+export function MatchesSection({ stageId }: { stageId: string }) {
   const matches = useStageMatches(stageId)
   const allTeams = useTeams()
-  const tournamentTeams = useTournamentTeams(tournamentId)
+  // Команды берём из заявок этого этапа: в дивизионе играют только его участники.
+  const tournamentTeams = useTournamentTeams(stageId)
   const create = useCreateMatch(stageId)
 
   const [formError, setFormError] = useState<string | null>(null)
@@ -93,7 +86,7 @@ export function MatchesSection({
               <th>Команды</th>
               <th>Счёт</th>
               <th>Статус</th>
-              <th>ID</th>
+              <th>Судья</th>
             </tr>
           </thead>
           <tbody>
@@ -107,7 +100,9 @@ export function MatchesSection({
                   {match.homeScore} : {match.awayScore}
                 </td>
                 <td>{matchStatusLabels[match.status]}</td>
-                <td className="mono">{match.id}</td>
+                <td>
+                  <RefereeAssign matchId={match.id} />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -117,9 +112,8 @@ export function MatchesSection({
       <h2>Новый матч</h2>
       {noRegisteredTeams ? (
         <p className="notice">
-          В турнире нет заявленных команд. Заявите их на{' '}
-          <Link to={`/leagues/${leagueId}/tournaments/${tournamentId}`}>странице турнира</Link> —
-          матч создаётся только между участниками сезона.
+          На этом этапе нет заявленных команд. Заявите их в блоке «Участники этапа» выше — матч
+          создаётся только между участниками этого дивизиона.
         </p>
       ) : (
         <form onSubmit={onSubmit}>

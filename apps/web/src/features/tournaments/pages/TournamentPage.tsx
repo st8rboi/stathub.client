@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router'
 import { ErrorText } from '@/shared/ui/ErrorText'
-import { TournamentTeamsSection } from '@/features/rosters/components/TournamentTeamsSection'
+import { TournamentFeesSection } from '@/features/finance/components/TournamentFeesSection'
+import { DisciplineSection } from '@/features/discipline/DisciplineSection'
 import { AddStageForm } from '../components/AddStageForm'
 import { StagesTable } from '../components/StagesTable'
 import { useChangeTournamentStatus, useTournament } from '../hooks'
@@ -59,10 +60,22 @@ export default function TournamentPage() {
       <ErrorText error={changeStatus.error} />
 
       <h2>Участники</h2>
-      <TournamentTeamsSection leagueId={leagueId} tournamentId={tournamentId} />
+      <p className="notice">
+        Команды заявляются на конкретный этап (дивизион): откройте этап ниже и добавьте участников
+        там — у каждой группы свой состав.
+      </p>
 
       <h2>Этапы</h2>
       <StagesTable leagueId={leagueId} tournamentId={tournamentId} stages={data.stages} />
+
+      <h2>Взносы</h2>
+      <TournamentFeesSection tournamentId={tournamentId} />
+
+      <h2>Дисциплинарные</h2>
+      <DisciplineSection
+        tournamentId={tournamentId}
+        stages={data.stages.map((stage) => ({ id: stage.id, name: stage.name }))}
+      />
 
       {data.status === 'Scheduled' ? (
         <>

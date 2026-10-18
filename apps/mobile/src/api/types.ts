@@ -4,6 +4,26 @@
  */
 export type MatchStatus = 'Scheduled' | 'InProgress' | 'Pause' | 'Finished' | 'Cancelled'
 
+/** Матч из «Мои матчи» судьи: только то, что нужно списку. */
+export type RefereeMatch = {
+  id: string
+  stageId: string
+  stageName: string
+  tournamentName: string
+  leagueName: string
+  homeTeamId: string
+  homeTeamName: string
+  awayTeamId: string
+  awayTeamName: string
+  status: MatchStatus
+  homeScore: number
+  awayScore: number
+  currentPeriod: number
+  periodsCount: number
+  scheduledTimeUtc: string
+  startedAtUtc: string | null
+}
+
 export type Match = {
   id: string
   stageId: string

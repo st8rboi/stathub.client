@@ -3,6 +3,7 @@ import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
+import { AuthProvider } from '../src/auth/AuthProvider'
 import { SettingsProvider } from '../src/settings/SettingsProvider'
 import { colors } from '../src/theme'
 
@@ -21,25 +22,28 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <SettingsProvider>
-        <SafeAreaProvider>
-          <StatusBar style="dark" />
-          <Stack
-            screenOptions={{
-              headerStyle: { backgroundColor: colors.surface },
-              headerTintColor: colors.text,
-              headerTitleStyle: { fontSize: 17, fontWeight: '600' },
-              contentStyle: { backgroundColor: colors.background },
-            }}
-          >
-            <Stack.Screen name="index" options={{ title: 'Stathub · Судья' }} />
-            <Stack.Screen name="connect" options={{ title: 'Подключение к матчу' }} />
-            <Stack.Screen name="scan" options={{ title: 'QR-код матча' }} />
-            <Stack.Screen name="create" options={{ title: 'Новый матч' }} />
-            <Stack.Screen name="settings" options={{ title: 'Сервер' }} />
-            <Stack.Screen name="stage/[stageId]" options={{ title: 'Матчи этапа' }} />
-            <Stack.Screen name="match/[id]" options={{ title: 'Матч' }} />
-          </Stack>
-        </SafeAreaProvider>
+        <AuthProvider>
+          <SafeAreaProvider>
+            <StatusBar style="dark" />
+            <Stack
+              screenOptions={{
+                headerStyle: { backgroundColor: colors.surface },
+                headerTintColor: colors.text,
+                headerTitleStyle: { fontSize: 17, fontWeight: '600' },
+                contentStyle: { backgroundColor: colors.background },
+              }}
+            >
+              <Stack.Screen name="index" options={{ title: 'Статхаб | АРМ Арбитра' }} />
+              <Stack.Screen name="login" options={{ title: 'Вход', headerBackVisible: false }} />
+              <Stack.Screen name="connect" options={{ title: 'Подключение к матчу' }} />
+              <Stack.Screen name="scan" options={{ title: 'QR-код матча' }} />
+              <Stack.Screen name="create" options={{ title: 'Новый матч' }} />
+              <Stack.Screen name="settings" options={{ title: 'Сервер' }} />
+              <Stack.Screen name="stage/[stageId]" options={{ title: 'Матчи этапа' }} />
+              <Stack.Screen name="match/[id]" options={{ title: 'Матч' }} />
+            </Stack>
+          </SafeAreaProvider>
+        </AuthProvider>
       </SettingsProvider>
     </QueryClientProvider>
   )

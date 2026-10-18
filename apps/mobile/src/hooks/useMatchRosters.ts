@@ -17,22 +17,20 @@ export type MatchRosters = {
 const EMPTY_GUID = '00000000-0000-0000-0000-000000000000'
 
 /**
- * Составы обеих команд матча. Событие хранит игрока по Id, а состав привязан к турниру
- * (заявка команды на сезон), поэтому цепочка такая:
- * турнир → заявка команды → активные заявки игроков → их ФИО.
+ * Составы обеих команд матча. Событие хранит игрока по Id, а состав заявлен на этап
+ * (дивизион), поэтому цепочка такая: этап → заявка команды → активные заявки игроков → их ФИО.
  *
  * Один композитный запрос вместо четырёх: экран судьи должен получить составы одним
  * «пакетом», иначе на плохой связи гол отмечается дольше, чем идёт атака.
  */
 export function useMatchRosters(match: Match | undefined) {
   const matchId = match?.id ?? ''
-  const tournamentId = match?.tournamentId ?? ''
+  const stageId = match?.stageId ?? ''
   const homeTeamId = match?.homeTeamId ?? ''
   const awayTeamId = match?.awayTeamId ?? ''
 
-  // У матчей, созданных до появления турнира в контракте, tournamentId пустой —
-  // составы для них просто недоступны, отметка гола работает без автора.
-  const enabled = Boolean(matchId && tournamentId && tournamentId !== EMPTY_GUID)
+  // У матчей со «пустым» этапом составы недоступны — отметка гола работает без автора.
+  const enabled = Boolean(matchId && stageId && stageId !== EMPTY_GUID)
 
   const query = useQuery({
     queryKey: ['matchRosters', matchId],
@@ -40,14 +38,14 @@ export function useMatchRosters(match: Match | undefined) {
     staleTime: 30_000,
     retry: 1,
     queryFn: async (): Promise<MatchRosters> => {
-      const tournamentTeams = await rostersApi.listTeams(tournamentId)
+      const tournamentTeams = await rostersApi.listTeams(stageId)
 
       const homeTournamentTeam = tournamentTeams.find((team) => team.teamId === homeTeamId)
       const awayTournamentTeam = tournamentTeams.find((team) => team.teamId === awayTeamId)
 
       const [homeDetails, awayDetails] = await Promise.all([
-        homeTournamentTeam ? rostersApi.getTeam(tournamentId, homeTournamentTeam.id) : null,
-        awayTournamentTeam ? rostersApi.getTeam(tournamentId, awayTournamentTeam.id) : null,
+        homeTournamentTeam ? rostersApi.getTeam(stageId, homeTournamentTeam.id) : null,
+        awayTournamentTeam ? rostersApi.getTeam(stageId, awayTournamentTeam.id) : null,
       ])
 
       const activeRegistrations = (details: TournamentTeamDetails | null): PlayerRegistration[] =>

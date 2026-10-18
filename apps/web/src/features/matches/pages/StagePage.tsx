@@ -1,5 +1,7 @@
 import { Link, useParams } from 'react-router'
 import { MatchesSection } from '@/features/matches/components/MatchesSection'
+import { TournamentTeamsSection } from '@/features/rosters/components/TournamentTeamsSection'
+import { StageFeesSection } from '@/features/finance/components/StageFeesSection'
 import { stageFormatLabels } from '@/features/tournaments/labels'
 import { useTournament } from '@/features/tournaments/hooks'
 import { ErrorText } from '@/shared/ui/ErrorText'
@@ -44,8 +46,14 @@ export default function StagePage() {
         </dd>
       </dl>
 
+      <h2>Участники этапа</h2>
+      <TournamentTeamsSection leagueId={leagueId} tournamentId={tournamentId} stageId={stageId} />
+
       <h2>Матчи</h2>
-      <MatchesSection leagueId={leagueId} tournamentId={tournamentId} stageId={stageId} />
+      <MatchesSection stageId={stageId} />
+
+      <h2>Взносы этапа</h2>
+      <StageFeesSection tournamentId={tournamentId} stageId={stageId} />
     </>
   )
 }

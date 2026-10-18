@@ -46,7 +46,13 @@ export default function HomePage() {
   const schedule = useSchedule(today, new Date(today.getTime() + 7 * DAY_MS))
   const leagues = useLeagues('', '')
 
-  const matches = schedule.data ?? []
+  // Счётчики в полосе дат и список соревнований строятся из одного и того же набора:
+  // матчи без лиги (битые/тестовые данные) отбрасываем до группировки, иначе
+  // «Сегодня 1» при пустом списке.
+  const matches = useMemo(
+    () => (schedule.data ?? []).filter((match) => match.leagueSlug !== ''),
+    [schedule.data],
+  )
 
   // Один запрос на неделю: из него считаем счётчики для полосы дат и матчи выбранного дня.
   const byDay = useMemo(() => {
@@ -67,7 +73,7 @@ export default function HomePage() {
     [leagues.data],
   )
 
-  const dayMatches = (byDay.get(selectedKey) ?? []).filter((match) => match.leagueSlug !== '')
+  const dayMatches = byDay.get(selectedKey) ?? []
 
   const competitions = useMemo<Competition[]>(() => {
     const map = new Map<string, Competition>()

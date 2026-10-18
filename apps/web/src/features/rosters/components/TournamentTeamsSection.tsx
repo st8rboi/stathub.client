@@ -6,19 +6,22 @@ import { useAddTournamentTeam, useTournamentTeams } from '../hooks'
 import { tournamentTeamStatusLabels } from '../labels'
 
 /**
- * Участники турнира (сезон). Здесь команда из справочника заявляется на турнир,
- * дальше её состав живёт на отдельной странице.
+ * Участники этапа (дивизиона). Команда из справочника заявляется на конкретный этап,
+ * дальше её состав живёт на отдельной странице. Одна команда может играть в разных
+ * дивизионах одного турнира — это разные заявки.
  */
 export function TournamentTeamsSection({
   leagueId,
   tournamentId,
+  stageId,
 }: {
   leagueId: string
   tournamentId: string
+  stageId: string
 }) {
-  const teams = useTournamentTeams(tournamentId)
+  const teams = useTournamentTeams(stageId)
   const allTeams = useTeams()
-  const addTeam = useAddTournamentTeam(tournamentId)
+  const addTeam = useAddTournamentTeam(stageId)
 
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -43,14 +46,14 @@ export function TournamentTeamsSection({
   }
 
   const rosterLink = (tournamentTeamId: string) =>
-    `/leagues/${leagueId}/tournaments/${tournamentId}/teams/${tournamentTeamId}`
+    `/leagues/${leagueId}/tournaments/${tournamentId}/stages/${stageId}/teams/${tournamentTeamId}`
 
   return (
     <>
       <ErrorText error={teams.error} />
       {teams.isPending && <p>Загрузка…</p>}
       {teams.data?.length === 0 && (
-        <p className="notice">В турнире пока нет команд — заявите первую ниже.</p>
+        <p className="notice">На этом этапе пока нет команд — заявите первую ниже.</p>
       )}
       {teams.data && teams.data.length > 0 && (
         <table>
@@ -102,10 +105,11 @@ export function TournamentTeamsSection({
           {formError && <p className="error">{formError}</p>}
           <ErrorText error={addTeam.error} />
           <button type="submit" disabled={addTeam.isPending}>
-            Заявить в турнир
+            Заявить на этап
           </button>
           <p className="hint">
-            Одна команда — одна заявка на турнир. Состав можно менять, пока турнир не завершён.
+            Одна команда — одна заявка на этап. В разных дивизионах одного турнира команда может
+            играть в каждом — это отдельные заявки.
           </p>
         </form>
       )}

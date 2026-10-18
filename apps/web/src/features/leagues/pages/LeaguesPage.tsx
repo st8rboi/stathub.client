@@ -1,18 +1,14 @@
 import { Link } from 'react-router'
-import { isGuid, useOrganizer } from '@/features/organizer/organizerContext'
+import { useOrganizer } from '@/features/organizer/organizerContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { CreateLeagueForm } from '../components/CreateLeagueForm'
 import { useLeagues } from '../hooks'
 import { leagueStatusLabels } from '../labels'
 
 export default function LeaguesPage() {
+  // Организация приходит из токена: пока сессии нет, запрос не отправляем.
   const { organizerId } = useOrganizer()
-  const validOrganizer = isGuid(organizerId)
-  const leagues = useLeagues(organizerId, validOrganizer)
-
-  if (!validOrganizer) {
-    return <p className="notice">Укажите ID организатора (GUID) в шапке страницы или нажмите «Сгенерировать».</p>
-  }
+  const leagues = useLeagues(organizerId, Boolean(organizerId))
 
   return (
     <>

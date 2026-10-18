@@ -9,7 +9,9 @@ type Props = {
   onChangeText: (value: string) => void
   placeholder?: string
   autoCapitalize?: 'none' | 'sentences'
+  autoCorrect?: boolean
   keyboardType?: KeyboardTypeOptions
+  secureTextEntry?: boolean
   multiline?: boolean
   error?: string | null
   hint?: string
@@ -22,7 +24,9 @@ export function Field({
   onChangeText,
   placeholder,
   autoCapitalize = 'none',
+  autoCorrect = false,
   keyboardType,
+  secureTextEntry = false,
   multiline = false,
   error,
   hint,
@@ -37,8 +41,9 @@ export function Field({
         placeholder={placeholder}
         placeholderTextColor={colors.textMuted}
         autoCapitalize={autoCapitalize}
-        autoCorrect={false}
+        autoCorrect={autoCorrect}
         keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
         multiline={multiline}
         editable={editable}
         style={[styles.input, multiline && styles.multiline, error ? styles.inputError : null]}

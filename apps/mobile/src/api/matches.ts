@@ -31,6 +31,6 @@ export const matchesApi = {
 
 /**
  * Проверка связи с сервером. Публичный список лиг — самый дешёвый эндпоинт,
- * который отвечает 200 и не требует идентификаторов.
+ * который отвечает 200 и не требует токена.
  */
-export const pingServer = () => request<unknown>('GET', '/leagues')
+export const pingServer = () => request<unknown>('GET', '/public/leagues')
