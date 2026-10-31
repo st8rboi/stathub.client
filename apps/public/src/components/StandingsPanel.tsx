@@ -16,6 +16,9 @@ export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
   const stageId = tournament?.stages[0]?.id ?? ''
   const stage = useStage(stageId)
 
+  console.log('leagues:', leagues)
+  console.log('activeSlug:', activeSlug)
+  
   const rows = stage.data?.standings ?? []
   const stageName = stage.data?.stage.name ?? tournament?.name ?? ''
 

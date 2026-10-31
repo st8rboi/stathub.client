@@ -11,7 +11,7 @@ export function Header() {
   return (
     <header>
       <NavLink to="/" className="brand">
-        Stathub | Администратор
+        Статхаб | Администратор
       </NavLink>
 
       <nav className="nav">

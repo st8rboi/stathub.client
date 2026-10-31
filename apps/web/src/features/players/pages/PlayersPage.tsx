@@ -16,6 +16,9 @@ export default function PlayersPage() {
         похожие имена, решение принимаете вы.
       </p>
 
+      <h2>Новый игрок</h2>
+      <CreatePlayerForm />
+
       <label>
         Поиск по ФИО (учитывает опечатки)
         <input
@@ -57,9 +60,6 @@ export default function PlayersPage() {
           </tbody>
         </table>
       )}
-
-      <h2>Новый игрок</h2>
-      <CreatePlayerForm />
     </>
   )
 }

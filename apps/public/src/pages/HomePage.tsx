@@ -111,7 +111,7 @@ export default function HomePage() {
     <>
       <section className="hero">
         <div className="hero-main">
-          <h1>Матчи, таблицы и статистика любительского футбола</h1>
+          <h1>Единая платформа для любительского футбола в России</h1>
           <p className="hero-date">
             {today.toLocaleDateString('ru-RU', {
               weekday: 'long',
@@ -121,18 +121,15 @@ export default function HomePage() {
             })}
           </p>
           <p className="hero-text">
-            Live-счёт от судей, расписание по дням и турнирные таблицы — от всех лиг платформы
-            в одном месте.
+            Онлайн счёт, турнирные таблицы и статистика матчей - всё в одном месте
           </p>
         </div>
 
         <aside className="hero-card">
-          <span className="hero-card-label">Live-счёт</span>
-          <h2>Результаты появляются сразу после события судьи</h2>
-          <p>Гол, карточка или смена статуса — и таблица со счётом обновляются автоматически.</p>
-          <p className="hero-card-live">
-            {liveCount > 0 ? `Сейчас идёт матчей: ${liveCount}` : 'Сейчас матчей не идёт'}
-          </p>
+          <span className="hero-card-label">Следи за нашей командой</span>
+          <h2>Подписывайтесь на Статхаб во всех соцсетях</h2>
+          <p>Вконтакте / Telegram / TikTok / YouTube</p>
+          <h4>@digital_stathub</h4>
         </aside>
       </section>
 

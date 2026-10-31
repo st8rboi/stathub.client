@@ -90,7 +90,7 @@ export default function LoginScreen() {
       </KeyboardAvoidingView>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Stathub · судейское приложение</Text>
+        <Text style={styles.footerText}>Статхаб · судейское приложение</Text>
       </View>
     </Screen>
   )

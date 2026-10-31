@@ -12,9 +12,9 @@ export default function App() {
       <header className="topbar">
         <Link to="/" className="brand">
           <span className="brand-mark" aria-hidden="true">
-            ⚡
+            ⚽
           </span>
-          STATHUB
+          Статхаб
         </Link>
 
         <nav className="topnav">
