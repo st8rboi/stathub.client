@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import type { PublicMatch } from '@/api/types'
 import { CompetitionGroup, type Competition } from '@/components/CompetitionGroup'
+import { Skeleton } from '@/components/Skeleton'
 import { StandingsPanel } from '@/components/StandingsPanel'
 import { useLeagues, useSchedule } from '@/hooks'
 import { useRealtime } from '@/realtime'
@@ -104,7 +105,7 @@ export default function HomePage() {
   })
 
   return (
-    <>
+    <div className="home">
       <section className="hero">
         <div className="hero-main">
           <h1>Единая платформа для любительского футбола в России</h1>
@@ -125,7 +126,7 @@ export default function HomePage() {
           <span className="hero-card-label">Следи за нашей командой</span>
           <h2>Подписывайтесь на Статхаб во всех соцсетях</h2>
           <p>Вконтакте / Telegram / TikTok / YouTube</p>
-          <h4>@digital_stathub</h4>
+          <p className="hero-card-handle">@digital_stathub</p>
         </aside>
       </section>
 
@@ -157,7 +158,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {schedule.isPending && <p className="muted">Загрузка…</p>}
+          {schedule.isPending && <Skeleton />}
           {schedule.error && (
             <p className="notice">Не удалось загрузить расписание: {schedule.error.message}</p>
           )}
@@ -172,6 +173,6 @@ export default function HomePage() {
 
         <StandingsPanel leagues={leagues.data ?? []} />
       </div>
-    </>
+    </div>
   )
 }

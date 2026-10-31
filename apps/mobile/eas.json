@@ -6,6 +6,9 @@
   "build": {
     "preview": {
       "distribution": "internal",
+      "env": {
+        "STATHUB_ALLOW_HTTP": "1"
+      },
       "android": {
         "buildType": "apk"
       }

@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router'
+import { Skeleton } from '@/components/Skeleton'
 import { useLeague } from '@/hooks'
 import { stageFormatLabels, tournamentStatusLabels } from '@/labels'
 
@@ -7,7 +8,7 @@ export default function LeaguePage() {
   const league = useLeague(slug)
 
   if (league.error) return <p className="notice">Не удалось загрузить лигу: {league.error.message}</p>
-  if (!league.data) return <p className="muted">Загрузка…</p>
+  if (!league.data) return <Skeleton rows={5} />
 
   const { league: info, tournaments } = league.data
 

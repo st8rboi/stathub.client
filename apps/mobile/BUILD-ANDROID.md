@@ -15,10 +15,9 @@ dotnet run --project src/Stathub.WebApi --launch-profile http --urls "http://0.0
 В приложении в «Настройках» указывается `http://<IP-машины>:5248` (например `http://192.168.1.50:5248`),
 порт 5248 должен быть разрешён в брандмауэре Windows.
 
-**Про HTTP в release-сборке:** Android 9+ по умолчанию блокирует `http://` (cleartext). Для проверки
-на телефоне это не мешает (debug-сборка и Expo Go разрешают), но для боевого APK нужен либо HTTPS,
-либо `expo-build-properties` с `android.usesCleartextTraffic: true`. Плагин не подключён —
-скажите, если нужно, добавлю.
+**Про HTTP в release-сборке:** Android 9+ по умолчанию блокирует `http://` (cleartext). Профиль `preview`
+разрешает его через `STATHUB_ALLOW_HTTP=1` ([плагин](plugins/withCleartextTraffic.js)), чтобы тестовый APK
+работал с API в локальной сети. Профиль `production` работает только по HTTPS.
 
 ## Вариант A. EAS Build (облако, без Android SDK)
 

@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router'
 import { FixtureRow } from '@/components/FixtureRow'
+import { Skeleton } from '@/components/Skeleton'
 import { StandingsTable } from '@/components/StandingsTable'
 import { useStage } from '@/hooks'
 import { stageFormatLabels } from '@/labels'
@@ -9,7 +10,7 @@ export default function StagePage() {
   const stage = useStage(stageId)
 
   if (stage.error) return <p className="notice">Не удалось загрузить этап: {stage.error.message}</p>
-  if (!stage.data) return <p className="muted">Загрузка…</p>
+  if (!stage.data) return <Skeleton rows={5} />
 
   const { stage: info, matches, standings } = stage.data
 
@@ -35,7 +36,7 @@ export default function StagePage() {
         </div>
       </div>
 
-      <div className="columns">
+      <div className="stage-columns">
         <section>
           <div className="section-head">
             <h2>Матчи</h2>
@@ -52,7 +53,9 @@ export default function StagePage() {
               </div>
             </div>
           )}
+        </section>
 
+        <section>
           <div className="section-head">
             <h2>Таблица</h2>
           </div>

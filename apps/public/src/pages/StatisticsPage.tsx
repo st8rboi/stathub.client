@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import type { PlayerStatisticsRow } from '@/api/types'
+import { Skeleton } from '@/components/Skeleton'
 import { useLeague, useLeagues, useTournamentStatistics } from '@/hooks'
 
 type SectionId = 'goals' | 'assists' | 'points' | 'yellow' | 'red'
@@ -174,6 +175,8 @@ export default function StatisticsPage() {
             ))}
           </nav>
 
+          {statistics.isPending && <Skeleton rows={6} />}
+
           {!statistics.isPending && sectionRows.length === 0 && (
             <p className="notice">В этом разделе пока нет данных: всё появится после матчей.</p>
           )}
@@ -185,8 +188,8 @@ export default function StatisticsPage() {
                   <thead>
                     <tr>
                       <th className="col-index">#</th>
-                      <th>Игрок</th>
-                      <th>Команда</th>
+                      <th className="stats-name">Игрок</th>
+                      <th className="col-extra">Команда</th>
                       {columns.map((column) => (
                         <th key={column.label} className="num">
                           {column.label}
@@ -198,8 +201,11 @@ export default function StatisticsPage() {
                     {sectionRows.map((row, index) => (
                       <tr key={row.playerId}>
                         <td className="muted col-index">{index + 1}</td>
-                        <td className="stats-name">{row.playerName}</td>
-                        <td>
+                        <td className="stats-name">
+                          <span className="stats-player">{row.playerName}</span>
+                          <span className="stats-team-inline">{row.teamName ?? '—'}</span>
+                        </td>
+                        <td className="col-extra">
                           <div className="standings-team">
                             {row.teamLogoUrl ? (
                               <img src={row.teamLogoUrl} alt="" className="team-logo team-logo--sm" />
@@ -228,7 +234,7 @@ export default function StatisticsPage() {
         </>
       )}
 
-      <p className="muted" style={{ marginTop: 16 }}>
+      <p className="footnote">
         М — матчи турнира, в которых у игрока было событие; Г — голы, А — ассисты, Г+П — голы плюс
         передачи, ЖК/КК — карточки. Отменённые события и голы без указанного автора не учитываются.
       </p>
