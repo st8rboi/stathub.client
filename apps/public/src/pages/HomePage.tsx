@@ -103,10 +103,6 @@ export default function HomePage() {
     void queryClient.invalidateQueries({ queryKey: ['public'] })
   })
 
-  const liveCount = matches.filter(
-    (match) => match.status === 'InProgress' || match.status === 'Pause',
-  ).length
-
   return (
     <>
       <section className="hero">

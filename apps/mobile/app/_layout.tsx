@@ -37,7 +37,6 @@ export default function RootLayout() {
               <Stack.Screen name="login" options={{ title: 'Вход', headerBackVisible: false }} />
               <Stack.Screen name="connect" options={{ title: 'Подключение к матчу' }} />
               <Stack.Screen name="scan" options={{ title: 'QR-код матча' }} />
-              <Stack.Screen name="create" options={{ title: 'Новый матч' }} />
               <Stack.Screen name="settings" options={{ title: 'Сервер' }} />
               <Stack.Screen name="stage/[stageId]" options={{ title: 'Матчи этапа' }} />
               <Stack.Screen name="match/[id]" options={{ title: 'Матч' }} />

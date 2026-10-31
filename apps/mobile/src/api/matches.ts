@@ -1,5 +1,5 @@
 import { request } from './client'
-import type { AppendEventsResult, CreateMatchRequest, Match, MatchState, NewMatchEvent } from './types'
+import type { AppendEventsResult, Match, MatchState, NewMatchEvent } from './types'
 
 /**
  * Эндпоинты модуля Matches.
@@ -12,8 +12,6 @@ export const matchesApi = {
   /** Список матчей этапа в порядке расписания (GET /matches?stageId=...). */
   listByStage: (stageId: string) =>
     request<Match[]>('GET', `/matches?stageId=${encodeURIComponent(stageId)}`),
-
-  createMatch: (payload: CreateMatchRequest) => request<{ id: string }>('POST', '/matches', payload),
 
   start: (id: string) => request<void>('POST', `/matches/${id}/start`),
   stop: (id: string) => request<void>('POST', `/matches/${id}/stop`),

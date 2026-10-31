@@ -46,12 +46,6 @@ export type Match = {
   periodStartedAtUtc: string | null
 }
 
-export type CreateMatchRequest = {
-  stageId: string
-  homeTeamId: string
-  awayTeamId: string
-  startTimeUtc: string
-}
 
 /** Типы событий протокола: отмена — отдельное событие со ссылкой на отменяемое. */
 export type MatchEventType =

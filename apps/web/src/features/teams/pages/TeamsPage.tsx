@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useAuth } from '@/features/auth/authContext'
 import { validateLogoFile } from '@/shared/lib/logoFile'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { CreateTeamForm } from '../components/CreateTeamForm'
 import { useDeleteTeamLogo, useTeams, useUploadTeamLogo } from '../hooks'
 
 export default function TeamsPage() {
+  const { user } = useAuth()
   const [query, setQuery] = useState('')
   const [logoError, setLogoError] = useState<string | null>(null)
   const teams = useTeams(query.trim())
@@ -51,48 +53,59 @@ export default function TeamsPage() {
             </tr>
           </thead>
           <tbody>
-            {teams.data.map((team) => (
-              <tr key={team.id}>
-                <td>
-                  <div className="logo-cell">
-                    {team.logoUrl ? (
-                      <img src={team.logoUrl} alt="" className="logo" />
-                    ) : (
-                      <span className="muted">—</span>
-                    )}
+            {teams.data.map((team) => {
+              // Логотип закрепляется за организацией, загрузившей его первой (см. Team.SetLogo).
+              const canChangeLogo = !team.logoUrl || team.logoOwnerTenantId === user?.tenantId
 
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      disabled={uploadingTeamId === team.id}
-                      onChange={(event) => {
-                        const file = event.target.files?.[0]
-                        if (file) {
-                          const error = validateLogoFile(file)
-                          setLogoError(error)
-                          if (!error) uploadLogo.mutate({ id: team.id, file })
-                        }
-                        event.target.value = ''
-                      }}
-                    />
+              return (
+                <tr key={team.id}>
+                  <td>
+                    <div className="logo-cell">
+                      {team.logoUrl ? (
+                        <img src={team.logoUrl} alt="" className="logo" />
+                      ) : (
+                        <span className="muted">—</span>
+                      )}
 
-                    {team.logoUrl && (
-                      <button
-                        type="button"
-                        className="danger"
-                        disabled={deleteLogo.isPending}
-                        onClick={() => deleteLogo.mutate(team.id)}
-                      >
-                        Убрать
-                      </button>
-                    )}
-                  </div>
-                </td>
-                <td>{team.name}</td>
-                <td>{team.city ?? '—'}</td>
-                <td className="mono">{team.id}</td>
-              </tr>
-            ))}
+                      {canChangeLogo ? (
+                        <>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            disabled={uploadingTeamId === team.id}
+                            onChange={(event) => {
+                              const file = event.target.files?.[0]
+                              if (file) {
+                                const error = validateLogoFile(file)
+                                setLogoError(error)
+                                if (!error) uploadLogo.mutate({ id: team.id, file })
+                              }
+                              event.target.value = ''
+                            }}
+                          />
+
+                          {team.logoUrl && (
+                            <button
+                              type="button"
+                              className="danger"
+                              disabled={deleteLogo.isPending}
+                              onClick={() => deleteLogo.mutate(team.id)}
+                            >
+                              Убрать
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <span className="muted">Заменить — через техподдержку</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>{team.name}</td>
+                  <td>{team.city ?? '—'}</td>
+                  <td className="mono">{team.id}</td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       )}

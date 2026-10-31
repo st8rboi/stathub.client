@@ -110,10 +110,8 @@ export default function HomeScreen() {
         <Text style={styles.heading}>Подключение</Text>
         <MutedText>
           Если матч уже открыт по ссылке или QR-коду — подключитесь к нему напрямую.
-          Создание нового матча доступно, только если вы ведёте его первым.
         </MutedText>
         <Button title="Подключиться к матчу" large onPress={() => router.push('/connect')} />
-        <Button title="Создать матч" variant="secondary" onPress={() => router.push('/create')} />
       </Card>
 
       <Card>
