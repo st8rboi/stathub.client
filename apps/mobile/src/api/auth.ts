@@ -26,15 +26,37 @@ type ProblemDetails = {
   errors?: Record<string, string[]>
 }
 
+/** Сервер ответил отказом. Сетевая ошибка сюда не попадает: без ответа о сессии ничего не известно. */
+export class AuthRejectedError extends Error {
+  readonly status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = 'AuthRejectedError'
+    this.status = status
+  }
+}
+
+const AUTH_TIMEOUT_MS = 10_000
+
 async function post<T>(path: string, body: unknown): Promise<T> {
   const baseUrl = getApiBaseUrl()
   if (!baseUrl) throw new Error('Не задан адрес сервера.')
 
-  const response = await fetch(`${normalizeBaseUrl(baseUrl)}${path}`, {
-    method: 'POST',
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), AUTH_TIMEOUT_MS)
+
+  let response: Response
+  try {
+    response = await fetch(`${normalizeBaseUrl(baseUrl)}${path}`, {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(timeout)
+  }
 
   if (!response.ok) {
     let message = `Ошибка ${response.status}`
@@ -47,7 +69,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
       // тело не JSON
     }
 
-    throw new Error(message)
+    throw new AuthRejectedError(response.status, message)
   }
 
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T)

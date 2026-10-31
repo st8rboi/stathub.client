@@ -2,7 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 
 import { authApi, type AuthUser } from '../api/auth'
-import { clearTokens, loadTokens, saveTokens, setCachedAccessToken } from './tokens'
+import { clearCache } from '../storage/offlineCache'
+import { clearTokens, loadTokens, onTokensCleared, saveTokens, setCachedAccessToken } from './tokens'
 import { colors, fontSize, spacing } from '../theme'
 
 type AuthStatus = 'loading' | 'anonymous' | 'authenticated'
@@ -45,6 +46,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // Сервер отказал в обновлении сессии: экраны покажут вход, очередь событий останется на устройстве.
+  useEffect(() => onTokensCleared(() => setStatus('anonymous')), [])
+
   const login = useCallback(async (loginValue: string, password: string) => {
     const result = await authApi.login(loginValue, password)
     await saveTokens({ accessToken: result.accessToken, refreshToken: result.refreshToken })
@@ -61,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     await clearTokens()
+    await clearCache()
     setCachedAccessToken(null)
     setUser(null)
     setStatus('anonymous')

@@ -6,9 +6,11 @@
  * к понятному русскому сообщению — судья не должен читать `TypeError: Network request failed`.
  *
  * Авторизация: access-токен в памяти (читается синхронно), на 401 клиент один раз
- * обновляет сессию по refresh-токену и повторяет запрос.
+ * обновляет сессию по refresh-токену и повторяет запрос. Токены стираются, только если
+ * сервер явно отказал: потеря связи на поле не должна разлогинивать судью.
  */
-import { authApi } from './auth'
+import { authApi, AuthRejectedError } from './auth'
+import { noteServerDate } from './serverClock'
 import {
   clearTokens,
   getCachedAccessToken,
@@ -33,6 +35,7 @@ export class ApiError extends Error {
 }
 
 const REQUEST_TIMEOUT_MS = 10_000
+const NO_CONNECTION_MESSAGE = 'Нет связи с сервером. Проверьте адрес в настройках и подключение к сети.'
 
 let baseUrl = ''
 
@@ -70,21 +73,28 @@ async function readErrorMessage(response: Response): Promise<string> {
   }
 }
 
-let refreshInFlight: Promise<boolean> | null = null
+type RefreshResult = 'refreshed' | 'rejected' | 'unreachable'
+
+let refreshInFlight: Promise<RefreshResult> | null = null
 
 /** Один общий refresh на все параллельные 401. */
-async function refreshSession(): Promise<boolean> {
+async function refreshSession(): Promise<RefreshResult> {
   refreshInFlight ??= (async () => {
     try {
       const refreshToken = await getRefreshToken()
-      if (!refreshToken) return false
+      if (!refreshToken) return 'rejected'
 
       const result = await authApi.refresh(refreshToken)
       await saveTokens({ accessToken: result.accessToken, refreshToken: result.refreshToken })
-      return true
-    } catch {
-      await clearTokens()
-      return false
+      return 'refreshed'
+    } catch (error) {
+      // 5xx — сбой сервера, а не ответ о сессии: токены остаются, запрос повторится позже.
+      if (error instanceof AuthRejectedError && error.status < 500) {
+        await clearTokens()
+        return 'rejected'
+      }
+
+      return 'unreachable'
     } finally {
       refreshInFlight = null
     }
@@ -125,19 +135,26 @@ export async function request<T>(method: string, path: string, body?: unknown): 
   try {
     response = await send(method, path, body, controller.signal)
 
-    if (response.status === 401 && (await refreshSession())) {
-      response = await send(method, path, body, controller.signal)
+    if (response.status === 401) {
+      const refresh = await refreshSession()
+
+      if (refresh === 'unreachable') throw new ApiError(0, NO_CONNECTION_MESSAGE)
+      if (refresh === 'refreshed') response = await send(method, path, body, controller.signal)
     }
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+
     throw new ApiError(
       0,
       controller.signal.aborted
         ? 'Сервер не ответил за 10 секунд. Проверьте адрес и сеть.'
-        : 'Нет связи с сервером. Проверьте адрес в настройках и подключение к сети.',
+        : NO_CONNECTION_MESSAGE,
     )
   } finally {
     clearTimeout(timeout)
   }
+
+  noteServerDate(response.headers.get('date'))
 
   if (response.status === 401) {
     setCachedAccessToken(null)

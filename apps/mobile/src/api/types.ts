@@ -44,6 +44,13 @@ export type Match = {
   /** 0 — матч ещё не начат */
   currentPeriod: number
   periodStartedAtUtc: string | null
+  /** Когда остановлена игра; null — часы идут. */
+  pausedAtUtc: string | null
+  /** Сумма завершённых пауз текущего периода. */
+  periodPausedMilliseconds: number
+  finishedAtUtc: string | null
+  /** Сколько событий ждут разбора организатором. */
+  eventsForReview: number
 }
 
 
@@ -55,6 +62,11 @@ export type MatchEventType =
   | 'RedCard'
   | 'Substitution'
   | 'EventVoided'
+  | 'MatchStarted'
+  | 'MatchPaused'
+  | 'MatchResumed'
+  | 'PeriodStarted'
+  | 'MatchFinished'
 
 export type MatchEvent = {
   id: string
@@ -66,6 +78,10 @@ export type MatchEvent = {
   targetEventId: string | null
   reason: string | null
   clientTimestampUtc: string
+  /** Время с поправкой на расхождение часов устройства и сервера. */
+  occurredAtUtc: string
+  /** Пометка для организатора: событие принято, но требует разбора. */
+  reviewNote: string | null
   sequenceNumber: number
   createdAtUtc: string
   isVoided: boolean
@@ -93,6 +109,7 @@ export type NewMatchEvent = {
 export type AppendEventsResult = {
   acceptedEventIds: string[]
   duplicateEventIds: string[]
+  rejectedEvents: { eventId: string; reason: string }[]
   state: MatchState
 }
 

@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
-
 import { teamsApi } from '../api/directory'
 import { shortId } from '../match/format'
+import { cacheKeys } from '../storage/offlineCache'
+import { usePersistedQuery } from './usePersistedQuery'
+
+export const fetchTeams = (ids: string[]) => teamsApi.byIds([...ids].sort())
 
 /**
  * Названия команд по идентификаторам. Матч хранит только Id, имена живут в справочнике
@@ -10,12 +12,12 @@ import { shortId } from '../match/format'
 export function useTeamNames(ids: string[]) {
   const uniqueIds = [...new Set(ids.filter(Boolean))].sort()
 
-  const query = useQuery({
+  const query = usePersistedQuery({
+    cacheKey: cacheKeys.teamNames(uniqueIds),
     queryKey: ['teamNames', uniqueIds.join(',')],
-    queryFn: () => teamsApi.byIds(uniqueIds),
+    queryFn: () => fetchTeams(uniqueIds),
     enabled: uniqueIds.length > 0,
     staleTime: 60_000,
-    retry: 1,
   })
 
   const namesById = new Map((query.data ?? []).map((team) => [team.id, team.name]))

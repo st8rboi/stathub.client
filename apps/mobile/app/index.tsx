@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useAuth } from '../src/auth/AuthProvider'
 import { formatDateTime } from '../src/match/format'
 import { statusLabels } from '../src/match/status'
+import { useSyncOverview } from '../src/events/syncEngine'
 import { useMyMatches } from '../src/hooks/useMyMatches'
 import { useTeamNames } from '../src/hooks/useTeamNames'
 import { loadRecentMatches, type RecentMatch } from '../src/storage/recentMatches'
@@ -20,6 +21,7 @@ export default function HomeScreen() {
   const [recent, setRecent] = useState<RecentMatch[]>([])
 
   const myMatches = useMyMatches()
+  const sync = useSyncOverview()
 
   // Названия команд подтягиваются пачкой на все недавние матчи, а не по строке.
   const teamName = useTeamNames(
@@ -56,15 +58,30 @@ export default function HomeScreen() {
         <MutedText>{user?.tenantName ?? ''}</MutedText>
       </Card>
 
+      {sync.pending > 0 ? (
+        <Card>
+          <SectionTitle>Не отправлено событий: {sync.pending}</SectionTitle>
+          <MutedText>
+            {sync.problem?.message ?? 'Отправляем на сервер.'} События хранятся на устройстве и уйдут,
+            пока приложение открыто и есть связь.
+          </MutedText>
+        </Card>
+      ) : null}
+
       <Card>
         <SectionTitle>Мои матчи</SectionTitle>
 
-        {myMatches.isPending ? <MutedText>Загружаем назначения…</MutedText> : null}
+        {myMatches.isPending && !myMatches.data ? <MutedText>Загружаем назначения…</MutedText> : null}
 
         {myMatches.error ? (
           <MutedText>
-            Не удалось получить назначения: {myMatches.error instanceof Error ? myMatches.error.message : 'ошибка'}
+            {myMatches.data ? 'Нет связи, показан последний сохранённый список.' : 'Не удалось получить назначения.'}{' '}
+            {myMatches.error instanceof Error ? myMatches.error.message : ''}
           </MutedText>
+        ) : null}
+
+        {myMatches.offlineReady ? (
+          <MutedText>Готово к работе без сети матчей: {myMatches.offlineReady}.</MutedText>
         ) : null}
 
         {myMatches.data?.length === 0 ? (

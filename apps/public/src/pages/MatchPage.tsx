@@ -41,6 +41,14 @@ export default function MatchPage() {
 
   const { match, events } = matchQuery.data
 
+  // Первый период начинается с началом матча, поэтому строки «Начало периода» нумеруются со второго.
+  let period = 1
+  const eventTitle = (type: string) => {
+    if (type !== 'PeriodStarted') return eventTypeLabels[type] ?? type
+    period += 1
+    return `${eventTypeLabels[type]} ${period}`
+  }
+
   return (
     <>
       <p className="crumb">
@@ -65,7 +73,7 @@ export default function MatchPage() {
           <div className={live ? 'matchboard-status live' : 'matchboard-status'}>
             {matchStatusLabels[match.status] ?? match.status}
             {live && match.periodStartedAtUtc
-              ? ` · ${match.currentPeriod}-й период · ${formatElapsed(match.periodStartedAtUtc, now)}`
+              ? ` · ${match.currentPeriod}-й период · ${formatElapsed(match, now)}`
               : ''}
           </div>
         </div>
@@ -96,13 +104,13 @@ export default function MatchPage() {
             {events.map((event) => (
               <div key={event.id} className={event.isVoided ? 'event voided' : 'event'}>
                 <span className="event-title">
-                  <strong>{eventTypeLabels[event.type] ?? event.type}</strong>
+                  <strong>{eventTitle(event.type)}</strong>
                   {event.teamName ? ` · ${event.teamName}` : ''}
                   {event.playerName ? ` · ${event.playerName}` : ''}
                   {event.isVoided ? ' · отменено' : ''}
                   {event.type === 'EventVoided' && event.reason ? ` — ${event.reason}` : ''}
                 </span>
-                <span className="event-time">{formatTime(event.clientTimestampUtc)}</span>
+                <span className="event-time">{formatTime(event.occurredAtUtc)}</span>
               </div>
             ))}
           </div>

@@ -1,3 +1,5 @@
+import type { PublicMatch } from '@/api/types'
+
 export const matchStatusLabels: Record<string, string> = {
   Scheduled: 'Запланирован',
   InProgress: 'Идёт',
@@ -25,6 +27,9 @@ export const eventTypeLabels: Record<string, string> = {
   RedCard: 'Красная карточка',
   Substitution: 'Замена',
   EventVoided: 'Отмена события',
+  MatchStarted: 'Начало матча',
+  PeriodStarted: 'Начало периода',
+  MatchFinished: 'Финальный свисток',
 }
 
 export function formatTime(iso: string): string {
@@ -47,14 +52,18 @@ export function formatDateTime(iso: string): string {
   })
 }
 
-/** Секундомер периода по времени старта периода (без учёта пауз — это витрина, не судейский протокол). */
-export function formatElapsed(periodStartedAtUtc: string | null, nowMs = Date.now()): string {
-  if (!periodStartedAtUtc) return '—'
+/** Секундомер периода: паузы не считаются игровым временем, на паузе часы стоят. */
+export function formatElapsed(
+  match: Pick<PublicMatch, 'periodStartedAtUtc' | 'pausedAtUtc' | 'periodPausedMilliseconds'>,
+  nowMs = Date.now(),
+): string {
+  if (!match.periodStartedAtUtc) return '—'
 
-  const startedMs = new Date(periodStartedAtUtc).getTime()
+  const startedMs = new Date(match.periodStartedAtUtc).getTime()
   if (Number.isNaN(startedMs)) return '—'
 
-  const totalSeconds = Math.max(0, Math.floor((nowMs - startedMs) / 1000))
+  const endMs = match.pausedAtUtc ? new Date(match.pausedAtUtc).getTime() : nowMs
+  const totalSeconds = Math.max(0, Math.floor((endMs - startedMs - match.periodPausedMilliseconds) / 1000))
   const minutes = Math.floor(totalSeconds / 60)
   const seconds = totalSeconds % 60
 

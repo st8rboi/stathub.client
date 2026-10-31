@@ -1,9 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import { useEffect } from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
-import { AuthProvider } from '../src/auth/AuthProvider'
+import { loadServerClockOffset } from '../src/api/serverClock'
+import { AuthProvider, useAuth } from '../src/auth/AuthProvider'
+import { requestSync, startOutboxSync } from '../src/events/syncEngine'
 import { SettingsProvider } from '../src/settings/SettingsProvider'
 import { colors } from '../src/theme'
 
@@ -18,11 +21,29 @@ const queryClient = new QueryClient({
   },
 })
 
+/** Отправка офлайн-очереди живёт всё время работы приложения, независимо от открытого экрана. */
+function OutboxSync() {
+  const { status } = useAuth()
+
+  useEffect(() => {
+    void loadServerClockOffset()
+    return startOutboxSync(queryClient)
+  }, [])
+
+  // После входа очередь, накопленная за время истёкшей сессии, уходит сразу.
+  useEffect(() => {
+    if (status === 'authenticated') void requestSync()
+  }, [status])
+
+  return null
+}
+
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <SettingsProvider>
         <AuthProvider>
+          <OutboxSync />
           <SafeAreaProvider>
             <StatusBar style="dark" />
             <Stack

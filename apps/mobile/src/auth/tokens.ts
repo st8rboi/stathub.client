@@ -5,6 +5,14 @@ const REFRESH_KEY = '@stathub/refreshToken'
 
 let cachedAccessToken: string | null = null
 
+const clearedListeners = new Set<() => void>()
+
+/** Подписка на стирание токенов: сервер отказал в обновлении сессии, нужен новый вход. */
+export function onTokensCleared(listener: () => void): () => void {
+  clearedListeners.add(listener)
+  return () => clearedListeners.delete(listener)
+}
+
 /** Токен в памяти: HTTP-клиент читает его синхронно на каждом запросе. */
 export function getCachedAccessToken(): string | null {
   return cachedAccessToken
@@ -44,4 +52,5 @@ export async function getRefreshToken(): Promise<string | null> {
 export async function clearTokens(): Promise<void> {
   cachedAccessToken = null
   await Promise.all([AsyncStorage.removeItem(ACCESS_KEY), AsyncStorage.removeItem(REFRESH_KEY)])
+  clearedListeners.forEach((listener) => listener())
 }

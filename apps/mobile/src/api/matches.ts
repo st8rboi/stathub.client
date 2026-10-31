@@ -3,8 +3,8 @@ import type { AppendEventsResult, Match, MatchState, NewMatchEvent } from './typ
 
 /**
  * Эндпоинты модуля Matches.
- * Жизненный цикл матча — отдельные POST-действия, а не PATCH статуса:
- * домен сам проверяет допустимость перехода (`Match.Start/Stop/Resume/...`).
+ * Смена статуса матча — такие же события протокола, как голы: они идут через офлайн-очередь,
+ * а домен сервера проверяет допустимость перехода.
  */
 export const matchesApi = {
   getMatch: (id: string) => request<Match>('GET', `/matches/${id}`),
@@ -13,18 +13,12 @@ export const matchesApi = {
   listByStage: (stageId: string) =>
     request<Match[]>('GET', `/matches?stageId=${encodeURIComponent(stageId)}`),
 
-  start: (id: string) => request<void>('POST', `/matches/${id}/start`),
-  stop: (id: string) => request<void>('POST', `/matches/${id}/stop`),
-  resume: (id: string) => request<void>('POST', `/matches/${id}/resume`),
-  nextPeriod: (id: string) => request<void>('POST', `/matches/${id}/next-period`),
-  finish: (id: string) => request<void>('POST', `/matches/${id}/finish`),
-
   /** Матч + протокол: независимый путь синхронизации, не зависящий от realtime-пуша. */
   getState: (id: string) => request<MatchState>('GET', `/matches/${id}/state`),
 
   /** Батч событий из офлайн-очереди; сервер идемпотентен по клиентскому UUID. */
-  appendEvents: (id: string, events: NewMatchEvent[]) =>
-    request<AppendEventsResult>('POST', `/matches/${id}/events`, { events }),
+  appendEvents: (id: string, events: NewMatchEvent[], sentAtUtc: string) =>
+    request<AppendEventsResult>('POST', `/matches/${id}/events`, { events, sentAtUtc }),
 }
 
 /**

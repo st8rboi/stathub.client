@@ -99,7 +99,12 @@ export function MatchesSection({ stageId }: { stageId: string }) {
                 <td>
                   {match.homeScore} : {match.awayScore}
                 </td>
-                <td>{matchStatusLabels[match.status]}</td>
+                <td>
+                  {matchStatusLabels[match.status]}
+                  {match.eventsForReview > 0 && (
+                    <p className="error">На разборе событий: {match.eventsForReview}</p>
+                  )}
+                </td>
                 <td>
                   <RefereeAssign matchId={match.id} />
                 </td>
