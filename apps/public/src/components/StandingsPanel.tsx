@@ -20,7 +20,7 @@ export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
   const stageName = stage.data?.stage.name ?? tournament?.name ?? ''
 
   return (
-    <aside className="side-panel">
+    <div className="side-panel">
       <div className="side-panel-head">
         <select value={activeSlug} onChange={(event) => setSlug(event.target.value)} aria-label="Лига">
           {leagues.length === 0 && <option value="">Нет лиг</option>}
@@ -45,6 +45,7 @@ export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
         <table className="standings-table">
           <thead>
             <tr>
+              <th className="col-index">#</th>
               <th className="col-team">Команда</th>
               <th className="num">И</th>
               <th className="num">±</th>
@@ -52,8 +53,11 @@ export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {rows.map((row, index) => (
               <tr key={row.teamId}>
+                <td className={index < 3 ? 'col-index standings-pos standings-pos--top' : 'col-index standings-pos'}>
+                  {index + 1}
+                </td>
                 <td className="col-team">
                   <div className="standings-team">
                     {row.teamLogoUrl ? (
@@ -76,6 +80,6 @@ export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
           </tbody>
         </table>
       )}
-    </aside>
+    </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import type { PublicMatch } from '@/api/types'
 import { FixtureRow } from '@/components/FixtureRow'
 
@@ -10,7 +11,7 @@ export type Competition = {
   matches: PublicMatch[]
 }
 
-function matchesWord(count: number): string {
+export function matchesWord(count: number): string {
   const lastTwo = count % 100
   const last = count % 10
 
@@ -20,42 +21,44 @@ function matchesWord(count: number): string {
   return 'матчей'
 }
 
-/** Карточка соревнования: шапка с гербом и раскрывающийся список матчей (как в референсе). */
+/**
+ * Группа матчей одной лиги внутри общей ленты: плоская строка-заголовок
+ * (логотип, название, город) и список матчей, который можно свернуть.
+ */
 export function CompetitionGroup({ competition }: { competition: Competition }) {
   const [expanded, setExpanded] = useState(true)
+  const count = competition.matches.length
 
   return (
-    <section className="competition">
-      <button
-        type="button"
-        className="competition-head"
-        onClick={() => setExpanded((value) => !value)}
-        aria-expanded={expanded}
-      >
+    <section className="feed-group">
+      <div className="feed-group-head">
         {competition.logoUrl ? (
-          <img src={competition.logoUrl} alt="" className="competition-logo" />
+          <img src={competition.logoUrl} alt="" className="team-logo" />
         ) : (
-          <span className="competition-logo competition-logo--empty" />
+          <span className="team-logo team-logo--empty" />
         )}
 
-        <span className="competition-title">
-          <span className="competition-name">{competition.name}</span>
-          <span className="competition-meta">
-            {competition.city ?? 'География не указана'} · {competition.matches.length}{' '}
-            {matchesWord(competition.matches.length)}
-          </span>
+        <Link to={`/leagues/${competition.slug}`} className="feed-group-name">
+          {competition.name}
+        </Link>
+
+        <span className="feed-group-meta">
+          {competition.city ? `${competition.city} · ` : ''}
+          {count} {matchesWord(count)}
         </span>
 
-        <span className={expanded ? 'competition-chevron open' : 'competition-chevron'} aria-hidden="true" />
-      </button>
+        <button
+          type="button"
+          className="feed-group-toggle"
+          onClick={() => setExpanded((value) => !value)}
+          aria-expanded={expanded}
+          aria-label={expanded ? 'Свернуть' : 'Развернуть'}
+        >
+          <span className={expanded ? 'competition-chevron open' : 'competition-chevron'} aria-hidden="true" />
+        </button>
+      </div>
 
-      {expanded && (
-        <div className="competition-body">
-          {competition.matches.map((match) => (
-            <FixtureRow key={match.id} match={match} />
-          ))}
-        </div>
-      )}
+      {expanded && competition.matches.map((match) => <FixtureRow key={match.id} match={match} />)}
     </section>
   )
 }
