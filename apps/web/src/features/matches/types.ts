@@ -20,3 +20,5 @@ export interface CreateMatchBody {
   awayTeamId: string
   startTimeUtc: string
 }
+
+export type UpdateMatchBody = Omit<CreateMatchBody, 'stageId'>
