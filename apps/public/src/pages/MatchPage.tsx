@@ -138,7 +138,10 @@ function EventLine({ row }: { row: EventRow }) {
     ? `Отменено судьёй${row.voidReason ? `: ${row.voidReason}` : ''}`
     : (eventTypeLabels[event.type] ?? event.type)
 
-  const className = ['pe', `pe--${row.side}`, event.isVoided ? 'pe--voided' : ''].filter(Boolean).join(' ')
+  const isGoal = event.type === 'Goal' || event.type === 'OwnGoal'
+  const className = ['pe', `pe--${row.side}`, isGoal ? 'pe--goal' : '', event.isVoided ? 'pe--voided' : '']
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <div className={className} title={title}>
@@ -246,7 +249,7 @@ export default function MatchPage() {
       {protocol.length === 0 ? (
         <p className="notice">Событий пока нет.</p>
       ) : (
-        <div className="competition competition--plain">
+        <div className="competition competition--plain protocol-card">
           <div className="protocol">
             {protocol.map((row) =>
               row.kind === 'period' ? (
