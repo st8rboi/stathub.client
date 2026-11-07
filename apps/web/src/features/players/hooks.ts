@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { playersApi } from './api'
-import type { CreatePlayerBody } from './types'
+import type { CreatePlayerBody, UpdatePlayerBody } from './types'
 
 export const playerKeys = {
   all: ['players'] as const,
@@ -23,6 +23,22 @@ export const useCreatePlayer = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (body: CreatePlayerBody) => playersApi.create(body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+  })
+}
+
+export const useUpdatePlayer = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { id: string; body: UpdatePlayerBody }) => playersApi.update(input.id, input.body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+  })
+}
+
+export const useDeletePlayer = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => playersApi.remove(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
   })
 }

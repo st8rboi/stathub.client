@@ -1,9 +1,17 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { TournamentsSection } from '@/features/tournaments/components/TournamentsSection'
 import { validateLogoFile } from '@/shared/lib/logoFile'
 import { ErrorText } from '@/shared/ui/ErrorText'
-import { useArchiveLeague, useDeleteLeagueLogo, useLeague, usePublishLeague, useUploadLeagueLogo } from '../hooks'
+import { EditLeagueForm } from '../components/EditLeagueForm'
+import {
+  useArchiveLeague,
+  useDeleteLeague,
+  useDeleteLeagueLogo,
+  useLeague,
+  usePublishLeague,
+  useUploadLeagueLogo,
+} from '../hooks'
 import { dataSourceLabels, leagueStatusLabels } from '../labels'
 
 export default function LeaguePage() {
@@ -14,10 +22,13 @@ export default function LeaguePage() {
   const archive = useArchiveLeague()
   const uploadLogo = useUploadLeagueLogo()
   const deleteLogo = useDeleteLeagueLogo()
+  const deleteLeague = useDeleteLeague()
+  const navigate = useNavigate()
 
   const [logoError, setLogoError] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
 
-  const busy = publish.isPending || archive.isPending
+  const busy = publish.isPending || archive.isPending || deleteLeague.isPending
 
   if (league.error) return <ErrorText error={league.error} />
   if (!league.data) return <p>Загрузка…</p>
@@ -31,18 +42,27 @@ export default function LeaguePage() {
       </p>
       <h1>{data.name}</h1>
 
-      <dl>
-        <dt>Статус</dt>
-        <dd>{leagueStatusLabels[data.status]}</dd>
-        <dt>Slug</dt>
-        <dd>{data.slug}</dd>
-        <dt>Город / регион</dt>
-        <dd>{[data.city, data.region].filter(Boolean).join(', ') || '—'}</dd>
-        <dt>Источник данных</dt>
-        <dd>{dataSourceLabels[data.dataSource]}</dd>
-      </dl>
+      {editing ? (
+        <EditLeagueForm league={data} onDone={() => setEditing(false)} />
+      ) : (
+        <dl>
+          <dt>Статус</dt>
+          <dd>{leagueStatusLabels[data.status]}</dd>
+          <dt>Slug</dt>
+          <dd>{data.slug}</dd>
+          <dt>Город / регион</dt>
+          <dd>{[data.city, data.region].filter(Boolean).join(', ') || '—'}</dd>
+          <dt>Источник данных</dt>
+          <dd>{dataSourceLabels[data.dataSource]}</dd>
+        </dl>
+      )}
 
       <div className="actions">
+        {!editing && (
+          <button className="secondary" disabled={busy} onClick={() => setEditing(true)}>
+            Изменить
+          </button>
+        )}
         {data.status === 'Draft' && (
           <button disabled={busy} onClick={() => publish.mutate(leagueId)}>
             Опубликовать
@@ -59,8 +79,21 @@ export default function LeaguePage() {
             В архив
           </button>
         )}
+        <button
+          className="danger"
+          disabled={busy}
+          onClick={() => {
+            // Сервер откажет (409), если в лиге есть турниры.
+            if (confirm(`Удалить лигу «${data.name}»? Это действие нельзя отменить.`))
+              deleteLeague.mutate(leagueId, { onSuccess: () => void navigate('/') })
+          }}
+        >
+          Удалить лигу
+        </button>
       </div>
-      <ErrorText error={publish.error ?? archive.error ?? uploadLogo.error ?? deleteLogo.error} />
+      <ErrorText
+        error={publish.error ?? archive.error ?? deleteLeague.error ?? uploadLogo.error ?? deleteLogo.error}
+      />
 
       <h2>Логотип лиги</h2>
       <div className="logo-row">

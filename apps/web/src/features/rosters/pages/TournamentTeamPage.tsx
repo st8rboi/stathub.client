@@ -1,9 +1,12 @@
 import { useState, type SubmitEvent } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { usePlayers, usePlayersByIds } from '@/features/players/hooks'
 import { useTeams } from '@/features/teams/hooks'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import {
+  useChangeSquadNumber,
+  useDeleteRegistration,
+  useDeleteTournamentTeam,
   useRegisterPlayer,
   useReleasePlayer,
   useTournamentTeam,
@@ -44,6 +47,13 @@ export default function TournamentTeamPage() {
   const register = useRegisterPlayer(stageId, tournamentTeamId)
   const release = useReleasePlayer(stageId, tournamentTeamId)
   const withdraw = useWithdrawTournamentTeam(stageId, tournamentTeamId)
+  const changeNumber = useChangeSquadNumber(stageId, tournamentTeamId)
+  const deleteRegistration = useDeleteRegistration(stageId, tournamentTeamId)
+  const deleteTeam = useDeleteTournamentTeam(stageId, tournamentTeamId)
+  const navigate = useNavigate()
+
+  // Заявка, у которой сейчас правится номер, и черновик номера (строка из поля ввода).
+  const [numberDraft, setNumberDraft] = useState<{ registrationId: string; value: string } | null>(null)
 
   const teamId = details.data?.teamId ?? ''
   const transfer = useTransferPlayer(stageId, teamId)
@@ -61,6 +71,16 @@ export default function TournamentTeamPage() {
   const otherTeams = (tournamentTeams.data ?? []).filter(
     (tournamentTeam) => tournamentTeam.id !== tournamentTeamId && tournamentTeam.status === 'Active',
   )
+
+  const stageLink = `/leagues/${leagueId}/tournaments/${tournamentId}/stages/${stageId}`
+
+  const saveNumber = () => {
+    if (!numberDraft) return
+    changeNumber.mutate(
+      { registrationId: numberDraft.registrationId, squadNumber: parseSquadNumber(numberDraft.value) },
+      { onSuccess: () => setNumberDraft(null) },
+    )
+  }
 
   const onRegister = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -102,9 +122,7 @@ export default function TournamentTeamPage() {
   return (
     <>
       <p>
-        <Link to={`/leagues/${leagueId}/tournaments/${tournamentId}/stages/${stageId}`}>
-          ← К этапу
-        </Link>
+        <Link to={stageLink}>← К этапу</Link>
       </p>
       <h1>{teamName(data.teamId)}</h1>
 
@@ -115,12 +133,12 @@ export default function TournamentTeamPage() {
         <dd>{activeRegistrations.length}</dd>
       </dl>
 
-      {data.status === 'Active' && (
-        <div className="actions">
+      <div className="actions">
+        {data.status === 'Active' && (
           <button
             type="button"
             className="danger"
-            disabled={withdraw.isPending}
+            disabled={withdraw.isPending || deleteTeam.isPending}
             onClick={() => {
               if (confirm('Снять команду с турнира? Все активные заявки игроков закроются.')) {
                 withdraw.mutate()
@@ -129,9 +147,26 @@ export default function TournamentTeamPage() {
           >
             Снять команду с турнира
           </button>
-        </div>
-      )}
-      <ErrorText error={withdraw.error} />
+        )}
+        <button
+          type="button"
+          className="danger"
+          disabled={withdraw.isPending || deleteTeam.isPending}
+          onClick={() => {
+            // Сервер откажет (409), если у команды уже есть матчи на этапе — тогда её снимают.
+            if (confirm('Удалить ошибочную заявку команды вместе с составом? Это действие нельзя отменить.')) {
+              deleteTeam.mutate(undefined, { onSuccess: () => void navigate(stageLink) })
+            }
+          }}
+        >
+          Удалить заявку
+        </button>
+      </div>
+      <p className="hint">
+        «Снять с турнира» сохраняет историю. «Удалить заявку» — только для ошибочно заявленной команды
+        без матчей на этапе.
+      </p>
+      <ErrorText error={withdraw.error ?? deleteTeam.error} />
 
       <h2>Заявки игроков</h2>
       {registrations.length === 0 ? (
@@ -151,32 +186,99 @@ export default function TournamentTeamPage() {
           <tbody>
             {registrations.map((registration) => (
               <tr key={registration.id}>
-                <td>{registration.squadNumber ?? '—'}</td>
+                <td>
+                  {numberDraft?.registrationId === registration.id ? (
+                    <input
+                      type="number"
+                      min={1}
+                      max={999}
+                      value={numberDraft.value}
+                      onChange={(e) => setNumberDraft({ ...numberDraft, value: e.target.value })}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveNumber()
+                        if (e.key === 'Escape') setNumberDraft(null)
+                      }}
+                      aria-label="Игровой номер"
+                      autoFocus
+                    />
+                  ) : (
+                    (registration.squadNumber ?? '—')
+                  )}
+                </td>
                 <td>{playerName(registration.playerId)}</td>
                 <td>{registrationStatusLabels[registration.status]}</td>
                 <td>{registration.joinedOn}</td>
                 <td>{registration.leftOn ?? '—'}</td>
-                <td>
-                  {registration.status === 'Active' && (
-                    <button
-                      type="button"
-                      disabled={release.isPending}
-                      onClick={() => {
-                        if (confirm('Отзаявить игрока? Заявка останется в истории.')) {
-                          release.mutate(registration.id)
-                        }
-                      }}
-                    >
-                      Отзаявить
-                    </button>
-                  )}
+                <td className="actions-cell">
+                  <div className="actions">
+                    {numberDraft?.registrationId === registration.id ? (
+                      <>
+                        <button type="button" disabled={changeNumber.isPending} onClick={saveNumber}>
+                          Сохранить
+                        </button>
+                        <button type="button" className="secondary" onClick={() => setNumberDraft(null)}>
+                          Отмена
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {registration.status === 'Active' && (
+                          <>
+                            <button
+                              type="button"
+                              className="secondary"
+                              onClick={() => {
+                                changeNumber.reset()
+                                setNumberDraft({
+                                  registrationId: registration.id,
+                                  value: registration.squadNumber?.toString() ?? '',
+                                })
+                              }}
+                            >
+                              Номер
+                            </button>
+                            <button
+                              type="button"
+                              disabled={release.isPending}
+                              onClick={() => {
+                                if (confirm('Отзаявить игрока? Заявка останется в истории.')) {
+                                  release.mutate(registration.id)
+                                }
+                              }}
+                            >
+                              Отзаявить
+                            </button>
+                          </>
+                        )}
+                        <button
+                          type="button"
+                          className="danger"
+                          disabled={deleteRegistration.isPending}
+                          onClick={() => {
+                            // Сервер откажет (409), если у игрока уже есть события в матчах за команду.
+                            if (confirm('Удалить ошибочную заявку? В истории она не останется.')) {
+                              deleteRegistration.mutate(registration.id)
+                            }
+                          }}
+                        >
+                          Удалить
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
-      <ErrorText error={release.error} />
+      <ErrorText error={release.error ?? changeNumber.error ?? deleteRegistration.error} />
+      {registrations.length > 0 && (
+        <p className="hint">
+          Уход игрока оформляйте отзаявкой или трансфером — заявка останется в истории. «Удалить» —
+          только для ошибочной заявки, по которой нет событий в матчах.
+        </p>
+      )}
 
       <h2>Заявить игрока</h2>
       {data.status !== 'Active' ? (

@@ -24,3 +24,10 @@ export interface CreateLeagueBody {
   region: string | null
   dataSource: LeagueDataSource
 }
+
+export interface UpdateLeagueBody {
+  name: string
+  slug: string
+  city: string | null
+  region: string | null
+}

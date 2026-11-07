@@ -256,6 +256,26 @@ form button {
   gap: 8px;
 }
 
+button.secondary {
+  background: #fff;
+  color: #2456d6;
+}
+
+td input {
+  width: 100%;
+}
+
+fieldset.plain {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: contents;
+}
+
+td.actions-cell {
+  white-space: nowrap;
+}
+
 .error {
   color: #c62828;
   margin: 8px 0;

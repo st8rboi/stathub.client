@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { tournamentsApi } from './api'
-import type { AddStageBody, CreateTournamentBody, TournamentAction } from './types'
+import type { AddStageBody, CreateTournamentBody, TournamentAction, UpdateTournamentBody } from './types'
 
 export const tournamentKeys = {
   all: ['tournaments'] as const,
@@ -33,3 +33,26 @@ export const useChangeTournamentStatus = (leagueId: string, tournamentId: string
   useTournamentMutation((action: TournamentAction) =>
     tournamentsApi.changeStatus(leagueId, tournamentId, action),
   )
+
+export const useUpdateTournament = (leagueId: string, tournamentId: string) =>
+  useTournamentMutation((body: UpdateTournamentBody) => tournamentsApi.update(leagueId, tournamentId, body))
+
+// Удалённый турнир убираем из кэша, а не перезапрашиваем: иначе открытая карточка мигнёт 404.
+export const useDeleteTournament = (leagueId: string, tournamentId: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => tournamentsApi.remove(leagueId, tournamentId),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: tournamentKeys.detail(leagueId, tournamentId) })
+      return queryClient.invalidateQueries({ queryKey: tournamentKeys.list(leagueId) })
+    },
+  })
+}
+
+export const useUpdateStage = (leagueId: string, tournamentId: string) =>
+  useTournamentMutation((input: { stageId: string; body: AddStageBody }) =>
+    tournamentsApi.updateStage(leagueId, tournamentId, input.stageId, input.body),
+  )
+
+export const useDeleteStage = (leagueId: string, tournamentId: string) =>
+  useTournamentMutation((stageId: string) => tournamentsApi.removeStage(leagueId, tournamentId, stageId))

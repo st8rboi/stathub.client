@@ -21,6 +21,16 @@ export const rostersApi = {
     stageId: string,
     body: { playerId: string; fromTeamId: string; toTeamId: string; squadNumber: number | null },
   ) => request<void>('POST', `/stages/${stageId}/transfers`, body),
+  changeSquadNumber: (stageId: string, tournamentTeamId: string, registrationId: string, squadNumber: number | null) =>
+    request<void>(
+      'PUT',
+      `/stages/${stageId}/teams/${tournamentTeamId}/players/${registrationId}/squad-number`,
+      { squadNumber },
+    ),
+  deleteRegistration: (stageId: string, tournamentTeamId: string, registrationId: string) =>
+    request<void>('DELETE', `/stages/${stageId}/teams/${tournamentTeamId}/players/${registrationId}`),
+  deleteTeam: (stageId: string, tournamentTeamId: string) =>
+    request<void>('DELETE', `/stages/${stageId}/teams/${tournamentTeamId}`),
   withdrawTeam: (stageId: string, tournamentTeamId: string) =>
     request<void>('POST', `/stages/${stageId}/teams/${tournamentTeamId}/withdraw`),
 }
