@@ -81,6 +81,8 @@ export type PublicMatch = {
   scheduledTimeUtc: string
   startedAtUtc: string | null
   periodStartedAtUtc: string | null
+  pausedAtUtc: string | null
+  periodPausedMilliseconds: number
 }
 
 export type PublicEvent = {
@@ -88,7 +90,7 @@ export type PublicEvent = {
   type: string
   teamName: string | null
   playerName: string | null
-  clientTimestampUtc: string
+  occurredAtUtc: string
   isVoided: boolean
   reason: string | null
 }

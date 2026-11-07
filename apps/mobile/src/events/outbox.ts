@@ -9,7 +9,15 @@ import type { NewMatchEvent } from '../api/types'
  * а на сервер уходит, когда связь появится. Сервер идемпотентен по клиентскому UUID,
  * поэтому повторная отправка безопасна.
  */
-const outboxKey = (matchId: string) => `@stathub/outbox/${matchId}`
+const OUTBOX_PREFIX = '@stathub/outbox/'
+const outboxKey = (matchId: string) => `${OUTBOX_PREFIX}${matchId}`
+const rejectedKey = (matchId: string) => `@stathub/rejected/${matchId}`
+
+/** Событие, которое сервер принять не смог. Хранится, чтобы судья увидел его, а не потерял молча. */
+export type RejectedEvent = {
+  event: NewMatchEvent
+  reason: string
+}
 
 // Записи в очередь сериализуются: иначе параллельные sync и «добавить событие»
 // могли бы перезаписать друг друга.
@@ -81,6 +89,45 @@ export function removeEvents(matchId: string, ids: string[]): Promise<NewMatchEv
     const accepted = new Set(ids)
     const next = (await loadOutbox(matchId)).filter((item) => !accepted.has(item.id))
     await writeOutbox(matchId, next)
+    return next
+  })
+}
+
+/** Матчи, у которых на устройстве лежит очередь. */
+export async function listOutboxMatchIds(): Promise<string[]> {
+  try {
+    const keys = await AsyncStorage.getAllKeys()
+    return keys.filter((key) => key.startsWith(OUTBOX_PREFIX)).map((key) => key.slice(OUTBOX_PREFIX.length))
+  } catch {
+    return []
+  }
+}
+
+export async function loadRejectedEvents(matchId: string): Promise<RejectedEvent[]> {
+  try {
+    const raw = await AsyncStorage.getItem(rejectedKey(matchId))
+    const parsed: unknown = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? (parsed as RejectedEvent[]) : []
+  } catch {
+    return []
+  }
+}
+
+export function addRejectedEvents(matchId: string, items: RejectedEvent[]): Promise<RejectedEvent[]> {
+  return serialize(async () => {
+    const current = await loadRejectedEvents(matchId)
+    if (items.length === 0) return current
+
+    const next = [...current, ...items]
+    await AsyncStorage.setItem(rejectedKey(matchId), JSON.stringify(next))
+    return next
+  })
+}
+
+export function dismissRejectedEvent(matchId: string, eventId: string): Promise<RejectedEvent[]> {
+  return serialize(async () => {
+    const next = (await loadRejectedEvents(matchId)).filter((item) => item.event.id !== eventId)
+    await AsyncStorage.setItem(rejectedKey(matchId), JSON.stringify(next))
     return next
   })
 }

@@ -4,7 +4,21 @@
  * Отличия от админского клиента (apps/web): адрес сервера настраивается на устройстве
  * (судья в поле не ходит через dev-прокси), а любая сетевая ошибка приводится
  * к понятному русскому сообщению — судья не должен читать `TypeError: Network request failed`.
+ *
+ * Авторизация: access-токен в памяти (читается синхронно), на 401 клиент один раз
+ * обновляет сессию по refresh-токену и повторяет запрос. Токены стираются, только если
+ * сервер явно отказал: потеря связи на поле не должна разлогинивать судью.
  */
+import { authApi, AuthRejectedError } from './auth'
+import { noteServerDate } from './serverClock'
+import {
+  clearTokens,
+  getCachedAccessToken,
+  getRefreshToken,
+  saveTokens,
+  setCachedAccessToken,
+} from '../auth/tokens'
+
 export class ApiError extends Error {
   readonly status: number
 
@@ -21,6 +35,7 @@ export class ApiError extends Error {
 }
 
 const REQUEST_TIMEOUT_MS = 10_000
+const NO_CONNECTION_MESSAGE = 'Нет связи с сервером. Проверьте адрес в настройках и подключение к сети.'
 
 let baseUrl = ''
 
@@ -50,12 +65,62 @@ async function readErrorMessage(response: Response): Promise<string> {
     const problem = (await response.json()) as ProblemDetails
     // Ошибки валидации модели приходят в errors, бизнес-ошибки — в detail (см. GlobalExceptionHandler).
     if (problem.errors) {
-      return Object.values(problem.errors).flat().join('; ')
+      return Object.values<string[]>(problem.errors).flat().join('; ')
     }
     return problem.detail ?? problem.title ?? `Ошибка ${response.status}`
   } catch {
     return `Ошибка ${response.status}`
   }
+}
+
+type RefreshResult = 'refreshed' | 'rejected' | 'unreachable'
+
+let refreshInFlight: Promise<RefreshResult> | null = null
+
+/** Один общий refresh на все параллельные 401. */
+async function refreshSession(): Promise<RefreshResult> {
+  refreshInFlight ??= (async () => {
+    try {
+      const refreshToken = await getRefreshToken()
+      if (!refreshToken) return 'rejected'
+
+      const result = await authApi.refresh(refreshToken)
+      await saveTokens({ accessToken: result.accessToken, refreshToken: result.refreshToken })
+      return 'refreshed'
+    } catch (error) {
+      // 5xx — сбой сервера, а не ответ о сессии: токены остаются, запрос повторится позже.
+      if (error instanceof AuthRejectedError && error.status < 500) {
+        await clearTokens()
+        return 'rejected'
+      }
+
+      return 'unreachable'
+    } finally {
+      refreshInFlight = null
+    }
+  })()
+
+  return refreshInFlight
+}
+
+async function send(
+  method: string,
+  path: string,
+  body: unknown,
+  signal: AbortSignal,
+): Promise<Response> {
+  const headers: Record<string, string> = { Accept: 'application/json' }
+  if (body !== undefined) headers['Content-Type'] = 'application/json'
+
+  const accessToken = getCachedAccessToken()
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`
+
+  return fetch(`${baseUrl}${path}`, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+    signal,
+  })
 }
 
 export async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -68,24 +133,32 @@ export async function request<T>(method: string, path: string, body?: unknown): 
 
   let response: Response
   try {
-    response = await fetch(`${baseUrl}${path}`, {
-      method,
-      headers:
-        body === undefined
-          ? { Accept: 'application/json' }
-          : { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
-      signal: controller.signal,
-    })
-  } catch {
+    response = await send(method, path, body, controller.signal)
+
+    if (response.status === 401) {
+      const refresh = await refreshSession()
+
+      if (refresh === 'unreachable') throw new ApiError(0, NO_CONNECTION_MESSAGE)
+      if (refresh === 'refreshed') response = await send(method, path, body, controller.signal)
+    }
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+
     throw new ApiError(
       0,
       controller.signal.aborted
         ? 'Сервер не ответил за 10 секунд. Проверьте адрес и сеть.'
-        : 'Нет связи с сервером. Проверьте адрес в настройках и подключение к сети.',
+        : NO_CONNECTION_MESSAGE,
     )
   } finally {
     clearTimeout(timeout)
+  }
+
+  noteServerDate(response.headers.get('date'))
+
+  if (response.status === 401) {
+    setCachedAccessToken(null)
+    throw new ApiError(401, 'Сессия истекла. Войдите заново.')
   }
 
   if (!response.ok) {

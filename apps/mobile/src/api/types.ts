@@ -4,6 +4,26 @@
  */
 export type MatchStatus = 'Scheduled' | 'InProgress' | 'Pause' | 'Finished' | 'Cancelled'
 
+/** Матч из «Мои матчи» судьи: только то, что нужно списку. */
+export type RefereeMatch = {
+  id: string
+  stageId: string
+  stageName: string
+  tournamentName: string
+  leagueName: string
+  homeTeamId: string
+  homeTeamName: string
+  awayTeamId: string
+  awayTeamName: string
+  status: MatchStatus
+  homeScore: number
+  awayScore: number
+  currentPeriod: number
+  periodsCount: number
+  scheduledTimeUtc: string
+  startedAtUtc: string | null
+}
+
 export type Match = {
   id: string
   stageId: string
@@ -24,14 +44,15 @@ export type Match = {
   /** 0 — матч ещё не начат */
   currentPeriod: number
   periodStartedAtUtc: string | null
+  /** Когда остановлена игра; null — часы идут. */
+  pausedAtUtc: string | null
+  /** Сумма завершённых пауз текущего периода. */
+  periodPausedMilliseconds: number
+  finishedAtUtc: string | null
+  /** Сколько событий ждут разбора организатором. */
+  eventsForReview: number
 }
 
-export type CreateMatchRequest = {
-  stageId: string
-  homeTeamId: string
-  awayTeamId: string
-  startTimeUtc: string
-}
 
 /** Типы событий протокола: отмена — отдельное событие со ссылкой на отменяемое. */
 export type MatchEventType =
@@ -41,6 +62,11 @@ export type MatchEventType =
   | 'RedCard'
   | 'Substitution'
   | 'EventVoided'
+  | 'MatchStarted'
+  | 'MatchPaused'
+  | 'MatchResumed'
+  | 'PeriodStarted'
+  | 'MatchFinished'
 
 export type MatchEvent = {
   id: string
@@ -52,6 +78,10 @@ export type MatchEvent = {
   targetEventId: string | null
   reason: string | null
   clientTimestampUtc: string
+  /** Время с поправкой на расхождение часов устройства и сервера. */
+  occurredAtUtc: string
+  /** Пометка для организатора: событие принято, но требует разбора. */
+  reviewNote: string | null
   sequenceNumber: number
   createdAtUtc: string
   isVoided: boolean
@@ -79,6 +109,7 @@ export type NewMatchEvent = {
 export type AppendEventsResult = {
   acceptedEventIds: string[]
   duplicateEventIds: string[]
+  rejectedEvents: { eventId: string; reason: string }[]
   state: MatchState
 }
 

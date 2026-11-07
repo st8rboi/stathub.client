@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import type { PublicMatch } from '@/api/types'
 import { CompetitionGroup, type Competition } from '@/components/CompetitionGroup'
+import { Skeleton } from '@/components/Skeleton'
 import { StandingsPanel } from '@/components/StandingsPanel'
 import { useLeagues, useSchedule } from '@/hooks'
 import { useRealtime } from '@/realtime'
@@ -46,7 +47,13 @@ export default function HomePage() {
   const schedule = useSchedule(today, new Date(today.getTime() + 7 * DAY_MS))
   const leagues = useLeagues('', '')
 
-  const matches = schedule.data ?? []
+  // Счётчики в полосе дат и список соревнований строятся из одного и того же набора:
+  // матчи без лиги (битые/тестовые данные) отбрасываем до группировки, иначе
+  // «Сегодня 1» при пустом списке.
+  const matches = useMemo(
+    () => (schedule.data ?? []).filter((match) => match.leagueSlug !== ''),
+    [schedule.data],
+  )
 
   // Один запрос на неделю: из него считаем счётчики для полосы дат и матчи выбранного дня.
   const byDay = useMemo(() => {
@@ -67,7 +74,7 @@ export default function HomePage() {
     [leagues.data],
   )
 
-  const dayMatches = (byDay.get(selectedKey) ?? []).filter((match) => match.leagueSlug !== '')
+  const dayMatches = byDay.get(selectedKey) ?? []
 
   const competitions = useMemo<Competition[]>(() => {
     const map = new Map<string, Competition>()
@@ -97,15 +104,11 @@ export default function HomePage() {
     void queryClient.invalidateQueries({ queryKey: ['public'] })
   })
 
-  const liveCount = matches.filter(
-    (match) => match.status === 'InProgress' || match.status === 'Pause',
-  ).length
-
   return (
-    <>
+    <div className="home">
       <section className="hero">
         <div className="hero-main">
-          <h1>Матчи, таблицы и статистика любительского футбола</h1>
+          <h1>Единая платформа для любительского футбола в России</h1>
           <p className="hero-date">
             {today.toLocaleDateString('ru-RU', {
               weekday: 'long',
@@ -115,18 +118,15 @@ export default function HomePage() {
             })}
           </p>
           <p className="hero-text">
-            Live-счёт от судей, расписание по дням и турнирные таблицы — от всех лиг платформы
-            в одном месте.
+            Онлайн счёт, турнирные таблицы и статистика матчей - всё в одном месте
           </p>
         </div>
 
         <aside className="hero-card">
-          <span className="hero-card-label">Live-счёт</span>
-          <h2>Результаты появляются сразу после события судьи</h2>
-          <p>Гол, карточка или смена статуса — и таблица со счётом обновляются автоматически.</p>
-          <p className="hero-card-live">
-            {liveCount > 0 ? `Сейчас идёт матчей: ${liveCount}` : 'Сейчас матчей не идёт'}
-          </p>
+          <span className="hero-card-label">Следи за нашей командой</span>
+          <h2>Подписывайтесь на Статхаб во всех соцсетях</h2>
+          <p>Вконтакте / Telegram / TikTok / YouTube</p>
+          <p className="hero-card-handle">@digital_stathub</p>
         </aside>
       </section>
 
@@ -158,7 +158,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {schedule.isPending && <p className="muted">Загрузка…</p>}
+          {schedule.isPending && <Skeleton />}
           {schedule.error && (
             <p className="notice">Не удалось загрузить расписание: {schedule.error.message}</p>
           )}
@@ -173,6 +173,6 @@ export default function HomePage() {
 
         <StandingsPanel leagues={leagues.data ?? []} />
       </div>
-    </>
+    </div>
   )
 }

@@ -45,7 +45,7 @@ export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
         <table className="standings-table">
           <thead>
             <tr>
-              <th>Команда</th>
+              <th className="col-team">Команда</th>
               <th className="num">И</th>
               <th className="num">±</th>
               <th className="num">О</th>
@@ -54,7 +54,7 @@ export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
           <tbody>
             {rows.map((row) => (
               <tr key={row.teamId}>
-                <td>
+                <td className="col-team">
                   <div className="standings-team">
                     {row.teamLogoUrl ? (
                       <img src={row.teamLogoUrl} alt="" className="team-logo team-logo--sm" />

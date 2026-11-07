@@ -7,11 +7,27 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      "./plugins/withCleartextTraffic",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Камера нужна, чтобы подключиться к матчу по QR-коду.",
+          "recordAudioAndroid": false
+        }
+      ]
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.stathub.referee"
     },
     "android": {
+      "package": "com.stathub.referee",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -23,6 +39,13 @@
     "web": {
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a2aa4e96-7577-4b6b-8e19-6e1ad2c9c9b1"
+      }
+    },
+    "owner": "st8rboi"
   }
 }

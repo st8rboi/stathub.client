@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
+import { AuthProvider } from '@/features/auth/AuthProvider'
 import { OrganizerProvider } from '@/features/organizer/OrganizerProvider'
 
 const queryClient = new QueryClient({
@@ -12,7 +13,9 @@ const queryClient = new QueryClient({
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <OrganizerProvider>{children}</OrganizerProvider>
+      <AuthProvider>
+        <OrganizerProvider>{children}</OrganizerProvider>
+      </AuthProvider>
     </QueryClientProvider>
   )
 }

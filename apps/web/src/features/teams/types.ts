@@ -3,6 +3,7 @@ export interface Team {
   name: string
   city: string | null
   logoUrl: string | null
+  logoOwnerTenantId: string | null
   createdAtUtc: string
 }
 

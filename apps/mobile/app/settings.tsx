@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 
+import { useAuth } from '../src/auth/AuthProvider'
 import { matchesApi, pingServer } from '../src/api/matches'
 import { getApiBaseUrl } from '../src/api/client'
 import { useSettings } from '../src/settings/SettingsProvider'
@@ -16,6 +17,7 @@ type CheckState = { kind: 'idle' | 'checking' | 'ok' | 'error'; message?: string
 export default function SettingsScreen() {
   const router = useRouter()
   const { baseUrl, saveBaseUrl } = useSettings()
+  const { user, logout } = useAuth()
 
   const [value, setValue] = useState(baseUrl)
   const [state, setState] = useState<CheckState>({ kind: 'idle' })
@@ -55,6 +57,21 @@ export default function SettingsScreen() {
 
   return (
     <Screen>
+      <Card>
+        <SectionTitle>Аккаунт</SectionTitle>
+        <MutedText>
+          {user ? `${user.displayName} · ${user.tenantName}` : 'Вход не выполнен'}
+        </MutedText>
+        <MutedText>Логин: {user?.login ?? '—'}</MutedText>
+        <Button
+          title="Выйти из аккаунта"
+          variant="secondary"
+          onPress={() => {
+            void logout().then(() => router.replace('/login'))
+          }}
+        />
+      </Card>
+
       <Card>
         <SectionTitle>Адрес сервера</SectionTitle>
         <MutedText>

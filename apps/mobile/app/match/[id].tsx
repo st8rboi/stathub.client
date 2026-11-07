@@ -2,11 +2,21 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState } from 'react'
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { serverClockOffsetMs } from '../../src/api/serverClock'
 import type { MatchEvent } from '../../src/api/types'
-import { computeScore, eventTypeLabels, formatEventTime, mergeEvents } from '../../src/events/projection'
-import { useMatchActions } from '../../src/hooks/useMatch'
+import { useAuth } from '../../src/auth/AuthProvider'
+import {
+  computeScore,
+  eventTypeLabels,
+  formatEventTime,
+  isLifecycleEvent,
+  mergeEvents,
+  periodNumbers,
+  projectMatch,
+} from '../../src/events/projection'
 import { useMatchEvents, useMatchStateQuery } from '../../src/hooks/useMatchEvents'
 import { useMatchRosters, type RosterPlayer } from '../../src/hooks/useMatchRosters'
+import { useStageBans } from '../../src/hooks/useStageBans'
 import { useTeamNames } from '../../src/hooks/useTeamNames'
 import { formatClock, formatDateTime, shortId } from '../../src/match/format'
 import { canStartNextPeriod, periodLabel, statusLabels, statusTones } from '../../src/match/status'
@@ -51,27 +61,22 @@ export default function MatchScreen() {
   const id = params.id ?? ''
   const router = useRouter()
 
+  const { status: authStatus } = useAuth()
+
   const [sheet, setSheet] = useState<Sheet | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
 
   const stateQuery = useMatchStateQuery(id)
-  const match = stateQuery.data?.match ?? stateQuery.cachedMatch
-
-  const actions = useMatchActions(id, (error) => {
-    setActionError(error.message)
-  })
-
   const events = useMatchEvents(id, stateQuery.data)
+
+  // Статус с учётом очереди: кнопки и секундомер реагируют сразу, даже без связи.
+  const serverMatch = stateQuery.data?.match ?? stateQuery.cachedMatch
+  const match = serverMatch ? projectMatch(serverMatch, events.pending, serverClockOffsetMs()) : null
+
   const clock = useMatchClock(match ?? undefined)
   const teamLabel = useTeamNames(match ? [match.homeTeamId, match.awayTeamId] : [])
   const rosters = useMatchRosters(match ?? undefined)
-
-  const busy =
-    actions.start.isPending ||
-    actions.stop.isPending ||
-    actions.resume.isPending ||
-    actions.nextPeriod.isPending ||
-    actions.finish.isPending
+  // Дисквалификации этапа: все хуки — до раннего return, иначе меняется их число при загрузке матча.
+  const stageBans = useStageBans(match?.stageId ?? '')
 
   if (!match) {
     return (
@@ -100,12 +105,14 @@ export default function MatchScreen() {
     )
   }
 
-  // Очередь показываем всегда (даже без связи), а счёт считаем из состояния сервера;
-  // без него показываем последний известный счёт из кэша, чтобы не терять уже забитые голы.
+  // Счёт — проекция протокола и очереди. Если протокола на устройстве нет (матч не успел
+  // скачаться), к последнему известному счёту прибавляем только то, что отмечено здесь.
   const mergedEvents = mergeEvents(stateQuery.data?.events ?? [], events.pending, id)
+  const queuedScore = computeScore(match, mergedEvents)
   const score = stateQuery.data
-    ? computeScore(match, mergedEvents)
-    : { home: match.homeScore, away: match.awayScore }
+    ? queuedScore
+    : { home: match.homeScore + queuedScore.home, away: match.awayScore + queuedScore.away }
+  const periods = periodNumbers(mergedEvents)
   const pendingIds = new Set(events.pending.map((event) => event.id))
   const eventsLocked = match.status === 'Finished' || match.status === 'Cancelled'
 
@@ -114,12 +121,22 @@ export default function MatchScreen() {
   )
   const playerName = (playerId: string) => playerNameById.get(playerId) ?? shortId(playerId)
 
+  // Пометка дисквалифицированных: сервер отклонит событие, лучше предупредить заранее.
+  const bannedPlayerIds = new Set((stageBans.data ?? []).map((ban) => ban.playerId))
+  const playerLabel = (player: RosterPlayer) => {
+    const base = player.squadNumber ? `№${player.squadNumber} ${player.fullName}` : player.fullName
+    return bannedPlayerIds.has(player.playerId) ? `${base} · дисквалифицирован` : base
+  }
+
   const rosterFor = (teamId: string): RosterPlayer[] =>
     teamId === match.homeTeamId ? rosters.home : rosters.away
 
   const describe = (event: MatchEvent): string => {
     if (event.type === 'EventVoided')
       return event.reason ? `Отмена: ${event.reason}` : 'Отмена события'
+
+    if (event.type === 'PeriodStarted') return `Начало периода ${periods.get(event.id) ?? ''}`.trim()
+    if (isLifecycleEvent(event.type)) return eventTypeLabels[event.type]
 
     const team =
       event.teamId === match.homeTeamId
@@ -162,7 +179,7 @@ export default function MatchScreen() {
                 : 'Состав команды не найден — можно отметить гол без автора.',
           options: [
             ...roster.map((player) => ({
-              label: player.squadNumber ? `№${player.squadNumber} ${player.fullName}` : player.fullName,
+              label: playerLabel(player),
               onPress: () => {
                 // Ассистент необязателен, поэтому сначала спрашиваем второго игрока,
                 // но всегда даём выбор «без ассистента».
@@ -193,7 +210,7 @@ export default function MatchScreen() {
               : 'Состав не найден — ассистента можно не указывать.',
           options: [
             ...roster.map((player) => ({
-              label: player.squadNumber ? `№${player.squadNumber} ${player.fullName}` : player.fullName,
+              label: playerLabel(player),
               onPress: () => {
                 setSheet(null)
                 void events.enqueue({
@@ -236,7 +253,7 @@ export default function MatchScreen() {
                 : 'Состав команды не найден — карточка уйдёт команде.',
           options: [
             ...roster.map((player) => ({
-              label: player.squadNumber ? `№${player.squadNumber} ${player.fullName}` : player.fullName,
+              label: playerLabel(player),
               onPress: () => setSheet({ kind: 'card-type', teamId, playerId: player.playerId }),
             })),
             {
@@ -299,14 +316,14 @@ export default function MatchScreen() {
       case 'finish':
         return {
           title: 'Завершить матч?',
-          message: 'После завершения статус и протокол изменить нельзя.',
+          message: 'После завершения статус и протокол изменить нельзя. Без связи матч завершится на устройстве, а на сервер уйдёт вместе с очередью.',
           options: [
             {
               label: 'Завершить матч',
               destructive: true,
               onPress: () => {
                 setSheet(null)
-                actions.finish.mutate()
+                void events.enqueue({ type: 'MatchFinished' })
               },
             },
           ],
@@ -321,7 +338,7 @@ export default function MatchScreen() {
               label: 'Продолжить',
               onPress: () => {
                 setSheet(null)
-                actions.nextPeriod.mutate()
+                void events.enqueue({ type: 'PeriodStarted' })
               },
             },
           ],
@@ -332,8 +349,10 @@ export default function MatchScreen() {
     }
   })()
 
-  const syncStatus = events.lastError
-    ? `Нет связи: ${events.lastError} В очереди: ${events.pending.length}.`
+  const syncProblem = events.storageError ?? events.problem?.message ?? null
+
+  const syncStatus = syncProblem
+    ? `${syncProblem} В очереди: ${events.pending.length}.`
     : events.pending.length > 0
       ? events.isSending
         ? 'Отправляем события на сервер…'
@@ -354,13 +373,28 @@ export default function MatchScreen() {
           </Card>
         ) : null}
 
-        {actionError ? (
+        {authStatus === 'anonymous' || events.problem?.kind === 'session' ? (
           <Card style={styles.warningCard}>
-            <Text style={styles.warningTitle}>Действие не выполнено</Text>
-            <MutedText>{actionError}</MutedText>
-            <Button title="Скрыть" variant="secondary" onPress={() => setActionError(null)} />
+            <Text style={styles.warningTitle}>Нужно войти заново</Text>
+            <MutedText>
+              Сессия истекла. Вести матч можно и дальше: все события сохраняются на устройстве
+              и уйдут на сервер после входа.
+            </MutedText>
+            <Button title="Войти" variant="secondary" onPress={() => router.push('/login')} />
           </Card>
         ) : null}
+
+        {events.rejected.map(({ event, reason }) => (
+          <Card key={event.id} style={styles.warningCard}>
+            <Text style={styles.warningTitle}>Сервер не принял: {eventTypeLabels[event.type]}</Text>
+            <MutedText>{reason}</MutedText>
+            <Button
+              title="Понятно"
+              variant="secondary"
+              onPress={() => void events.dismissRejected(event.id)}
+            />
+          </Card>
+        ))}
 
         <Card>
           <View style={styles.rowBetween}>
@@ -396,9 +430,7 @@ export default function MatchScreen() {
                 title="Начать матч"
                 compact
                 style={styles.controlButton}
-                loading={actions.start.isPending}
-                disabled={busy}
-                onPress={() => actions.start.mutate()}
+                onPress={() => void events.enqueue({ type: 'MatchStarted' })}
               />
             ) : null}
 
@@ -409,9 +441,7 @@ export default function MatchScreen() {
                   variant="secondary"
                   compact
                   style={styles.controlButton}
-                  loading={actions.stop.isPending}
-                  disabled={busy}
-                  onPress={() => actions.stop.mutate()}
+                  onPress={() => void events.enqueue({ type: 'MatchPaused' })}
                 />
                 {canStartNextPeriod(match) ? (
                   <Button
@@ -419,8 +449,6 @@ export default function MatchScreen() {
                     variant="secondary"
                     compact
                     style={styles.controlButton}
-                    loading={actions.nextPeriod.isPending}
-                    disabled={busy}
                     onPress={() => setSheet({ kind: 'next-period' })}
                   />
                 ) : null}
@@ -429,8 +457,6 @@ export default function MatchScreen() {
                   variant="danger"
                   compact
                   style={styles.controlButton}
-                  loading={actions.finish.isPending}
-                  disabled={busy}
                   onPress={() => setSheet({ kind: 'finish' })}
                 />
               </>
@@ -442,9 +468,7 @@ export default function MatchScreen() {
                   title="Продолжить"
                   compact
                   style={styles.controlButton}
-                  loading={actions.resume.isPending}
-                  disabled={busy}
-                  onPress={() => actions.resume.mutate()}
+                  onPress={() => void events.enqueue({ type: 'MatchResumed' })}
                 />
                 {canStartNextPeriod(match) ? (
                   <Button
@@ -452,8 +476,6 @@ export default function MatchScreen() {
                     variant="secondary"
                     compact
                     style={styles.controlButton}
-                    loading={actions.nextPeriod.isPending}
-                    disabled={busy}
                     onPress={() => setSheet({ kind: 'next-period' })}
                   />
                 ) : null}
@@ -491,17 +513,9 @@ export default function MatchScreen() {
               disabled={eventsLocked}
               onPress={() => setSheet({ kind: 'card-team' })}
             />
-            <Button
-              title="Обновить"
-              variant="secondary"
-              compact
-              style={styles.actionButton}
-              loading={stateQuery.isRefetching}
-              onPress={() => void stateQuery.refetch()}
-            />
           </View>
 
-          <Text style={[styles.syncStatus, events.lastError ? styles.syncError : null]}>
+          <Text style={[styles.syncStatus, syncProblem ? styles.syncError : null]}>
             {syncStatus}
           </Text>
         </Card>
@@ -518,10 +532,11 @@ export default function MatchScreen() {
                     {describe(event)}
                     {pendingIds.has(event.id) ? ' · в очереди' : ''}
                   </Text>
-                  <Text style={styles.eventMeta}>{formatEventTime(event.clientTimestampUtc)}</Text>
+                  <Text style={styles.eventMeta}>{formatEventTime(event.occurredAtUtc)}</Text>
+                  {event.reviewNote ? <Text style={styles.syncError}>{event.reviewNote}</Text> : null}
                 </View>
 
-                {!event.isVoided && event.type !== 'EventVoided' && !eventsLocked ? (
+                {!event.isVoided && event.type !== 'EventVoided' && !isLifecycleEvent(event.type) && !eventsLocked ? (
                   <Pressable
                     accessibilityRole="button"
                     onPress={() => setSheet({ kind: 'void', event })}

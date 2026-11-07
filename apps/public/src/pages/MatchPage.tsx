@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
+import { Skeleton } from '@/components/Skeleton'
 import { publicKeys, useMatch } from '@/hooks'
 import {
   eventTypeLabels,
@@ -10,6 +11,13 @@ import {
   matchStatusLabels,
 } from '@/labels'
 import { useRealtime } from '@/realtime'
+
+const eventMarkerClass: Record<string, string> = {
+  Goal: 'event-marker event-marker--goal',
+  OwnGoal: 'event-marker event-marker--goal',
+  YellowCard: 'event-marker event-marker--yellow',
+  RedCard: 'event-marker event-marker--red',
+}
 
 export default function MatchPage() {
   const { matchId = '' } = useParams()
@@ -37,9 +45,17 @@ export default function MatchPage() {
     return <p className="notice">Не удалось загрузить матч: {matchQuery.error.message}</p>
   }
 
-  if (!matchQuery.data) return <p className="muted">Загрузка…</p>
+  if (!matchQuery.data) return <Skeleton rows={5} />
 
   const { match, events } = matchQuery.data
+
+  // Первый период начинается с началом матча, поэтому строки «Начало периода» нумеруются со второго.
+  let period = 1
+  const eventTitle = (type: string) => {
+    if (type !== 'PeriodStarted') return eventTypeLabels[type] ?? type
+    period += 1
+    return `${eventTypeLabels[type]} ${period}`
+  }
 
   return (
     <>
@@ -62,12 +78,14 @@ export default function MatchPage() {
           <div className="matchboard-score">
             {match.homeScore} : {match.awayScore}
           </div>
-          <div className={live ? 'matchboard-status live' : 'matchboard-status'}>
+          <div className={match.status === 'InProgress' ? 'matchboard-status live' : 'matchboard-status'}>
             {matchStatusLabels[match.status] ?? match.status}
-            {live && match.periodStartedAtUtc
-              ? ` · ${match.currentPeriod}-й период · ${formatElapsed(match.periodStartedAtUtc, now)}`
-              : ''}
           </div>
+          {live && match.periodStartedAtUtc && (
+            <div className="matchboard-clock">
+              {match.currentPeriod}-й период · {formatElapsed(match, now)}
+            </div>
+          )}
         </div>
 
         <div className="matchboard-team matchboard-team--away">
@@ -80,7 +98,7 @@ export default function MatchPage() {
         </div>
       </div>
 
-      <p className="muted">
+      <p className="match-meta">
         {match.tournamentName} · {formatTime(match.scheduledTimeUtc)} · {match.stageName}
       </p>
 
@@ -93,23 +111,32 @@ export default function MatchPage() {
       ) : (
         <div className="competition competition--plain">
           <div className="events">
-            {events.map((event) => (
-              <div key={event.id} className={event.isVoided ? 'event voided' : 'event'}>
-                <span className="event-title">
-                  <strong>{eventTypeLabels[event.type] ?? event.type}</strong>
-                  {event.teamName ? ` · ${event.teamName}` : ''}
-                  {event.playerName ? ` · ${event.playerName}` : ''}
-                  {event.isVoided ? ' · отменено' : ''}
-                  {event.type === 'EventVoided' && event.reason ? ` — ${event.reason}` : ''}
-                </span>
-                <span className="event-time">{formatTime(event.clientTimestampUtc)}</span>
-              </div>
-            ))}
+            {events.map((event) => {
+              const detail = [
+                event.teamName,
+                event.playerName,
+                event.isVoided ? 'отменено' : '',
+                event.type === 'EventVoided' ? event.reason : '',
+              ]
+                .filter(Boolean)
+                .join(' · ')
+
+              return (
+                <div key={event.id} className={event.isVoided ? 'event voided' : 'event'}>
+                  <span className="event-time">{formatTime(event.occurredAtUtc)}</span>
+                  <span className={eventMarkerClass[event.type] ?? 'event-marker'} aria-hidden="true" />
+                  <span className="event-body">
+                    <span className="event-title">{eventTitle(event.type)}</span>
+                    {detail && <span className="event-detail">{detail}</span>}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
 
-      <p className="muted" style={{ marginTop: 16 }}>
+      <p className="footnote">
         Счёт обновляется автоматически. Если обновление задерживается, обновите страницу —
         данные придут из REST-состояния матча.
       </p>

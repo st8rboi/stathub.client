@@ -22,14 +22,14 @@ function parseSquadNumber(value: FormDataEntryValue | null): number | null {
 }
 
 /**
- * Состав команды в турнире: заявка игрока, отзаявка и трансфер.
+ * Состав команды на этапе: заявка игрока, отзаявка и трансфер.
  * История заявок не скрывается — закрытые строки остаются с датой и статусом.
  */
 export default function TournamentTeamPage() {
-  const { leagueId = '', tournamentId = '', tournamentTeamId = '' } = useParams()
+  const { leagueId = '', tournamentId = '', stageId = '', tournamentTeamId = '' } = useParams()
 
-  const details = useTournamentTeam(tournamentId, tournamentTeamId)
-  const tournamentTeams = useTournamentTeams(tournamentId)
+  const details = useTournamentTeam(stageId, tournamentTeamId)
+  const tournamentTeams = useTournamentTeams(stageId)
   const allTeams = useTeams()
 
   const [playerQuery, setPlayerQuery] = useState('')
@@ -41,12 +41,12 @@ export default function TournamentTeamPage() {
   const playerIds = [...new Set(registrations.map((registration) => registration.playerId))]
   const playersByIds = usePlayersByIds(playerIds)
 
-  const register = useRegisterPlayer(tournamentId, tournamentTeamId)
-  const release = useReleasePlayer(tournamentId, tournamentTeamId)
-  const withdraw = useWithdrawTournamentTeam(tournamentId, tournamentTeamId)
+  const register = useRegisterPlayer(stageId, tournamentTeamId)
+  const release = useReleasePlayer(stageId, tournamentTeamId)
+  const withdraw = useWithdrawTournamentTeam(stageId, tournamentTeamId)
 
   const teamId = details.data?.teamId ?? ''
-  const transfer = useTransferPlayer(tournamentId, teamId)
+  const transfer = useTransferPlayer(stageId, teamId)
 
   const teamName = (id: string) =>
     allTeams.data?.find((team) => team.id === id)?.name ?? id.slice(0, 8)
@@ -102,7 +102,9 @@ export default function TournamentTeamPage() {
   return (
     <>
       <p>
-        <Link to={`/leagues/${leagueId}/tournaments/${tournamentId}`}>← К турниру</Link>
+        <Link to={`/leagues/${leagueId}/tournaments/${tournamentId}/stages/${stageId}`}>
+          ← К этапу
+        </Link>
       </p>
       <h1>{teamName(data.teamId)}</h1>
 

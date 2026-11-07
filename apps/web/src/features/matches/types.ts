@@ -10,6 +10,8 @@ export interface Match {
   status: MatchStatus
   homeScore: number
   awayScore: number
+  /** Сколько событий принято с пометкой и ждут разбора организатором. */
+  eventsForReview: number
 }
 
 export interface CreateMatchBody {

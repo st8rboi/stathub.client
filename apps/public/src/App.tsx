@@ -6,15 +6,25 @@ import MatchPage from '@/pages/MatchPage'
 import StagePage from '@/pages/StagePage'
 import StatisticsPage from '@/pages/StatisticsPage'
 
+const svgProps = {
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  'aria-hidden': true,
+} as const
+
 export default function App() {
   return (
     <>
       <header className="topbar">
         <Link to="/" className="brand">
           <span className="brand-mark" aria-hidden="true">
-            ⚡
+            ⚽
           </span>
-          STATHUB
+          Статхаб
         </Link>
 
         <nav className="topnav">
@@ -46,6 +56,29 @@ export default function App() {
           />
         </Routes>
       </main>
+
+      <nav className="tabbar" aria-label="Основная навигация">
+        <NavLink to="/" end>
+          <svg {...svgProps}>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+          Матчи
+        </NavLink>
+        <NavLink to="/leagues">
+          <svg {...svgProps}>
+            <path d="M8 4h8v6a4 4 0 0 1-8 0V4Z" />
+            <path d="M8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 14v4M8 20h8" />
+          </svg>
+          Лиги
+        </NavLink>
+        <NavLink to="/statistics">
+          <svg {...svgProps}>
+            <path d="M5 20v-7M12 20V5M19 20v-11" />
+          </svg>
+          Статистика
+        </NavLink>
+      </nav>
     </>
   )
 }

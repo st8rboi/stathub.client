@@ -14,19 +14,19 @@ export default defineConfig({
     proxy: {
       // REST витрины — /public/*, отдаём на бэкенд без CORS.
       '/api': {
-        target: 'http://localhost:5248',
+        target: 'http://banzai.h1n.ru:5000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
       // SignalR-хаб живёт на /hubs/matches (ws: true обязателен для WebSocket).
       '/hubs': {
-        target: 'http://localhost:5248',
+        target: 'http://banzai.h1n.ru:5000',
         changeOrigin: true,
         ws: true,
       },
       // Логотипы команд и лиг — статика бэкенда.
       '/uploads': {
-        target: 'http://localhost:5248',
+        target: 'http://banzai.h1n.ru:5000',
         changeOrigin: true,
       },
     },

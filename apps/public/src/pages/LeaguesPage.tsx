@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { Skeleton } from '@/components/Skeleton'
 import { useLeagues } from '@/hooks'
 
 /** Каталог опубликованных лиг с фильтрами «по названию» и «в моём городе» (doc §2.1). */
@@ -33,6 +34,7 @@ export default function LeaguesPage() {
         </label>
       </div>
 
+      {leagues.isPending && <Skeleton />}
       {leagues.error && <p className="notice">Не удалось загрузить лиги: {leagues.error.message}</p>}
       {leagues.data?.length === 0 && (
         <p className="notice">Лиг не найдено — попробуйте другой город или название.</p>

@@ -1,22 +1,43 @@
 :root {
   color-scheme: light;
   --bg: #ffffff;
-  --bg-soft: #f6f7f8;
-  --border: #e5e7eb;
+  --bg-soft: #f3f5f7;
+  --bg-hover: #f7f8fa;
+  --border: #e8ebef;
+  --border-soft: #f0f2f5;
   --border-strong: #d7dbe0;
-  --text: #0a0d12;
-  --muted: #6b7280;
+  --text: #0e1319;
+  --text-soft: #414b57;
+  --muted: #68727f;
   --green: #17b34b;
-  --green-dark: #0f7a37;
-  --green-soft: #e9f8ee;
+  --green-dark: #0c7334;
+  --green-soft: #e7f7ec;
   --red: #d92d20;
   --red-soft: #fdecec;
-  --amber: #b25e02;
+  --amber: #a85802;
   --amber-soft: #fdf3e3;
+  --yellow-card: #f4c20d;
 
-  font: 15px/1.45 system-ui, 'Segoe UI', Roboto, sans-serif;
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 20px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 2px 8px rgba(16, 24, 40, 0.04);
+  --shadow-raised: 0 2px 4px rgba(16, 24, 40, 0.06), 0 10px 24px rgba(16, 24, 40, 0.08);
+
+  --topbar-height: 60px;
+  --tabbar-height: 58px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --gutter: 24px;
+
+  font: 15px/1.45 Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
-  background: var(--bg);
+  background: var(--bg-soft);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 * {
@@ -26,11 +47,17 @@
 body {
   margin: 0;
   background: var(--bg-soft);
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
 }
 
 /* ---------- Шапка ---------- */
@@ -42,8 +69,11 @@ a {
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 12px 24px;
-  background: #fff;
+  min-height: calc(var(--topbar-height) + var(--safe-top));
+  padding: var(--safe-top) calc(var(--gutter) + var(--safe-right)) 0 calc(var(--gutter) + var(--safe-left));
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  backdrop-filter: saturate(180%) blur(14px);
   border-bottom: 1px solid var(--border);
 }
 
@@ -51,8 +81,8 @@ a {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 900;
-  font-size: 20px;
+  font-weight: 800;
+  font-size: 19px;
   letter-spacing: -0.02em;
 }
 
@@ -60,33 +90,30 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
   background: var(--green-soft);
   color: var(--green-dark);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .topnav {
   display: flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 .topnav a {
   padding: 8px 14px;
   border-radius: 999px;
   font-weight: 600;
-  color: #374151;
-}
-
-.topnav a:hover {
-  background: var(--bg-soft);
+  color: var(--text-soft);
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .topnav a.active {
-  background: var(--bg-soft);
-  color: var(--text);
+  background: var(--green-soft);
+  color: var(--green-dark);
 }
 
 .topbar-note {
@@ -95,12 +122,18 @@ a {
   color: var(--muted);
 }
 
+/* ---------- Нижняя навигация (только телефон) ---------- */
+
+.tabbar {
+  display: none;
+}
+
 /* ---------- Каркас ---------- */
 
 .page {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 24px calc(var(--gutter) + var(--safe-right)) 40px calc(var(--gutter) + var(--safe-left));
 }
 
 .columns {
@@ -110,26 +143,28 @@ a {
   align-items: start;
 }
 
-@media (max-width: 980px) {
-  .columns {
-    grid-template-columns: 1fr;
-  }
+/* Этап: матчи и полная таблица рядом. Таблица шире, потому что в ней 9 колонок. */
+.stage-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 24px;
+  align-items: start;
 }
 
 h1 {
   margin: 0 0 8px;
-  font-size: clamp(26px, 3vw, 38px);
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  line-height: 1.05;
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
 }
 
 h2 {
   margin: 0;
   font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 .muted {
@@ -137,28 +172,79 @@ h2 {
 }
 
 .notice {
+  margin: 0 0 12px;
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   background: var(--amber-soft);
-  border: 1px solid #f1dfb6;
   color: #6b5316;
   font-size: 14px;
 }
 
-/* ---------- Hero ---------- */
+.notice a {
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.footnote {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* ---------- Скелетоны ---------- */
+
+.skeleton {
+  padding: 4px 16px;
+  margin-bottom: 12px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.skeleton-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.skeleton-row:last-child {
+  border-bottom: none;
+}
+
+.skeleton-line {
+  height: 12px;
+  width: 62%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eceff2 25%, #f6f7f9 50%, #eceff2 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-line:last-child {
+  width: 44%;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ---------- Главная и hero ---------- */
 
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
   gap: 24px;
-  padding: 8px 0 20px;
+  padding: 8px 0 24px;
   align-items: start;
-}
-
-@media (max-width: 980px) {
-  .hero {
-    grid-template-columns: 1fr;
-  }
 }
 
 .hero-date {
@@ -167,57 +253,64 @@ h2 {
   color: var(--muted);
 }
 
+.hero-date::first-letter {
+  text-transform: uppercase;
+}
+
 .hero-text {
   margin: 0;
   max-width: 620px;
-  color: #4b5563;
+  color: var(--text-soft);
 }
 
 .hero-card {
   padding: 18px 20px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #0f7a37 0%, #17b34b 100%);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #0a6a2e 0%, #15a545 100%);
   color: #fff;
+  box-shadow: var(--shadow-raised);
 }
 
 .hero-card-label {
   display: inline-block;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   padding: 3px 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.18);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .hero-card h2 {
   margin: 0 0 8px;
-  font-size: 20px;
-  line-height: 1.15;
+  font-size: 19px;
+  line-height: 1.2;
 }
 
 .hero-card p {
-  margin: 0 0 10px;
+  margin: 0 0 6px;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.92);
 }
 
-.hero-card-live {
+.hero-card .hero-card-handle {
   margin: 0;
   font-weight: 700;
+  color: #fff;
 }
 
-/* ---------- Полоса дат ---------- */
+/* ---------- Полоса дат и вкладки ---------- */
 
 .date-strip {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   margin-bottom: 20px;
+  padding: 2px;
   overflow-x: auto;
-  border-bottom: 1px solid var(--border);
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-inline: 16px;
 }
 
 .date-strip::-webkit-scrollbar {
@@ -226,40 +319,45 @@ h2 {
 
 .date-tab {
   display: flex;
+  flex: none;
   align-items: center;
-  gap: 6px;
-  padding: 10px 14px 12px;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 14px;
   border: none;
-  border-bottom: 3px solid transparent;
-  background: none;
+  border-radius: 999px;
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--border);
   font: inherit;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--text-soft);
   white-space: nowrap;
   cursor: pointer;
-}
-
-.date-tab:hover {
-  color: var(--text);
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .date-tab.active {
-  color: var(--text);
-  border-bottom-color: var(--green);
+  background: var(--green-dark);
+  box-shadow: none;
+  color: #fff;
 }
 
 .date-count {
-  padding: 1px 7px;
+  min-width: 20px;
+  padding: 1px 6px;
   border-radius: 999px;
   background: var(--bg-soft);
   font-size: 11px;
   font-weight: 700;
+  text-align: center;
   color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .date-tab.active .date-count {
-  background: var(--green-soft);
-  color: var(--green-dark);
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 /* ---------- Соревнования ---------- */
@@ -276,13 +374,14 @@ h2 {
   font-size: 13px;
   font-weight: 600;
   color: var(--green-dark);
+  white-space: nowrap;
 }
 
 .competition {
   margin-bottom: 12px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   overflow: hidden;
 }
 
@@ -291,16 +390,14 @@ h2 {
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 12px 16px;
+  min-height: 58px;
+  padding: 10px 16px;
   border: none;
   background: none;
+  color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
-}
-
-.competition-head:hover {
-  background: var(--bg-soft);
 }
 
 .competition-head--static {
@@ -308,8 +405,8 @@ h2 {
 }
 
 .competition-logo {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
   flex: none;
 }
@@ -320,7 +417,7 @@ h2 {
   display: inline-block;
   border-radius: 50%;
   background: var(--bg-soft);
-  border: 1px solid var(--border);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 .competition-title {
@@ -345,18 +442,22 @@ h2 {
 }
 
 .competition-chevron {
-  color: var(--muted);
-  font-size: 16px;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
   transition: transform 0.15s ease;
-  transform: rotate(-90deg);
+  transform: rotate(-45deg);
 }
 
 .competition-chevron.open {
-  transform: rotate(0deg);
+  transform: rotate(45deg) translate(-2px, -2px);
 }
 
 .competition-body {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-soft);
 }
 
 /* ---------- Строка матча ---------- */
@@ -365,8 +466,8 @@ h2 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 84px;
   gap: 12px;
-  padding: 10px 16px;
-  border-bottom: 1px solid #f1f2f4;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-soft);
   transition: background 0.12s ease;
 }
 
@@ -374,24 +475,28 @@ h2 {
   border-bottom: none;
 }
 
-.fixture:hover {
+.fixture:active {
   background: var(--bg-soft);
 }
 
 .fixture--live {
-  box-shadow: inset 3px 0 0 var(--green);
+  box-shadow: inset 3px 0 0 var(--red);
+}
+
+.fixture--live .fixture-score {
+  color: var(--red);
 }
 
 .fixture-lines {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
 }
 
 .fixture-line {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) 22px;
+  grid-template-columns: 20px minmax(0, 1fr) 22px;
   align-items: center;
   gap: 8px;
 }
@@ -424,16 +529,20 @@ h2 {
   text-align: right;
 }
 
+.fixture-hint:empty {
+  display: none;
+}
+
 .team-logo {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   object-fit: contain;
   flex: none;
 }
 
 .team-logo--sm {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 .team-logo--lg {
@@ -442,44 +551,55 @@ h2 {
 }
 
 .badge {
-  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: var(--bg-soft);
-  border: 1px solid var(--border);
   font-size: 11px;
   font-weight: 700;
-  color: #4b5563;
+  color: var(--text-soft);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
 .badge.live {
   background: var(--red-soft);
-  border-color: #f7c6c2;
   color: var(--red);
+}
+
+.badge.live::before,
+.matchboard-status.live::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: live-pulse 1.4s ease-in-out infinite;
 }
 
 .badge.pause {
   background: var(--amber-soft);
-  border-color: #f1dfb6;
   color: var(--amber);
+}
+
+@keyframes live-pulse {
+  50% {
+    opacity: 0.3;
+  }
 }
 
 /* ---------- Сайдбар с таблицей ---------- */
 
 .side-panel {
   position: sticky;
-  top: 76px;
+  top: calc(var(--topbar-height) + var(--safe-top) + 16px);
   padding: 14px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-}
-
-@media (max-width: 980px) {
-  .side-panel {
-    position: static;
-  }
+  background: var(--bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 .side-panel-head {
@@ -491,11 +611,6 @@ h2 {
 .side-panel-head select {
   flex: 1;
   min-width: 0;
-  padding: 8px 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  background: #fff;
-  font: inherit;
   font-weight: 600;
 }
 
@@ -526,18 +641,21 @@ table {
 
 th,
 td {
-  padding: 8px 10px;
+  padding: 10px;
   text-align: left;
-  border-bottom: 1px solid #f1f2f4;
+  border-bottom: 1px solid var(--border-soft);
   font-variant-numeric: tabular-nums;
   font-size: 14px;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
 }
 
 th {
   font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   color: var(--muted);
   border-bottom: 1px solid var(--border);
 }
@@ -572,12 +690,19 @@ th {
   white-space: nowrap;
 }
 
+/* max-width: 0 не даёт длинному названию распирать таблицу: оно обрезается многоточием. */
+.standings-table .col-team {
+  width: 100%;
+  max-width: 0;
+}
+
 /* ---------- Каталог лиг ---------- */
 
 .filters {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 12px;
-  flex-wrap: wrap;
+  max-width: 560px;
   margin-bottom: 16px;
 }
 
@@ -585,6 +710,7 @@ label {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
   font-size: 12px;
   font-weight: 600;
   color: var(--muted);
@@ -592,24 +718,43 @@ label {
 
 input,
 select {
-  font: inherit;
+  width: 100%;
+  min-height: 42px;
   padding: 9px 12px;
   border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  background: #fff;
-  min-width: 220px;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg);
   color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+select {
+  padding-right: 32px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%2368727f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+select:disabled {
+  color: var(--muted);
+  background-color: var(--bg-soft);
 }
 
 input:focus,
 select:focus {
-  outline: 2px solid var(--green-soft);
+  outline: 3px solid var(--green-soft);
   border-color: var(--green);
 }
 
 .league-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: 12px;
 }
 
@@ -618,15 +763,14 @@ select:focus {
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  transition: border-color 0.12s ease, transform 0.12s ease;
+  background: var(--bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
-.league-card:hover {
-  border-color: var(--green);
-  transform: translateY(-1px);
+.league-card:active {
+  transform: scale(0.99);
 }
 
 .league-card-logo {
@@ -646,6 +790,7 @@ select:focus {
 
 .league-card-name {
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .league-card-meta {
@@ -677,6 +822,10 @@ select:focus {
   margin-bottom: 18px;
 }
 
+.league-header > div {
+  min-width: 0;
+}
+
 .league-hero-logo {
   width: 72px;
   height: 72px;
@@ -697,8 +846,9 @@ select:focus {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f1f2f4;
+  min-height: 48px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-soft);
   font-weight: 600;
 }
 
@@ -706,55 +856,100 @@ select:focus {
   border-bottom: none;
 }
 
-.stage-row:hover {
+.stage-row:active {
   background: var(--bg-soft);
 }
 
 .competition--plain {
-  background: #fff;
+  background: var(--bg);
 }
 
+/* Контейнер: колонки таблицы скрываются по ширине карточки, а не экрана,
+   поэтому таблица ведёт себя одинаково на телефоне и в колонке на планшете. */
 .table-scroll {
+  container-type: inline-size;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@container (max-width: 480px) {
+  .col-extra {
+    display: none;
+  }
 }
 
 /* Имя в таблице статистики — одной строкой: фамилия и имя, без отчества. */
 .stats-name {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  max-width: 48vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  background: var(--bg);
+  box-shadow: 1px 0 0 var(--border-soft);
+}
+
+td.stats-name {
   font-weight: 600;
+}
+
+.stats-team-inline {
+  display: none;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* В узкой карточке команда уходит под имя игрока: все метрики видны без прокрутки вбок. */
+@container (max-width: 480px) {
+  .stats-name {
+    position: static;
+    width: 100%;
+    max-width: 0;
+    box-shadow: none;
+  }
+
+  .stats-player,
+  .stats-team-inline {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 /* ---------- Матч ---------- */
 
 .matchboard {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 16px;
   padding: 24px;
   margin-bottom: 12px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 16px;
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
 }
 
 .matchboard-team {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   min-width: 0;
 }
 
 .matchboard-team--away {
-  justify-content: flex-end;
+  flex-direction: row-reverse;
   text-align: right;
 }
 
 .matchboard-name {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .matchboard-center {
@@ -765,21 +960,40 @@ select:focus {
 }
 
 .matchboard-score {
-  font-size: 40px;
-  font-weight: 900;
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .matchboard-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--muted);
   text-align: center;
 }
 
 .matchboard-status.live {
-  color: var(--green-dark);
+  color: var(--red);
+}
+
+.matchboard-clock {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-soft);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.match-meta {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--muted);
 }
 
 .events {
@@ -788,16 +1002,55 @@ select:focus {
 }
 
 .event {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 16px;
-  border-bottom: 1px solid #f1f2f4;
+  display: grid;
+  grid-template-columns: 44px 12px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .event:last-child {
   border-bottom: none;
+}
+
+.event-marker {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.event-marker--goal {
+  background: var(--green);
+}
+
+.event-marker--yellow {
+  border-radius: 2px;
+  background: var(--yellow-card);
+}
+
+.event-marker--red {
+  border-radius: 2px;
+  background: var(--red);
+}
+
+.event-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.event-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.event-detail {
+  font-size: 13px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
 }
 
 .event.voided .event-title {
@@ -805,8 +1058,8 @@ select:focus {
   color: var(--muted);
 }
 
-.event-title {
-  font-size: 14px;
+.event.voided .event-marker {
+  background: var(--border-strong);
 }
 
 .event-time {
@@ -815,31 +1068,301 @@ select:focus {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Hover — только там, где есть мышь: на тачскрине он залипает после касания ---------- */
+
+@media (hover: hover) {
+  .topnav a:hover {
+    background: var(--bg-soft);
+  }
+
+  .topnav a.active:hover {
+    background: var(--green-soft);
+  }
+
+  .date-tab:hover {
+    color: var(--text);
+    box-shadow: inset 0 0 0 1px var(--border-strong);
+  }
+
+  .date-tab.active:hover {
+    color: #fff;
+    box-shadow: none;
+  }
+
+  .competition-head:not(.competition-head--static):hover,
+  .fixture:hover,
+  .stage-row:hover {
+    background: var(--bg-hover);
+  }
+
+  .league-card:hover {
+    box-shadow: var(--shadow-raised);
+    transform: translateY(-1px);
+  }
+
+  .section-link:hover,
+  .side-panel-link:hover,
+  .crumb a:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ---------- Планшет ---------- */
+
+@media (max-width: 980px) {
+  .columns,
+  .stage-columns,
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .side-panel {
+    position: static;
+  }
+
+  .hero {
+    gap: 16px;
+  }
+}
+
+/* ---------- Телефон ---------- */
+
 @media (max-width: 640px) {
-  .page {
-    padding: 16px;
+  :root {
+    --topbar-height: 52px;
+    --gutter: 16px;
   }
 
-  .topbar {
-    padding: 10px 16px;
-    gap: 12px;
-  }
-
+  .topnav,
   .topbar-note {
     display: none;
   }
 
-  .fixture {
-    grid-template-columns: minmax(0, 1fr) 64px;
+  .topbar .brand {
+    font-size: 18px;
   }
 
+  .tabbar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
+    background: rgba(255, 255, 255, 0.92);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    backdrop-filter: saturate(180%) blur(14px);
+    border-top: 1px solid var(--border);
+  }
+
+  .tabbar a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    height: var(--tabbar-height);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .tabbar a.active {
+    color: var(--green-dark);
+  }
+
+  .tabbar svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .page {
+    padding-top: 16px;
+    padding-bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 24px);
+  }
+
+  /* Шрифт полей от 16px: иначе iOS приближает страницу при фокусе. */
+  input,
+  select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  /* Сначала матчи: заголовок компактный, а промокарточка уходит в конец страницы. */
+  .home {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero {
+    display: contents;
+  }
+
+  .hero-main {
+    order: 1;
+    margin-bottom: 14px;
+  }
+
+  .date-strip {
+    order: 2;
+  }
+
+  .home .columns {
+    order: 3;
+  }
+
+  .hero-card {
+    order: 4;
+    margin-top: 16px;
+  }
+
+  h1 {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+
+  .hero-main h1 {
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  .hero-text {
+    display: none;
+  }
+
+  .hero-date {
+    margin: 0;
+    font-size: 13px;
+  }
+
+  /* Вкладки прокручиваются от края до края экрана, а не внутри отступов страницы. */
+  .date-strip {
+    margin-inline: calc(-1 * (var(--gutter) + var(--safe-left))) calc(-1 * (var(--gutter) + var(--safe-right)));
+    margin-bottom: 16px;
+    padding-inline: calc(var(--gutter) + var(--safe-left)) calc(var(--gutter) + var(--safe-right));
+  }
+
+  .date-tab {
+    min-height: 44px;
+  }
+
+  .section-link,
+  .side-panel-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-block: -12px;
+  }
+
+  .crumb {
+    line-height: 2;
+  }
+
+  .fixture {
+    grid-template-columns: minmax(0, 1fr) 72px;
+    gap: 10px;
+  }
+
+  .league-header {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .league-hero-logo {
+    width: 52px;
+    height: 52px;
+  }
+
+  .filters {
+    max-width: none;
+    margin-top: 12px;
+  }
+
+  /* Табло остаётся на экране, пока читают протокол, поэтому оно компактное. */
   .matchboard {
-    grid-template-columns: 1fr;
-    text-align: center;
+    position: sticky;
+    top: calc(var(--topbar-height) + var(--safe-top));
+    z-index: 10;
+    align-items: start;
+    gap: 8px;
+    padding: 12px;
+    box-shadow: var(--shadow-raised);
   }
 
   .matchboard-team,
   .matchboard-team--away {
-    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+  }
+
+  .matchboard-name {
+    display: -webkit-box;
+    overflow: hidden;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    font-size: 13px;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .team-logo--lg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .matchboard-center {
+    gap: 2px;
+    min-width: 92px;
+  }
+
+  .matchboard-score {
+    font-size: 32px;
+  }
+
+  .matchboard-status,
+  .matchboard-clock {
+    font-size: 11px;
+  }
+
+  .match-meta {
+    margin-bottom: 16px;
+  }
+
+  th,
+  td {
+    padding: 10px 8px;
+  }
+
+  th:first-child,
+  td:first-child {
+    padding-left: 14px;
+  }
+
+  th:last-child,
+  td:last-child {
+    padding-right: 14px;
+  }
+
+  .side-panel th:first-child,
+  .side-panel td:first-child {
+    padding-left: 0;
+  }
+
+  .side-panel th:last-child,
+  .side-panel td:last-child {
+    padding-right: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }
