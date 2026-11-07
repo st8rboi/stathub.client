@@ -660,9 +660,9 @@ h2 {
 /* ---------- Строка матча ---------- */
 
 .fixture {
-  display: grid;
-  grid-template-columns: 62px minmax(0, 1fr);
+  display: flex;
   align-items: center;
+  gap: 16px;
   min-height: 54px;
   padding: 8px 16px;
   border-bottom: 1px solid var(--border-soft);
@@ -677,19 +677,24 @@ h2 {
   background: var(--bg-soft);
 }
 
+/* Время начала / «Отменён» — справа, на месте счёта. */
 .fixture-status {
-  font-size: 12px;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.fixture-status.live {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+/* Минута идущего матча — между командами и счётом. */
+.fixture-minute {
+  flex-shrink: 0;
+  font-size: 13px;
   font-weight: 700;
   color: var(--red);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .fixture--live .fixture-score {
@@ -697,6 +702,7 @@ h2 {
 }
 
 .fixture-lines {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -705,9 +711,25 @@ h2 {
 
 .fixture-line {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) 24px;
+  grid-template-columns: 18px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
+  min-height: 20px;
+}
+
+/* Столбец счёта: строки той же высоты и с тем же зазором, что и строки команд. */
+.fixture-scores {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 20px;
+}
+
+.fixture-scores .fixture-score {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   min-height: 20px;
 }
 
@@ -726,11 +748,6 @@ h2 {
 
 .fixture-line--win .fixture-name {
   font-weight: 700;
-}
-
-.fixture-line--lose .fixture-name,
-.fixture-line--lose .fixture-score {
-  color: var(--muted);
 }
 
 .team-logo {
@@ -1574,7 +1591,6 @@ td.stats-name {
   }
 
   .fixture {
-    grid-template-columns: 56px minmax(0, 1fr);
     min-height: 56px;
   }
 
