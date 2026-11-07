@@ -83,6 +83,8 @@ export type PublicMatch = {
   periodStartedAtUtc: string | null
   pausedAtUtc: string | null
   periodPausedMilliseconds: number
+  /** Длительность периода по регламенту; нужна, чтобы считать минуту как на флешскоре (2-й тайм с 46'). */
+  periodDurationMinutes?: number
 }
 
 export type PublicEvent = {
@@ -93,6 +95,15 @@ export type PublicEvent = {
   occurredAtUtc: string
   isVoided: boolean
   reason: string | null
+  // Поля ниже сервер может ещё не отдавать — клиент работает и без них.
+  teamId?: string | null
+  /** Ассистент гола или выходящий на замену. */
+  relatedPlayerName?: string | null
+  /** Для EventVoided — какое событие отменено. */
+  targetEventId?: string | null
+  /** Период и игровые секунды от его начала без учёта пауз. */
+  period?: number | null
+  elapsedSeconds?: number | null
 }
 
 export type PublicMatchPage = {

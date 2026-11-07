@@ -52,18 +52,40 @@ export function formatDateTime(iso: string): string {
   })
 }
 
-/** Секундомер периода: паузы не считаются игровым временем, на паузе часы стоят. */
-export function formatElapsed(
-  match: Pick<PublicMatch, 'periodStartedAtUtc' | 'pausedAtUtc' | 'periodPausedMilliseconds'>,
-  nowMs = Date.now(),
-): string {
-  if (!match.periodStartedAtUtc) return '—'
+type PeriodClock = Pick<PublicMatch, 'periodStartedAtUtc' | 'pausedAtUtc' | 'periodPausedMilliseconds'>
+
+/** Игровые секунды текущего периода: паузы не считаются, на паузе часы стоят. */
+export function periodElapsedSeconds(match: PeriodClock, nowMs = Date.now()): number | null {
+  if (!match.periodStartedAtUtc) return null
 
   const startedMs = new Date(match.periodStartedAtUtc).getTime()
-  if (Number.isNaN(startedMs)) return '—'
+  if (Number.isNaN(startedMs)) return null
 
   const endMs = match.pausedAtUtc ? new Date(match.pausedAtUtc).getTime() : nowMs
-  const totalSeconds = Math.max(0, Math.floor((endMs - startedMs - match.periodPausedMilliseconds) / 1000))
+  return Math.max(0, Math.floor((endMs - startedMs - match.periodPausedMilliseconds) / 1000))
+}
+
+/**
+ * Минута матча как на флешскоре: идущая минута (0:30 → 1'), периоды продолжают отсчёт
+ * (второй тайм 25-минутных периодов начинается с 26'), добавленное время — «25+2'».
+ * Без длительности периода по регламенту считаем минуту внутри периода.
+ */
+export function formatMinute(period: number, elapsedSeconds: number, periodDurationMinutes?: number): string {
+  const minute = Math.floor(Math.max(0, elapsedSeconds) / 60) + 1
+
+  if (!periodDurationMinutes || periodDurationMinutes <= 0) return `${minute}'`
+
+  const offset = (Math.max(1, period) - 1) * periodDurationMinutes
+  return minute > periodDurationMinutes
+    ? `${offset + periodDurationMinutes}+${minute - periodDurationMinutes}'`
+    : `${offset + minute}'`
+}
+
+/** Секундомер периода: паузы не считаются игровым временем, на паузе часы стоят. */
+export function formatElapsed(match: PeriodClock, nowMs = Date.now()): string {
+  const totalSeconds = periodElapsedSeconds(match, nowMs)
+  if (totalSeconds === null) return '—'
+
   const minutes = Math.floor(totalSeconds / 60)
   const seconds = totalSeconds % 60
 
@@ -71,3 +93,10 @@ export function formatElapsed(
 }
 
 export const isLiveMatch = (status: string) => status === 'InProgress' || status === 'Pause'
+
+/** «Сажин Алексей Николаевич» → «Сажин А.»: в протоколе, как на флешскоре, фамилия и инициал. */
+export function shortPlayerName(fullName: string): string {
+  const [lastName, firstName] = fullName.trim().split(/\s+/)
+  if (!lastName) return fullName
+  return firstName ? `${lastName} ${firstName.charAt(0)}.` : lastName
+}

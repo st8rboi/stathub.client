@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import { publicApi } from './api/publicApi'
 import type { PublicMatch } from './api/types'
 
@@ -56,3 +57,18 @@ export const useTournamentStatistics = (tournamentId: string) =>
 
 export const isLive = (match: PublicMatch) =>
   match.status === 'InProgress' || match.status === 'Pause'
+
+/** Текущее время, которое тикает только пока `enabled` — для часов идущих матчей. */
+export function useNow(enabled: boolean, intervalMs = 1000): number {
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (!enabled) return
+
+    setNow(Date.now())
+    const timer = setInterval(() => setNow(Date.now()), intervalMs)
+    return () => clearInterval(timer)
+  }, [enabled, intervalMs])
+
+  return now
+}
