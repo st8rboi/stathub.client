@@ -1,0 +1,83 @@
+# Сборка админки (apps/web) и витрины (apps/public) на каждый push в dev и PR в main;
+# после merge в main — выкладка dist на VPS.
+# Секреты репозитория (Settings → Secrets and variables → Actions):
+#   DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS — те же, что в stathub.server.
+# Подробно: stathub.server/deploy/README.md, раздел «CI/CD».
+
+name: CI/CD
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: web
+            package: "@stathub/web"
+            site: admin
+          - app: public
+            package: "@stathub/public"
+            site: public
+    concurrency:
+      group: ${{ github.workflow }}-${{ matrix.site }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Версия pnpm берётся из packageManager в package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Ставим зависимости только нужного приложения — без тяжёлого Expo из apps/mobile.
+      - name: Install
+        run: pnpm install --frozen-lockfile --filter "${{ matrix.package }}..."
+
+      - name: Lint
+        run: pnpm --filter "${{ matrix.package }}" run --if-present lint
+
+      - name: Build
+        run: pnpm --filter "${{ matrix.package }}" build
+
+      - name: Set up SSH
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      # Заливаем в sites/<site>.new и подменяем каталог целиком: пользователи не увидят
+      # «половину» новой сборки. nginx перезапускать не нужно.
+      - name: Deploy
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+          SITE: ${{ matrix.site }}
+        run: |
+          ssh "$TARGET" "mkdir -p ~/stathub/sites"
+          rsync -rtz --delete --chmod=D755,F644 \
+            "apps/${{ matrix.app }}/dist/" "$TARGET:stathub/sites/$SITE.new/"
+          ssh "$TARGET" SITE="$SITE" bash -s <<'EOF'
+          set -euo pipefail
+          cd ~/stathub/sites
+          rm -rf "$SITE.old"
+          if [ -d "$SITE" ]; then mv "$SITE" "$SITE.old"; fi
+          mv "$SITE.new" "$SITE"
+          rm -rf "$SITE.old"
+          echo "Выложено: sites/$SITE"
+          EOF
