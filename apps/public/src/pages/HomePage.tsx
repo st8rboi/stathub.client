@@ -2,13 +2,44 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import type { PublicMatch } from '@/api/types'
-import { CompetitionGroup, type Competition } from '@/components/CompetitionGroup'
+import { CompetitionGroup, matchesWord, type Competition } from '@/components/CompetitionGroup'
 import { Skeleton } from '@/components/Skeleton'
 import { StandingsPanel } from '@/components/StandingsPanel'
 import { useLeagues, useSchedule } from '@/hooks'
+import { isLiveMatch } from '@/labels'
 import { useRealtime } from '@/realtime'
 
 const DAY_MS = 86_400_000
+const LEAGUES_IN_SIDEBAR = 12
+
+type MatchFilter = 'all' | 'live' | 'finished' | 'scheduled'
+
+const FILTERS: { id: MatchFilter; label: string }[] = [
+  { id: 'all', label: 'Все' },
+  { id: 'live', label: 'LIVE' },
+  { id: 'finished', label: 'Завершённые' },
+  { id: 'scheduled', label: 'Расписание' },
+]
+
+const EMPTY_TEXT: Record<MatchFilter, string> = {
+  all: 'На этот день матчей нет.',
+  live: 'Сейчас нет идущих матчей.',
+  finished: 'Завершённых матчей пока нет.',
+  scheduled: 'Предстоящих матчей нет.',
+}
+
+function matchesFilter(match: PublicMatch, filter: MatchFilter): boolean {
+  switch (filter) {
+    case 'live':
+      return isLiveMatch(match.status)
+    case 'finished':
+      return match.status === 'Finished'
+    case 'scheduled':
+      return match.status === 'Scheduled'
+    default:
+      return true
+  }
+}
 
 function startOfDay(date: Date): Date {
   const copy = new Date(date)
@@ -30,7 +61,8 @@ function dayLabel(date: Date, today: Date): string {
   if (diff === 0) return 'Сегодня'
   if (diff === 1) return 'Завтра'
 
-  return date.toLocaleDateString('ru-RU', { weekday: 'short', day: '2-digit', month: '2-digit' })
+  const label = date.toLocaleDateString('ru-RU', { weekday: 'short', day: '2-digit', month: '2-digit' })
+  return label.charAt(0).toUpperCase() + label.slice(1)
 }
 
 export default function HomePage() {
@@ -38,6 +70,7 @@ export default function HomePage() {
 
   const [today] = useState(() => startOfDay(new Date()))
   const [selectedKey, setSelectedKey] = useState(() => dayKey(startOfDay(new Date())))
+  const [filter, setFilter] = useState<MatchFilter>('all')
 
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, index) => new Date(today.getTime() + index * DAY_MS)),
@@ -74,12 +107,17 @@ export default function HomePage() {
     [leagues.data],
   )
 
-  const dayMatches = byDay.get(selectedKey) ?? []
+  const dayMatches = useMemo(() => byDay.get(selectedKey) ?? [], [byDay, selectedKey])
+  const liveCount = dayMatches.filter((match) => isLiveMatch(match.status)).length
+  const visibleMatches = useMemo(
+    () => dayMatches.filter((match) => matchesFilter(match, filter)),
+    [dayMatches, filter],
+  )
 
   const competitions = useMemo<Competition[]>(() => {
     const map = new Map<string, Competition>()
 
-    for (const match of dayMatches) {
+    for (const match of visibleMatches) {
       const existing = map.get(match.leagueSlug)
 
       if (existing) {
@@ -97,7 +135,7 @@ export default function HomePage() {
     }
 
     return [...map.values()]
-  }, [dayMatches, cityBySlug])
+  }, [visibleMatches, cityBySlug])
 
   // Push — сигнал «перечитай расписание»; сам список всегда из REST (doc §4).
   useRealtime({}, () => {
@@ -106,73 +144,91 @@ export default function HomePage() {
 
   return (
     <div className="home">
-      <section className="hero">
-        <div className="hero-main">
-          <h1>Единая платформа для любительского футбола в России</h1>
-          <p className="hero-date">
-            {today.toLocaleDateString('ru-RU', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })}
-          </p>
-          <p className="hero-text">
-            Онлайн счёт, турнирные таблицы и статистика матчей - всё в одном месте
-          </p>
+      <h1 className="visually-hidden">Матчи любительского футбола: онлайн-счёт и расписание</h1>
+
+      <aside className="home-leagues">
+        <div className="home-leagues-head">
+          <h2>Лиги</h2>
+          <Link to="/leagues" className="section-link">
+            Все →
+          </Link>
         </div>
 
-        <aside className="hero-card">
-          <span className="hero-card-label">Следи за нашей командой</span>
-          <h2>Подписывайтесь на Статхаб во всех соцсетях</h2>
-          <p>Вконтакте / Telegram / TikTok / YouTube</p>
-          <p className="hero-card-handle">@digital_stathub</p>
-        </aside>
+        {(leagues.data ?? []).slice(0, LEAGUES_IN_SIDEBAR).map((league) => (
+          <Link key={league.id} to={`/leagues/${league.slug}`} className="home-league">
+            {league.logoUrl ? (
+              <img src={league.logoUrl} alt="" className="team-logo" />
+            ) : (
+              <span className="team-logo team-logo--empty" />
+            )}
+            <span className="home-league-text">
+              <span className="home-league-name">{league.name}</span>
+              {league.city && <span className="home-league-city">{league.city}</span>}
+            </span>
+          </Link>
+        ))}
+      </aside>
+
+      <section className="feed" aria-label="Матчи">
+        <nav className="day-strip" aria-label="Дни">
+          {days.map((day) => {
+            const key = dayKey(day)
+            const count = byDay.get(key)?.length ?? 0
+
+            return (
+              <button
+                key={key}
+                type="button"
+                className={key === selectedKey ? 'day-tab active' : 'day-tab'}
+                onClick={() => setSelectedKey(key)}
+              >
+                {dayLabel(day, today)}
+                <span className="day-tab-count">
+                  {count} {matchesWord(count)}
+                </span>
+              </button>
+            )
+          })}
+        </nav>
+
+        <div className="feed-filters" role="group" aria-label="Фильтр матчей">
+          {FILTERS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={item.id === filter ? 'chip active' : 'chip'}
+              aria-pressed={item.id === filter}
+              onClick={() => setFilter(item.id)}
+            >
+              {item.id === 'live' && <span className="chip-dot" aria-hidden="true" />}
+              {item.label}
+              {item.id === 'live' && liveCount > 0 && ` ${liveCount}`}
+            </button>
+          ))}
+        </div>
+
+        {schedule.isPending && <Skeleton />}
+        {schedule.error && (
+          <p className="feed-empty">Не удалось загрузить расписание: {schedule.error.message}</p>
+        )}
+        {!schedule.isPending && !schedule.error && competitions.length === 0 && (
+          <p className="feed-empty">{EMPTY_TEXT[filter]}</p>
+        )}
+
+        {competitions.map((competition) => (
+          <CompetitionGroup key={competition.slug} competition={competition} />
+        ))}
       </section>
 
-      <nav className="date-strip" aria-label="Дни">
-        {days.map((day) => {
-          const key = dayKey(day)
-          const count = byDay.get(key)?.length ?? 0
-
-          return (
-            <button
-              key={key}
-              type="button"
-              className={key === selectedKey ? 'date-tab active' : 'date-tab'}
-              onClick={() => setSelectedKey(key)}
-            >
-              {dayLabel(day, today)}
-              <span className="date-count">{count}</span>
-            </button>
-          )
-        })}
-      </nav>
-
-      <div className="columns">
-        <section>
-          <div className="section-head">
-            <h2>Соревнования</h2>
-            <Link to="/leagues" className="section-link">
-              Все лиги →
-            </Link>
-          </div>
-
-          {schedule.isPending && <Skeleton />}
-          {schedule.error && (
-            <p className="notice">Не удалось загрузить расписание: {schedule.error.message}</p>
-          )}
-          {!schedule.isPending && competitions.length === 0 && (
-            <p className="notice">На этот день матчей нет.</p>
-          )}
-
-          {competitions.map((competition) => (
-            <CompetitionGroup key={competition.slug} competition={competition} />
-          ))}
-        </section>
-
+      <aside className="home-side">
         <StandingsPanel leagues={leagues.data ?? []} />
-      </div>
+
+        <div className="promo-card">
+          <h2>Подписывайтесь на Статхаб</h2>
+          <p>ВКонтакте, Telegram, TikTok и YouTube</p>
+          <p className="promo-card-handle">@digital_stathub</p>
+        </div>
+      </aside>
     </div>
   )
 }

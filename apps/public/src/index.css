@@ -1,14 +1,21 @@
 :root {
   color-scheme: light;
   --bg: #ffffff;
-  --bg-soft: #f3f5f7;
-  --bg-hover: #f7f8fa;
-  --border: #e8ebef;
-  --border-soft: #f0f2f5;
-  --border-strong: #d7dbe0;
-  --text: #0e1319;
-  --text-soft: #414b57;
-  --muted: #68727f;
+  --bg-soft: #eef1f5;
+  --bg-hover: #f6f8fb;
+  --border: #e6eaf0;
+  --border-soft: #eef1f5;
+  --border-strong: #d5dbe3;
+  --text: #0f1b2d;
+  --text-soft: #3b4658;
+  --muted: #64748b;
+
+  /* Тема «Стадион»: тёмно-синяя шапка, светлый контент. */
+  --navy: #0f1b2d;
+  --navy-raised: #1c2a40;
+  --navy-text: #ffffff;
+  --navy-muted: #94a3b8;
+  --brand-accent: #3ddc84;
   --green: #17b34b;
   --green-dark: #0c7334;
   --green-soft: #e7f7ec;
@@ -71,17 +78,15 @@ a {
   gap: 20px;
   min-height: calc(var(--topbar-height) + var(--safe-top));
   padding: var(--safe-top) calc(var(--gutter) + var(--safe-right)) 0 calc(var(--gutter) + var(--safe-left));
-  background: rgba(255, 255, 255, 0.88);
-  -webkit-backdrop-filter: saturate(180%) blur(14px);
-  backdrop-filter: saturate(180%) blur(14px);
-  border-bottom: 1px solid var(--border);
+  background: var(--navy);
+  color: var(--navy-text);
 }
 
 .topbar .brand {
   display: flex;
   align-items: center;
   gap: 11px;
-  color: var(--text);
+  color: var(--navy-text);
 }
 
 /* Знак из логотипа (SVG, currentColor). Пропорции viewBox 313×272. */
@@ -89,6 +94,7 @@ a {
   flex: none;
   width: 31px;
   height: 27px;
+  color: var(--brand-accent);
 }
 
 /* Надпись как в логотипе: прописные с широкой разрядкой. */
@@ -111,19 +117,19 @@ a {
   padding: 8px 14px;
   border-radius: 999px;
   font-weight: 600;
-  color: var(--text-soft);
+  color: var(--navy-muted);
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .topnav a.active {
-  background: var(--green-soft);
-  color: var(--green-dark);
+  background: var(--navy-raised);
+  color: var(--navy-text);
 }
 
 .topbar-note {
   margin-left: auto;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--navy-muted);
 }
 
 /* ---------- Нижняя навигация (только телефон) ---------- */
@@ -135,7 +141,7 @@ a {
 /* ---------- Каркас ---------- */
 
 .page {
-  max-width: 1180px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 24px calc(var(--gutter) + var(--safe-right)) 40px calc(var(--gutter) + var(--safe-left));
 }
@@ -241,67 +247,254 @@ h2 {
   }
 }
 
-/* ---------- Главная и hero ---------- */
+/* ---------- Главная: три колонки (лиги · лента матчей · таблица) ---------- */
 
-.hero {
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.home {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 24px;
-  padding: 8px 0 24px;
+  grid-template-columns: 220px minmax(0, 1fr) 300px;
+  gap: 16px;
   align-items: start;
 }
 
-.hero-date {
-  margin: 0 0 10px;
-  font-size: 14px;
+.home-leagues,
+.feed,
+.side-panel,
+.promo-card {
+  background: var(--bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.home-leagues {
+  position: sticky;
+  top: calc(var(--topbar-height) + var(--safe-top) + 16px);
+  padding: 6px 0 10px;
+}
+
+.home-leagues-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 8px 16px 6px;
+}
+
+.home-leagues-head h2 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--muted);
 }
 
-.hero-date::first-letter {
-  text-transform: uppercase;
+.home-league {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 16px;
 }
 
-.hero-text {
-  margin: 0;
-  max-width: 620px;
-  color: var(--text-soft);
+.home-league-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
-.hero-card {
-  padding: 18px 20px;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, #0a6a2e 0%, #15a545 100%);
-  color: #fff;
-  box-shadow: var(--shadow-raised);
+.home-league-name,
+.home-league-city {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.hero-card-label {
-  display: inline-block;
-  margin-bottom: 10px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.hero-card h2 {
-  margin: 0 0 8px;
-  font-size: 19px;
-  line-height: 1.2;
-}
-
-.hero-card p {
-  margin: 0 0 6px;
+.home-league-name {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.92);
 }
 
-.hero-card .hero-card-handle {
+.home-league-city {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.home-side {
+  position: sticky;
+  top: calc(var(--topbar-height) + var(--safe-top) + 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.promo-card {
+  padding: 16px;
+}
+
+.promo-card h2 {
+  margin-bottom: 4px;
+  font-size: 15px;
+}
+
+.promo-card p {
   margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.promo-card .promo-card-handle {
+  margin-top: 6px;
   font-weight: 700;
+  color: var(--green-dark);
+}
+
+/* Лента: дни, фильтры и группы матчей в одной карточке. */
+.feed {
+  overflow: hidden;
+}
+
+.day-strip {
+  display: flex;
+  gap: 4px;
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.day-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.day-tab {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  align-items: center;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.day-tab-count {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.day-tab.active {
+  background: var(--navy);
+  color: var(--navy-text);
+}
+
+.feed-filters {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.chip.active {
+  background: var(--green);
   color: #fff;
+}
+
+.chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+.chip.active .chip-dot {
+  background: #fff;
+}
+
+.feed-empty {
+  margin: 0;
+  padding: 24px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.feed .skeleton {
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.feed-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 6px 8px 6px 16px;
+  background: var(--bg-hover);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.feed-group-name {
+  flex: none;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.feed-group-meta {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.feed-group-toggle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
 }
 
 /* ---------- Полоса дат и вкладки ---------- */
@@ -468,9 +661,10 @@ h2 {
 
 .fixture {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 84px;
-  gap: 12px;
-  padding: 12px 16px;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: center;
+  min-height: 54px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--border-soft);
   transition: background 0.12s ease;
 }
@@ -483,8 +677,28 @@ h2 {
   background: var(--bg-soft);
 }
 
-.fixture--live {
-  box-shadow: inset 3px 0 0 var(--red);
+.fixture-status {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fixture-status.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  color: var(--red);
+}
+
+.fixture--live .fixture-status.live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: live-pulse 1.4s ease-in-out infinite;
 }
 
 .fixture--live .fixture-score {
@@ -494,20 +708,20 @@ h2 {
 .fixture-lines {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
   min-width: 0;
 }
 
 .fixture-line {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) 22px;
+  grid-template-columns: 18px minmax(0, 1fr) 24px;
   align-items: center;
   gap: 8px;
+  min-height: 20px;
 }
 
 .fixture-name {
   font-size: 14px;
-  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -515,26 +729,17 @@ h2 {
 
 .fixture-score {
   text-align: right;
-  font-weight: 800;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
-.fixture-side {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 4px;
+.fixture-line--win .fixture-name {
+  font-weight: 700;
 }
 
-.fixture-hint {
-  font-size: 11px;
+.fixture-line--lose .fixture-name,
+.fixture-line--lose .fixture-score {
   color: var(--muted);
-  text-align: right;
-}
-
-.fixture-hint:empty {
-  display: none;
 }
 
 .team-logo {
@@ -598,12 +803,23 @@ h2 {
 /* ---------- Сайдбар с таблицей ---------- */
 
 .side-panel {
-  position: sticky;
-  top: calc(var(--topbar-height) + var(--safe-top) + 16px);
   padding: 14px;
-  background: var(--bg);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+}
+
+/* В узкой колонке четыре числовые колонки съедают место у названий — ужимаем отступы. */
+.side-panel th,
+.side-panel td {
+  padding: 8px 5px;
+}
+
+.standings-pos {
+  text-align: center;
+  color: var(--muted);
+}
+
+.standings-pos--top {
+  font-weight: 700;
+  color: var(--green-dark);
 }
 
 .side-panel-head {
@@ -1076,11 +1292,8 @@ td.stats-name {
 
 @media (hover: hover) {
   .topnav a:hover {
-    background: var(--bg-soft);
-  }
-
-  .topnav a.active:hover {
-    background: var(--green-soft);
+    background: var(--navy-raised);
+    color: var(--navy-text);
   }
 
   .date-tab:hover {
@@ -1093,9 +1306,15 @@ td.stats-name {
     box-shadow: none;
   }
 
+  .day-tab:not(.active):hover,
+  .chip:not(.active):hover {
+    color: var(--text);
+  }
+
   .competition-head:not(.competition-head--static):hover,
   .fixture:hover,
-  .stage-row:hover {
+  .stage-row:hover,
+  .home-league:hover {
     background: var(--bg-hover);
   }
 
@@ -1106,6 +1325,7 @@ td.stats-name {
 
   .section-link:hover,
   .side-panel-link:hover,
+  .feed-group-name:hover,
   .crumb a:hover {
     text-decoration: underline;
   }
@@ -1113,19 +1333,26 @@ td.stats-name {
 
 /* ---------- Планшет ---------- */
 
+/* Узкий десктоп: колонка лиг уходит (лиги есть в верхнем меню), остаются лента и таблица. */
+@media (max-width: 1100px) {
+  .home {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+
+  .home-leagues {
+    display: none;
+  }
+}
+
 @media (max-width: 980px) {
   .columns,
   .stage-columns,
-  .hero {
+  .home {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .side-panel {
+  .home-side {
     position: static;
-  }
-
-  .hero {
-    gap: 16px;
   }
 }
 
@@ -1199,51 +1426,52 @@ td.stats-name {
     font-size: 16px;
   }
 
-  /* Сначала матчи: заголовок компактный, а промокарточка уходит в конец страницы. */
-  .home {
-    display: flex;
-    flex-direction: column;
+  /* Лента матчей — от края до края экрана, таблица и промо идут под ней. */
+  .page:has(.home) {
+    padding-top: 0;
   }
 
-  .hero {
-    display: contents;
+  .feed {
+    margin-inline: calc(-1 * (var(--gutter) + var(--safe-left))) calc(-1 * (var(--gutter) + var(--safe-right)));
+    border-radius: 0;
+    box-shadow: none;
   }
 
-  .hero-main {
-    order: 1;
-    margin-bottom: 14px;
+  .day-strip {
+    gap: 2px;
+    padding: 8px;
   }
 
-  .date-strip {
-    order: 2;
+  .day-tab {
+    flex: none;
+    padding: 6px 12px;
   }
 
-  .home .columns {
-    order: 3;
+  .feed-filters {
+    padding: 8px 16px 10px;
   }
 
-  .hero-card {
-    order: 4;
-    margin-top: 16px;
+  .chip {
+    min-height: 32px;
+  }
+
+  .feed-group-meta {
+    display: none;
+  }
+
+  .feed-group-name {
+    flex: 1;
+    max-width: none;
+  }
+
+  .feed-group-toggle {
+    width: 44px;
+    height: 36px;
   }
 
   h1 {
     font-size: 22px;
     margin-bottom: 4px;
-  }
-
-  .hero-main h1 {
-    font-size: 20px;
-    line-height: 1.2;
-  }
-
-  .hero-text {
-    display: none;
-  }
-
-  .hero-date {
-    margin: 0;
-    font-size: 13px;
   }
 
   /* Вкладки прокручиваются от края до края экрана, а не внутри отступов страницы. */
@@ -1270,8 +1498,8 @@ td.stats-name {
   }
 
   .fixture {
-    grid-template-columns: minmax(0, 1fr) 72px;
-    gap: 10px;
+    grid-template-columns: 56px minmax(0, 1fr);
+    min-height: 56px;
   }
 
   .league-header {
