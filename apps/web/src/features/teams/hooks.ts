@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { teamsApi } from './api'
-import type { CreateTeamBody } from './types'
+import type { CreateTeamBody, UpdateTeamBody } from './types'
 
 export const teamKeys = {
   all: ['teams'] as const,
@@ -30,6 +30,22 @@ export const useDeleteTeamLogo = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => teamsApi.deleteLogo(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: teamKeys.all }),
+  })
+}
+
+export const useUpdateTeam = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { id: string; body: UpdateTeamBody }) => teamsApi.update(input.id, input.body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: teamKeys.all }),
+  })
+}
+
+export const useDeleteTeam = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => teamsApi.remove(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: teamKeys.all }),
   })
 }

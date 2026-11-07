@@ -59,3 +59,25 @@ export const useTransferPlayer = (
       squadNumber: input.squadNumber,
     }),
   )
+
+export const useChangeSquadNumber = (stageId: string, tournamentTeamId: string) =>
+  useRosterMutation((input: { registrationId: string; squadNumber: number | null }) =>
+    rostersApi.changeSquadNumber(stageId, tournamentTeamId, input.registrationId, input.squadNumber),
+  )
+
+export const useDeleteRegistration = (stageId: string, tournamentTeamId: string) =>
+  useRosterMutation((registrationId: string) =>
+    rostersApi.deleteRegistration(stageId, tournamentTeamId, registrationId),
+  )
+
+// Удалённую заявку команды убираем из кэша, а не перезапрашиваем: иначе открытая карточка мигнёт 404.
+export const useDeleteTournamentTeam = (stageId: string, tournamentTeamId: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => rostersApi.deleteTeam(stageId, tournamentTeamId),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: rosterKeys.team(stageId, tournamentTeamId) })
+      return queryClient.invalidateQueries({ queryKey: rosterKeys.teams(stageId) })
+    },
+  })
+}

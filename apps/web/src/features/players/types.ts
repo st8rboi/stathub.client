@@ -9,3 +9,5 @@ export interface CreatePlayerBody {
   fullName: string
   birthDate: string | null
 }
+
+export type UpdatePlayerBody = CreatePlayerBody

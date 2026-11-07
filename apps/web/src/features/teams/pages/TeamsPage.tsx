@@ -3,7 +3,13 @@ import { useAuth } from '@/features/auth/authContext'
 import { validateLogoFile } from '@/shared/lib/logoFile'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { CreateTeamForm } from '../components/CreateTeamForm'
-import { useDeleteTeamLogo, useTeams, useUploadTeamLogo } from '../hooks'
+import { useDeleteTeam, useDeleteTeamLogo, useTeams, useUpdateTeam, useUploadTeamLogo } from '../hooks'
+
+interface TeamDraft {
+  id: string
+  name: string
+  city: string
+}
 
 export default function TeamsPage() {
   const { user } = useAuth()
@@ -13,6 +19,19 @@ export default function TeamsPage() {
 
   const uploadLogo = useUploadTeamLogo()
   const deleteLogo = useDeleteTeamLogo()
+  const updateTeam = useUpdateTeam()
+  const deleteTeam = useDeleteTeam()
+
+  // Редактируемая строка: правка идёт прямо в таблице, одна строка за раз.
+  const [draft, setDraft] = useState<TeamDraft | null>(null)
+
+  const saveDraft = () => {
+    if (!draft) return
+    updateTeam.mutate(
+      { id: draft.id, body: { name: draft.name, city: draft.city.trim() || null } },
+      { onSuccess: () => setDraft(null) },
+    )
+  }
 
   const uploadingTeamId = uploadLogo.isPending ? uploadLogo.variables?.id : undefined
 
@@ -22,6 +41,8 @@ export default function TeamsPage() {
       <p>
         Справочник клубов: команда заводится один раз и переиспользуется во всех турнирах.
         Матчи ссылаются на её идентификатор, поэтому переименование не ломает историю.
+        Команда общая для всех организаторов: изменить её можно, только если она не используется
+        в чужих лигах, а удалить — только если её ещё нет ни в заявках, ни в матчах.
       </p>
 
       <label>
@@ -34,7 +55,9 @@ export default function TeamsPage() {
         />
       </label>
 
-      <ErrorText error={teams.error ?? uploadLogo.error ?? deleteLogo.error} />
+      <ErrorText
+        error={teams.error ?? uploadLogo.error ?? deleteLogo.error ?? updateTeam.error ?? deleteTeam.error}
+      />
       {logoError && <p className="error">{logoError}</p>}
       {teams.isPending && <p>Загрузка…</p>}
       {teams.data?.length === 0 && (
@@ -50,12 +73,14 @@ export default function TeamsPage() {
               <th>Название</th>
               <th>Город</th>
               <th>ID</th>
+              <th />
             </tr>
           </thead>
           <tbody>
             {teams.data.map((team) => {
               // Логотип закрепляется за организацией, загрузившей его первой (см. Team.SetLogo).
               const canChangeLogo = !team.logoUrl || team.logoOwnerTenantId === user?.tenantId
+              const isEditing = draft?.id === team.id
 
               return (
                 <tr key={team.id}>
@@ -100,9 +125,83 @@ export default function TeamsPage() {
                       )}
                     </div>
                   </td>
-                  <td>{team.name}</td>
-                  <td>{team.city ?? '—'}</td>
+                  {isEditing ? (
+                    <>
+                      <td>
+                        <input
+                          value={draft.name}
+                          onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                          onKeyDown={(e) => e.key === 'Enter' && saveDraft()}
+                          required
+                          maxLength={150}
+                          aria-label="Название команды"
+                          autoFocus
+                        />
+                      </td>
+                      <td>
+                        <input
+                          value={draft.city}
+                          onChange={(e) => setDraft({ ...draft, city: e.target.value })}
+                          onKeyDown={(e) => e.key === 'Enter' && saveDraft()}
+                          maxLength={100}
+                          aria-label="Город"
+                        />
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td>{team.name}</td>
+                      <td>{team.city ?? '—'}</td>
+                    </>
+                  )}
                   <td className="mono">{team.id}</td>
+                  <td className="actions-cell">
+                    {isEditing ? (
+                      <div className="actions">
+                        <button
+                          type="button"
+                          disabled={updateTeam.isPending || !draft.name.trim()}
+                          onClick={saveDraft}
+                        >
+                          Сохранить
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => {
+                            setDraft(null)
+                            updateTeam.reset()
+                          }}
+                        >
+                          Отмена
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="actions">
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => {
+                            updateTeam.reset()
+                            setDraft({ id: team.id, name: team.name, city: team.city ?? '' })
+                          }}
+                        >
+                          Изменить
+                        </button>
+                        <button
+                          type="button"
+                          className="danger"
+                          disabled={deleteTeam.isPending}
+                          onClick={() => {
+                            // Сервер откажет (409), если команда уже есть в заявках или матчах.
+                            if (confirm(`Удалить команду «${team.name}»?`)) deleteTeam.mutate(team.id)
+                          }}
+                        >
+                          Удалить
+                        </button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               )
             })}

@@ -36,3 +36,5 @@ export interface CreateTournamentBody {
 }
 
 export type AddStageBody = Omit<Stage, 'id' | 'order'>
+
+export type UpdateTournamentBody = CreateTournamentBody

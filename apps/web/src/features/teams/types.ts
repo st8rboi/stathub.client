@@ -11,3 +11,5 @@ export interface CreateTeamBody {
   name: string
   city: string | null
 }
+
+export type UpdateTeamBody = CreateTeamBody
