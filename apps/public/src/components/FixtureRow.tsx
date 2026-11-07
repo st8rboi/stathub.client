@@ -6,17 +6,19 @@ import { formatMinute, formatTime, isLiveMatch, periodElapsedSeconds } from '@/l
 /** Откуда пришли на страницу матча — чтобы там была стрелка «назад» именно туда. */
 export type MatchLinkState = { from: string }
 
-function statusLabel(match: PublicMatch, nowMs: number): string {
+/** Минута идущего матча (или «Пер.» на паузе) — красным между командами и счётом. */
+function liveLabel(match: PublicMatch, nowMs: number): string {
+  if (match.status === 'Pause') return 'Пер.'
+  const elapsed = periodElapsedSeconds(match, nowMs)
+  return elapsed === null ? 'LIVE' : formatMinute(match.currentPeriod, elapsed, match.periodDurationMinutes)
+}
+
+/**
+ * Что стоит справа вместо счёта у матча без счёта: время начала у запланированного,
+ * слово — только у нештатных статусов (отменён и т.п.).
+ */
+function sideLabel(match: PublicMatch): string {
   switch (match.status) {
-    case 'InProgress': {
-      // Вместо «LIVE» — минута матча, как на флешскоре.
-      const elapsed = periodElapsedSeconds(match, nowMs)
-      return elapsed === null ? 'LIVE' : formatMinute(match.currentPeriod, elapsed, match.periodDurationMinutes)
-    }
-    case 'Pause':
-      return 'Пер.'
-    case 'Finished':
-      return 'Заверш.'
     case 'Cancelled':
       return 'Отменён'
     default:
@@ -24,10 +26,9 @@ function statusLabel(match: PublicMatch, nowMs: number): string {
   }
 }
 
-/** У завершённого матча победитель выделяется жирным, проигравший приглушается. */
-function resultClass(own: number, other: number, finished: boolean): string {
-  if (!finished || own === other) return ''
-  return own > other ? ' fixture-line--win' : ' fixture-line--lose'
+/** У завершённого матча победитель выделяется жирным. */
+function winClass(own: number, other: number, finished: boolean): string {
+  return finished && own > other ? ' fixture-line--win' : ''
 }
 
 function TeamLogo({ url }: { url: string | null }) {
@@ -39,8 +40,9 @@ function TeamLogo({ url }: { url: string | null }) {
 }
 
 /**
- * Строка матча в стиле флешскора: слева статус (время, минута идущего матча, пауза), по центру
- * две строки команд, справа счёт. Счёт есть только у идущих и завершённых матчей.
+ * Строка матча в стиле флешскора: слева две строки команд, справа —
+ * идёт: красная минута + красный счёт; завершён: только счёт, победитель жирным;
+ * запланирован: время начала; нештатный статус (отменён): короткое слово.
  */
 export function FixtureRow({ match }: { match: PublicMatch }) {
   const location = useLocation()
@@ -56,21 +58,28 @@ export function FixtureRow({ match }: { match: PublicMatch }) {
       state={linkState}
       className={live ? 'fixture fixture--live' : 'fixture'}
     >
-      <span className={live ? 'fixture-status live' : 'fixture-status'}>{statusLabel(match, now)}</span>
-
       <span className="fixture-lines">
-        <span className={'fixture-line' + resultClass(match.homeScore, match.awayScore, finished)}>
+        <span className={'fixture-line' + winClass(match.homeScore, match.awayScore, finished)}>
           <TeamLogo url={match.homeTeamLogoUrl} />
           <span className="fixture-name">{match.homeTeamName}</span>
-          <span className="fixture-score">{showScore ? match.homeScore : ''}</span>
         </span>
 
-        <span className={'fixture-line' + resultClass(match.awayScore, match.homeScore, finished)}>
+        <span className={'fixture-line' + winClass(match.awayScore, match.homeScore, finished)}>
           <TeamLogo url={match.awayTeamLogoUrl} />
           <span className="fixture-name">{match.awayTeamName}</span>
-          <span className="fixture-score">{showScore ? match.awayScore : ''}</span>
         </span>
       </span>
+
+      {live && <span className="fixture-minute">{liveLabel(match, now)}</span>}
+
+      {showScore ? (
+        <span className="fixture-scores">
+          <span className="fixture-score">{match.homeScore}</span>
+          <span className="fixture-score">{match.awayScore}</span>
+        </span>
+      ) : (
+        <span className="fixture-status">{sideLabel(match)}</span>
+      )}
     </Link>
   )
 }
