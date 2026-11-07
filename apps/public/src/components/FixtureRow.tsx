@@ -1,11 +1,18 @@
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import type { PublicMatch } from '@/api/types'
-import { formatTime, isLiveMatch } from '@/labels'
+import { useNow } from '@/hooks'
+import { formatMinute, formatTime, isLiveMatch, periodElapsedSeconds } from '@/labels'
 
-function statusLabel(match: PublicMatch): string {
+/** Откуда пришли на страницу матча — чтобы там была стрелка «назад» именно туда. */
+export type MatchLinkState = { from: string }
+
+function statusLabel(match: PublicMatch, nowMs: number): string {
   switch (match.status) {
-    case 'InProgress':
-      return 'LIVE'
+    case 'InProgress': {
+      // Вместо «LIVE» — минута матча, как на флешскоре.
+      const elapsed = periodElapsedSeconds(match, nowMs)
+      return elapsed === null ? 'LIVE' : formatMinute(match.currentPeriod, elapsed, match.periodDurationMinutes)
+    }
     case 'Pause':
       return 'Пер.'
     case 'Finished':
@@ -32,17 +39,24 @@ function TeamLogo({ url }: { url: string | null }) {
 }
 
 /**
- * Строка матча в стиле флешскора: слева статус (время, LIVE, пауза), по центру
+ * Строка матча в стиле флешскора: слева статус (время, минута идущего матча, пауза), по центру
  * две строки команд, справа счёт. Счёт есть только у идущих и завершённых матчей.
  */
 export function FixtureRow({ match }: { match: PublicMatch }) {
+  const location = useLocation()
   const live = isLiveMatch(match.status)
   const finished = match.status === 'Finished'
   const showScore = live || finished
+  const now = useNow(match.status === 'InProgress', 5000)
+  const linkState: MatchLinkState = { from: location.pathname + location.search }
 
   return (
-    <Link to={`/matches/${match.id}`} className={live ? 'fixture fixture--live' : 'fixture'}>
-      <span className={live ? 'fixture-status live' : 'fixture-status'}>{statusLabel(match)}</span>
+    <Link
+      to={`/matches/${match.id}`}
+      state={linkState}
+      className={live ? 'fixture fixture--live' : 'fixture'}
+    >
+      <span className={live ? 'fixture-status live' : 'fixture-status'}>{statusLabel(match, now)}</span>
 
       <span className="fixture-lines">
         <span className={'fixture-line' + resultClass(match.homeScore, match.awayScore, finished)}>
