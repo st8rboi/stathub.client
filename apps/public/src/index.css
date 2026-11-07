@@ -1207,21 +1207,21 @@ td.stats-name {
   color: var(--muted);
 }
 
-/* ---------- Протокол матча (как на флешскоре) ---------- */
+/* ---------- Протокол матча (пропорции флешскора) ---------- */
 
 .protocol {
   display: flex;
   flex-direction: column;
-  padding-bottom: 6px;
+  padding-bottom: 4px;
 }
 
 .protocol-period {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 16px;
+  padding: 6px 12px;
   background: var(--bg-soft);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1237,8 +1237,8 @@ td.stats-name {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 16px;
-  min-height: 48px;
+  min-height: 34px;
+  padding: 4px 12px;
 }
 
 .pe--away {
@@ -1248,10 +1248,11 @@ td.stats-name {
 
 .pe-minute {
   flex: none;
-  width: 44px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-soft);
+  min-width: 30px;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1263,13 +1264,13 @@ td.stats-name {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 8px;
-  min-width: 36px;
-  height: 36px;
-  padding: 0 9px;
   justify-content: center;
+  gap: 6px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--bg);
 }
 
@@ -1278,15 +1279,15 @@ td.stats-name {
 }
 
 .pe-score {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
 .pe-ball {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   color: var(--text);
 }
 
@@ -1295,8 +1296,8 @@ td.stats-name {
 }
 
 .pe-card {
-  width: 11px;
-  height: 15px;
+  width: 9px;
+  height: 12px;
   border-radius: 2px;
 }
 
@@ -1309,13 +1310,13 @@ td.stats-name {
 }
 
 .pe-sub {
-  width: 20px;
-  height: 20px;
+  width: 15px;
+  height: 15px;
 }
 
 .pe-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--border-strong);
 }
@@ -1324,8 +1325,10 @@ td.stats-name {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 2px 6px;
+  gap: 0 5px;
   min-width: 0;
+  font-size: 14px;
+  line-height: 1.3;
 }
 
 .pe--away .pe-text {
@@ -1333,13 +1336,16 @@ td.stats-name {
 }
 
 .pe-player {
-  font-size: 15px;
-  font-weight: 700;
+  font-weight: 400;
   overflow-wrap: anywhere;
 }
 
+/* Как на флешскоре: жирным только автор гола. */
+.pe--goal .pe-player {
+  font-weight: 600;
+}
+
 .pe-note {
-  font-size: 14px;
   color: var(--muted);
 }
 
@@ -1351,7 +1357,7 @@ td.stats-name {
 }
 
 .pe--voided .pe-player {
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .pe--voided .pe-badge > :not(.pe-score) {
@@ -1675,20 +1681,14 @@ td.stats-name {
 }
 
 @media (max-width: 640px) {
+  /* Протокол на телефоне — от края до края экрана, как лента матчей. */
+  .protocol-card {
+    margin-inline: calc(-1 * (var(--gutter) + var(--safe-left))) calc(-1 * (var(--gutter) + var(--safe-right)));
+    border-radius: 0;
+    box-shadow: none;
+  }
+
   .pe {
     gap: 8px;
-    padding-inline: 12px;
-  }
-
-  .pe-minute {
-    width: 34px;
-  }
-
-  .pe-player {
-    font-size: 14px;
-  }
-
-  .pe-note {
-    font-size: 13px;
   }
 }
