@@ -1,4 +1,5 @@
 import { Link, NavLink, Route, Routes } from 'react-router'
+import BrandMark from '@/components/BrandMark'
 import HomePage from '@/pages/HomePage'
 import LeaguePage from '@/pages/LeaguePage'
 import LeaguesPage from '@/pages/LeaguesPage'
@@ -20,11 +21,9 @@ export default function App() {
   return (
     <>
       <header className="topbar">
-        <Link to="/" className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            ⚽
-          </span>
-          Статхаб
+        <Link to="/" className="brand" aria-label="Статхаб — на главную">
+          <BrandMark className="brand-mark" />
+          <span className="brand-name">Статхаб</span>
         </Link>
 
         <nav className="topnav">

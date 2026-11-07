@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="70 308.5 313 313">
+  <style>
+    .mark { color: #0e1319; }
+    @media (prefers-color-scheme: dark) { .mark { color: #ffffff; } }
+  </style>
+  <g class="mark" stroke-linejoin="round">
+    <g fill="currentColor" stroke="currentColor" stroke-width="6">
+      <path id="c" d="M120.12 333H74.88L178.19 436.31A16 16 0 0 0 200.81 413.69Z"/>
+      <use href="#c" transform="matrix(-1 0 0 1 453 0)"/>
+    </g>
+    <g fill="none" stroke="currentColor" stroke-width="16">
+      <use href="#c" transform="matrix(1 0 0 -1 0 930)"/>
+      <use href="#c" transform="matrix(-1 0 0 -1 453 930)"/>
+    </g>
+  </g>
+</svg>

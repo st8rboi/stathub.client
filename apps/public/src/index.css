@@ -80,22 +80,26 @@ a {
 .topbar .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 800;
-  font-size: 19px;
-  letter-spacing: -0.02em;
+  gap: 11px;
+  color: var(--text);
 }
 
+/* Знак из логотипа (SVG, currentColor). Пропорции viewBox 313×272. */
 .brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  background: var(--green-soft);
-  color: var(--green-dark);
-  font-size: 15px;
+  flex: none;
+  width: 31px;
+  height: 27px;
+}
+
+/* Надпись как в логотипе: прописные с широкой разрядкой. */
+.brand-name {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  /* Разрядка добавляет отступ после последней буквы — компенсируем, чтобы блок был ровным. */
+  margin-right: -0.2em;
 }
 
 .topnav {
@@ -1138,8 +1142,13 @@ td.stats-name {
     display: none;
   }
 
-  .topbar .brand {
-    font-size: 18px;
+  .brand-mark {
+    width: 28px;
+    height: 24px;
+  }
+
+  .brand-name {
+    font-size: 15px;
   }
 
   .tabbar {
