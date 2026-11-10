@@ -32,3 +32,44 @@ const moneyFormat = new Intl.NumberFormat('ru-RU', { style: 'currency', currency
 export function formatMoney(amount: number): string {
   return moneyFormat.format(amount)
 }
+
+const pad = (value: number) => String(value).padStart(2, '0')
+
+const timeFormat = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' })
+
+/** Время «19:00» в местном часовом поясе. */
+export function formatTime(iso: string): string {
+  return timeFormat.format(new Date(iso))
+}
+
+/** Ключ местного дня 'YYYY-MM-DD' — для группировки по датам. */
+export function dayKey(iso: string): string {
+  const date = new Date(iso)
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+/** Значение для <input type="datetime-local"> (местное время). */
+export function toLocalInputValue(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+const dayFormat = new Intl.DateTimeFormat('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' })
+const dayFormatWithYear = new Intl.DateTimeFormat('ru-RU', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+})
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** Заголовок дня: «Сегодня, ср, 12 ноября», «Пт, 14 ноября», год — только если не текущий. */
+export function formatDayHeading(iso: string): string {
+  const date = new Date(iso)
+  const now = new Date()
+  const startOf = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime()
+  const diffDays = Math.round((startOf(date) - startOf(now)) / DAY_MS)
+
+  const text = (date.getFullYear() === now.getFullYear() ? dayFormat : dayFormatWithYear).format(date)
+  const relative = diffDays === 0 ? 'Сегодня' : diffDays === 1 ? 'Завтра' : diffDays === -1 ? 'Вчера' : null
+  return relative ? `${relative}, ${text}` : text.charAt(0).toUpperCase() + text.slice(1)
+}

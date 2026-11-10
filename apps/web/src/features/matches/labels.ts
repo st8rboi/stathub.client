@@ -1,3 +1,4 @@
+import type { BadgeTone } from '@/shared/ui/layout'
 import type { MatchStatus } from './types'
 
 export const matchStatusLabels: Record<MatchStatus, string> = {
@@ -6,4 +7,12 @@ export const matchStatusLabels: Record<MatchStatus, string> = {
   Pause: 'Пауза',
   Finished: 'Завершён',
   Cancelled: 'Отменён',
+}
+
+export const matchStatusTones: Record<MatchStatus, BadgeTone> = {
+  Scheduled: 'neutral',
+  InProgress: 'success',
+  Pause: 'warning',
+  Finished: 'neutral',
+  Cancelled: 'danger',
 }

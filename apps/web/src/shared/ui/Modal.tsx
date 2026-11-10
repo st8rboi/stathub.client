@@ -9,13 +9,15 @@ interface ModalProps {
   /** Кнопки внизу окна. */
   footer?: ReactNode
   size?: 'sm' | 'md'
+  /** drawer — боковая панель справа во всю высоту (для форм, к которым возвращаются часто). */
+  variant?: 'dialog' | 'drawer'
 }
 
 /**
- * Модальное окно на нативном <dialog>: фокус-ловушка, Escape и затемнение фона
+ * Модальное окно (или боковая панель) на нативном <dialog>: фокус-ловушка, Escape и затемнение фона
  * даёт браузер. Клик по затемнению закрывает окно. На телефоне — нижняя шторка.
  */
-export function Modal({ open, onClose, title, children, footer, size = 'md' }: ModalProps) {
+export function Modal({ open, onClose, title, children, footer, size = 'md', variant = 'dialog' }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
 
@@ -29,7 +31,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
   return (
     <dialog
       ref={ref}
-      className={`modal modal--${size}`}
+      className={variant === 'drawer' ? 'modal modal--drawer' : `modal modal--${size}`}
       aria-labelledby={titleId}
       onCancel={(event) => {
         // Escape: закрываем через состояние родителя, а не силами браузера.
