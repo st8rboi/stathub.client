@@ -2,6 +2,7 @@ import { useState, type SubmitEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { usePlayers, usePlayersByIds } from '@/features/players/hooks'
 import { useTeams } from '@/features/teams/hooks'
+import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import {
   useChangeSquadNumber,
@@ -29,6 +30,7 @@ function parseSquadNumber(value: FormDataEntryValue | null): number | null {
  * История заявок не скрывается — закрытые строки остаются с датой и статусом.
  */
 export default function TournamentTeamPage() {
+  const confirm = useConfirm()
   const { leagueId = '', tournamentId = '', stageId = '', tournamentTeamId = '' } = useParams()
 
   const details = useTournamentTeam(stageId, tournamentTeamId)
@@ -121,9 +123,6 @@ export default function TournamentTeamPage() {
 
   return (
     <>
-      <p>
-        <Link to={stageLink}>← К этапу</Link>
-      </p>
       <h1>{teamName(data.teamId)}</h1>
 
       <dl>
@@ -140,9 +139,14 @@ export default function TournamentTeamPage() {
             className="danger"
             disabled={withdraw.isPending || deleteTeam.isPending}
             onClick={() => {
-              if (confirm('Снять команду с турнира? Все активные заявки игроков закроются.')) {
-                withdraw.mutate()
-              }
+              void confirm({
+                title: 'Снять команду с турнира?',
+                message: 'Все активные заявки игроков закроются.',
+                confirmLabel: 'Снять команду',
+                danger: true,
+              }).then((ok) => {
+                if (ok) withdraw.mutate()
+              })
             }}
           >
             Снять команду с турнира
@@ -154,9 +158,14 @@ export default function TournamentTeamPage() {
           disabled={withdraw.isPending || deleteTeam.isPending}
           onClick={() => {
             // Сервер откажет (409), если у команды уже есть матчи на этапе — тогда её снимают.
-            if (confirm('Удалить ошибочную заявку команды вместе с составом? Это действие нельзя отменить.')) {
-              deleteTeam.mutate(undefined, { onSuccess: () => void navigate(stageLink) })
-            }
+            void confirm({
+              title: 'Удалить заявку команды?',
+              message: 'Ошибочная заявка удалится вместе с составом. Это действие нельзя отменить.',
+              confirmLabel: 'Удалить заявку',
+              danger: true,
+            }).then((ok) => {
+              if (ok) deleteTeam.mutate(undefined, { onSuccess: () => void navigate(stageLink) })
+            })
           }}
         >
           Удалить заявку
@@ -241,9 +250,13 @@ export default function TournamentTeamPage() {
                               type="button"
                               disabled={release.isPending}
                               onClick={() => {
-                                if (confirm('Отзаявить игрока? Заявка останется в истории.')) {
-                                  release.mutate(registration.id)
-                                }
+                                void confirm({
+                                  title: 'Отзаявить игрока?',
+                                  message: 'Заявка останется в истории.',
+                                  confirmLabel: 'Отзаявить',
+                                }).then((ok) => {
+                                  if (ok) release.mutate(registration.id)
+                                })
                               }}
                             >
                               Отзаявить
@@ -256,9 +269,14 @@ export default function TournamentTeamPage() {
                           disabled={deleteRegistration.isPending}
                           onClick={() => {
                             // Сервер откажет (409), если у игрока уже есть события в матчах за команду.
-                            if (confirm('Удалить ошибочную заявку? В истории она не останется.')) {
-                              deleteRegistration.mutate(registration.id)
-                            }
+                            void confirm({
+                              title: 'Удалить ошибочную заявку?',
+                              message: 'В истории она не останется.',
+                              confirmLabel: 'Удалить',
+                              danger: true,
+                            }).then((ok) => {
+                              if (ok) deleteRegistration.mutate(registration.id)
+                            })
                           }}
                         >
                           Удалить

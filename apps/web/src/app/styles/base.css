@@ -1,0 +1,479 @@
+/* Базовые элементы: типографика, таблицы, формы, кнопки и служебные классы,
+   на которые опираются существующие страницы. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  font: var(--font);
+  color: var(--text);
+  background: var(--bg-soft);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+/* ---------- Типографика ---------- */
+
+h1 {
+  margin: 0 0 16px;
+  font-size: clamp(22px, 2.6vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+h2 {
+  margin: 32px 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  margin: 24px 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+a {
+  color: var(--link);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- Сообщения ---------- */
+
+.error {
+  margin: 8px 0;
+  color: var(--red);
+  font-size: 14px;
+}
+
+.notice {
+  margin: 0 0 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--amber-line);
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  color: #6b5316;
+  font-size: 14px;
+}
+
+.notice a {
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* ---------- Списки «термин — значение» ---------- */
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 20px;
+  margin: 0 0 16px;
+}
+
+dt {
+  color: var(--muted);
+}
+
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Таблицы ---------- */
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  /* Без overflow: hidden — широкая таблица не должна обрезаться. Углы скругляем ячейками. */
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  font-size: 14px;
+}
+
+th,
+td {
+  padding: 10px 14px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+th {
+  background: var(--bg-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+tbody tr:hover td {
+  background: var(--bg-hover);
+}
+
+tr:first-child > :first-child {
+  border-top-left-radius: calc(var(--radius-sm) - 1px);
+}
+
+tr:first-child > :last-child {
+  border-top-right-radius: calc(var(--radius-sm) - 1px);
+}
+
+tbody tr:last-child > :first-child {
+  border-bottom-left-radius: calc(var(--radius-sm) - 1px);
+}
+
+tbody tr:last-child > :last-child {
+  border-bottom-right-radius: calc(var(--radius-sm) - 1px);
+}
+
+/* Строки tbody, если есть thead, — не первые в таблице: верхние углы им не нужны. */
+thead + tbody tr:first-child > * {
+  border-radius: 0;
+}
+
+thead + tbody tr:last-child > :first-child {
+  border-bottom-left-radius: calc(var(--radius-sm) - 1px);
+}
+
+thead + tbody tr:last-child > :last-child {
+  border-bottom-right-radius: calc(var(--radius-sm) - 1px);
+}
+
+td.actions-cell {
+  white-space: nowrap;
+}
+
+td input {
+  width: 100%;
+}
+
+/* Телефон: таблица не распирает страницу, а прокручивается внутри своей рамки.
+   Полноценные карточные списки появятся вместе с переделкой разделов. */
+@media (max-width: 720px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  th,
+  td {
+    white-space: nowrap;
+  }
+}
+
+/* ---------- Формы ---------- */
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 560px;
+  padding: 20px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+form button {
+  align-self: flex-start;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+
+label.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 400;
+  color: inherit;
+}
+
+input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--green-dark);
+}
+
+input:not([type='checkbox']):not([type='file']):not([type='radio']),
+select,
+textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: 7px 10px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xs);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:not([type='checkbox']):not([type='file']):not([type='radio']):focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: var(--focus-ring);
+}
+
+input:disabled,
+select:disabled {
+  background: var(--bg-muted);
+  color: var(--muted);
+}
+
+input[aria-invalid='true'] {
+  border-color: var(--red);
+}
+
+input[type='file'] {
+  max-width: 260px;
+  font-size: 13px;
+}
+
+/* Поля в строку; в узкой карточке переносятся, а не вылезают за край. */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.row label {
+  /* flex-basis + min-width: 0 обязательны, иначе поле не сжимается ниже своей ширины по умолчанию */
+  flex: 1 1 130px;
+  min-width: 0;
+}
+
+fieldset.plain {
+  display: contents;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* ---------- Кнопки ----------
+ * По умолчанию — основная (тёмно-синяя). Варианты: .secondary, .ghost, .danger (контурная),
+ * .danger-solid (для подтверждения необратимого действия), .icon-button.
+ */
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--navy-text);
+  background: var(--navy);
+  border: 1px solid var(--navy);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--navy-raised);
+  border-color: var(--navy-raised);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+button.secondary {
+  color: var(--text);
+  background: var(--bg);
+  border-color: var(--border-strong);
+}
+
+button.secondary:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+button.ghost {
+  color: var(--text-soft);
+  background: transparent;
+  border-color: transparent;
+}
+
+button.ghost:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: transparent;
+}
+
+button.danger {
+  color: var(--red);
+  background: var(--bg);
+  border-color: var(--red-line);
+}
+
+button.danger:hover:not(:disabled) {
+  background: var(--red-soft);
+  border-color: var(--red-line);
+}
+
+button.danger-solid {
+  color: #fff;
+  background: var(--red);
+  border-color: var(--red);
+}
+
+button.danger-solid:hover:not(:disabled) {
+  background: var(--red-dark);
+  border-color: var(--red-dark);
+}
+
+button.icon-button {
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border-color: transparent;
+}
+
+button.icon-button:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: transparent;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Сенсорные экраны: цели нажатия не меньше 42px. */
+@media (pointer: coarse) {
+  button,
+  input:not([type='checkbox']):not([type='file']):not([type='radio']),
+  select {
+    min-height: 42px;
+  }
+
+  button.icon-button {
+    width: 42px;
+    min-width: 42px;
+  }
+}
+
+/* ---------- Логотипы ---------- */
+
+.logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: var(--bg-muted);
+}
+
+.logo--lg {
+  width: 64px;
+  height: 64px;
+}
+
+.logo-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+/* ---------- Назначение судьи в строке матча ---------- */
+
+.referee-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.referee-cell select {
+  width: auto;
+  min-width: 150px;
+}
+
+.referee-name {
+  font-weight: 600;
+}

@@ -1,0 +1,80 @@
+/*
+ * Дизайн-токены админки. Тема «Стадион» — та же палитра, что у публичной витрины
+ * (apps/public): тёмно-синяя навигация, светлый контент, зелёный акцент.
+ * Цвета в компонентах задаются только через эти переменные.
+ */
+:root {
+  color-scheme: light;
+
+  /* Поверхности и линии */
+  --bg: #ffffff;
+  --bg-soft: #eef1f5;
+  --bg-muted: #f8fafc;
+  --bg-hover: #f4f6f9;
+  --border: #e6eaf0;
+  --border-soft: #eef1f5;
+  --border-strong: #d5dbe3;
+
+  /* Текст */
+  --text: #0f1b2d;
+  --text-soft: #3b4658;
+  --muted: #64748b;
+
+  /* Навигация «Стадион» */
+  --navy: #0f1b2d;
+  --navy-raised: #1c2a40;
+  --navy-line: rgba(255, 255, 255, 0.08);
+  --navy-text: #ffffff;
+  --navy-muted: #94a3b8;
+  --brand-accent: #3ddc84;
+
+  /* Смысловые цвета */
+  --green: #17b34b;
+  --green-dark: #0c7334;
+  --green-soft: #e7f7ec;
+  --red: #d92d20;
+  --red-dark: #b42318;
+  --red-soft: #fdecec;
+  --red-line: #f3b8b3;
+  --amber: #a85802;
+  --amber-soft: #fdf3e3;
+  --amber-line: #f0dcb4;
+  --blue: #1d4ed8;
+  --blue-soft: #e8effd;
+
+  --link: var(--green-dark);
+
+  /* Форма */
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 2px 8px rgba(16, 24, 40, 0.04);
+  --shadow-raised: 0 2px 4px rgba(16, 24, 40, 0.06), 0 10px 24px rgba(16, 24, 40, 0.08);
+  --shadow-pop: 0 12px 32px rgba(16, 24, 40, 0.18);
+  --focus-ring: 0 0 0 3px rgba(23, 179, 75, 0.28);
+
+  /* Каркас */
+  --sidebar-width: 264px;
+  --topbar-height: 56px;
+  --content-max: 1200px;
+  --gutter: 28px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* Шрифт */
+  --font: 15px/1.5 Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+
+/* Брейкпоинты (в медиазапросах переменные не работают — держим значения здесь для справки):
+ *   ≤ 720px  — телефон: таблицы скроллятся, поля и кнопки крупнее;
+ *   ≤ 959px  — планшет: боковое меню уходит в выезжающую панель.
+ */
+@media (max-width: 720px) {
+  :root {
+    --gutter: 16px;
+  }
+}

@@ -1,0 +1,5 @@
+/* Порядок важен: токены → база → компоненты → каркас. */
+@import './tokens.css';
+@import './base.css';
+@import './components.css';
+@import './shell.css';

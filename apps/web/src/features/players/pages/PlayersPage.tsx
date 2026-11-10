@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { CreatePlayerForm } from '../components/CreatePlayerForm'
 import { useDeletePlayer, usePlayers, useUpdatePlayer } from '../hooks'
@@ -10,6 +11,7 @@ interface PlayerDraft {
 }
 
 export default function PlayersPage() {
+  const confirm = useConfirm()
   const [query, setQuery] = useState('')
   const players = usePlayers(query.trim())
   const updatePlayer = useUpdatePlayer()
@@ -151,7 +153,13 @@ export default function PlayersPage() {
                           disabled={deletePlayer.isPending}
                           onClick={() => {
                             // Сервер откажет (409), если игрок уже есть в заявках или событиях матчей.
-                            if (confirm(`Удалить игрока «${player.fullName}»?`)) deletePlayer.mutate(player.id)
+                            void confirm({
+                              title: `Удалить игрока «${player.fullName}»?`,
+                              confirmLabel: 'Удалить',
+                              danger: true,
+                            }).then((ok) => {
+                              if (ok) deletePlayer.mutate(player.id)
+                            })
                           }}
                         >
                           Удалить

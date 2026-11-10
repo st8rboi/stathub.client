@@ -1,0 +1,726 @@
+/* Стили компонентов из shared/ui. */
+
+/* ---------- Бренд ---------- */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  color: var(--navy-text);
+  text-decoration: none;
+}
+
+.brand:hover {
+  text-decoration: none;
+}
+
+/* Знак из логотипа (SVG, currentColor). Пропорции viewBox 313×272. */
+.brand-mark {
+  flex: none;
+  width: 29px;
+  height: 25px;
+  color: var(--brand-accent);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Надпись как в логотипе: прописные с широкой разрядкой. */
+.brand-name {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  /* Разрядка добавляет отступ после последней буквы — компенсируем. */
+  margin-right: -0.2em;
+}
+
+.brand-sub {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--navy-muted);
+}
+
+/* ---------- Карточка ---------- */
+
+.card {
+  margin: 0 0 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.card-head h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.card-body--flush {
+  padding: 0;
+}
+
+/* Таблица внутри карточки: рамку и тень даёт карточка. */
+.card-body--flush > table {
+  border: 0;
+  border-radius: 0 0 var(--radius) var(--radius);
+  box-shadow: none;
+}
+
+/* ---------- Шапка страницы ---------- */
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 0 0 20px;
+}
+
+.page-header-media {
+  flex: none;
+}
+
+.page-header-main {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.page-header-main h1 {
+  margin: 0;
+}
+
+.page-header-eyebrow {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.page-header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.page-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- Бейдж статуса ---------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  border-radius: 999px;
+  color: var(--text-soft);
+  background: var(--bg-soft);
+}
+
+.badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.8;
+}
+
+.badge--success {
+  color: var(--green-dark);
+  background: var(--green-soft);
+}
+
+.badge--warning {
+  color: var(--amber);
+  background: var(--amber-soft);
+}
+
+.badge--danger {
+  color: var(--red);
+  background: var(--red-soft);
+}
+
+.badge--info {
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+/* ---------- Вкладки ---------- */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 20px;
+  border-bottom: 1px solid var(--border-strong);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: -1px;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.tab.active {
+  color: var(--text);
+  border-bottom-color: var(--green);
+}
+
+.tab-count {
+  padding: 0 7px;
+  font-size: 12px;
+  line-height: 20px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  color: var(--muted);
+}
+
+.tab.active .tab-count {
+  background: var(--green-soft);
+  color: var(--green-dark);
+}
+
+/* ---------- Пустое состояние ---------- */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 36px 20px;
+  text-align: center;
+  background: var(--bg);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.empty-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  color: var(--muted);
+  background: var(--bg-soft);
+}
+
+.empty-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.empty-text {
+  max-width: 420px;
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.empty-action {
+  margin-top: 8px;
+}
+
+/* ---------- Загрузка ---------- */
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 24px 0;
+  color: var(--muted);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Выпадающее меню ---------- */
+
+.menu {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
+/* Позиция задаётся из JS (position: fixed), чтобы меню не обрезалось контейнерами. */
+.menu-popover {
+  position: fixed;
+  z-index: 60;
+  width: max-content;
+  min-width: 220px;
+  max-width: min(340px, calc(100vw - 16px));
+  max-height: min(420px, 70vh);
+  padding: 6px;
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-pop);
+}
+
+.menu-title {
+  margin: 0;
+  padding: 6px 10px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  border-radius: var(--radius-xs);
+  text-decoration: none;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--bg-hover);
+  text-decoration: none;
+}
+
+.menu-item:focus-visible {
+  outline-offset: -2px;
+}
+
+.menu-item[aria-current='page'] {
+  font-weight: 700;
+}
+
+.menu-item-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.menu-item-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-item-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.menu-item-check {
+  flex: none;
+  color: var(--green);
+}
+
+.menu-empty {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* ---------- Модальное окно (нативный <dialog>) ---------- */
+
+.modal {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  color: var(--text);
+  background: var(--bg);
+  border: 0;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-pop);
+}
+
+.modal--sm {
+  width: min(420px, calc(100vw - 32px));
+}
+
+.modal::backdrop {
+  background: rgba(15, 27, 45, 0.5);
+}
+
+.modal-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 48px);
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 12px 8px 20px;
+}
+
+.modal-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.modal-body {
+  padding: 4px 20px 16px;
+  overflow-y: auto;
+  color: var(--text-soft);
+}
+
+.modal-body > p {
+  margin: 0 0 8px;
+}
+
+/* Форма внутри модалки — без собственной карточки. */
+.modal-body form {
+  max-width: none;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.modal-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border-soft);
+}
+
+/* Телефон: модалка становится нижней шторкой. */
+@media (max-width: 600px) {
+  .modal,
+  .modal--sm {
+    width: 100%;
+    max-width: 100%;
+    margin: auto 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .modal-foot {
+    padding-bottom: calc(16px + var(--safe-bottom));
+  }
+
+  .modal-foot button {
+    flex: 1 1 0;
+  }
+}
+
+.card--danger {
+  border-color: var(--red-line);
+}
+
+.card--danger .card-head h2 {
+  color: var(--red);
+}
+
+/* Форма внутри карточки — без собственной рамки. */
+.card-body form {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.card-body > dl:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- Логотип сущности ---------- */
+
+.logo-badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+
+.logo-badge--sm {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+  border-radius: var(--radius-xs);
+}
+
+.logo-badge--lg {
+  width: 64px;
+  height: 64px;
+  font-size: 20px;
+  border-radius: var(--radius);
+}
+
+.logo-badge--empty {
+  background: var(--bg-soft);
+}
+
+/* ---------- Сетка карточек-ссылок (лиги, турниры) ---------- */
+
+.entity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.entity-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 100%;
+  min-height: 80px;
+  padding: 16px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.entity-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-raised);
+  text-decoration: none;
+}
+
+.entity-card-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  border-radius: var(--radius-sm);
+}
+
+.entity-card--muted .entity-card-icon {
+  color: var(--muted);
+  background: var(--bg-soft);
+}
+
+.entity-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.entity-card-title {
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.entity-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.entity-card-chevron {
+  flex: none;
+  color: var(--border-strong);
+}
+
+.entity-card:hover .entity-card-chevron {
+  color: var(--muted);
+}
+
+/* ---------- Панель над списком и заголовки групп ---------- */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.toolbar > p {
+  margin: 0;
+}
+
+.group-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---------- Кнопка выбора файла (label с visually-hidden input) ---------- */
+
+.file-button {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+
+.file-button:hover {
+  background: var(--bg-hover);
+}
+
+.file-button:focus-within {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.file-button[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: default;
+}
+
+@media (pointer: coarse) {
+  .file-button {
+    min-height: 42px;
+  }
+}
+
+/* ---------- Страница настроек ---------- */
+
+.settings {
+  max-width: 760px;
+}
+
+.logo-editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo-editor-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.danger-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.danger-row:first-child {
+  padding-top: 0;
+}
+
+.danger-row:last-of-type {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.danger-row-text {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.danger-row-title {
+  margin: 0 0 2px;
+  font-weight: 600;
+}

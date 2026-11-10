@@ -1,0 +1,444 @@
+/* Каркас админки: боковое меню, мобильная шапка, хлебные крошки, экран входа. */
+
+.shell {
+  min-height: 100dvh;
+}
+
+/* ---------- Боковое меню ---------- */
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  width: calc(var(--sidebar-width) + var(--safe-left));
+  padding: var(--safe-top) 0 var(--safe-bottom) var(--safe-left);
+  color: var(--navy-text);
+  background: var(--navy);
+}
+
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 18px 14px 14px 20px;
+}
+
+.sidebar-close {
+  display: none;
+}
+
+.sidebar button.icon-button:hover:not(:disabled) {
+  background: var(--navy-raised);
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 4px 12px 16px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--navy-raised) transparent;
+}
+
+.sidebar-section {
+  margin: 18px 10px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--navy-muted);
+  opacity: 0.8;
+}
+
+.sidebar-section:first-child {
+  margin-top: 6px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 10px;
+  font-weight: 600;
+  color: var(--navy-muted);
+  border-radius: var(--radius-xs);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-link:hover,
+.sidebar-league:hover {
+  color: var(--navy-text);
+  background: var(--navy-raised);
+  text-decoration: none;
+}
+
+.sidebar-link.active,
+.sidebar-league.active {
+  color: var(--navy-text);
+  background: var(--navy-raised);
+  box-shadow: inset 3px 0 0 var(--brand-accent);
+}
+
+.sidebar-link svg {
+  flex: none;
+}
+
+.sidebar-leagues {
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sidebar-league {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 6px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--navy-muted);
+  border-radius: var(--radius-xs);
+}
+
+.sidebar-league-logo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--navy-text);
+  background: var(--navy-raised);
+  border-radius: 6px;
+}
+
+img.sidebar-league-logo {
+  background: #fff;
+}
+
+.sidebar-league-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-hint {
+  margin: 4px 10px 0 14px;
+  font-size: 13px;
+  color: var(--navy-muted);
+}
+
+.sidebar-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 14px 16px;
+  border-top: 1px solid var(--navy-line);
+}
+
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  background: var(--brand-accent);
+  border-radius: 50%;
+}
+
+.sidebar-user {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.sidebar-user-name,
+.sidebar-user-org {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-user-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sidebar-user-org {
+  font-size: 12px;
+  color: var(--navy-muted);
+}
+
+.sidebar-foot .icon-button {
+  color: var(--navy-muted);
+}
+
+/* ---------- Основная область ---------- */
+
+.mobilebar,
+.shell-backdrop {
+  display: none;
+}
+
+.shell-main {
+  min-width: 0;
+  margin-left: calc(var(--sidebar-width) + var(--safe-left));
+}
+
+.content {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 24px calc(var(--gutter) + var(--safe-right)) 56px var(--gutter);
+}
+
+/* ---------- Хлебные крошки ---------- */
+
+.crumbs {
+  margin: 0 0 18px;
+}
+
+.crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.crumb + .crumb::before {
+  content: '/';
+  margin: 0 6px 0 4px;
+  color: var(--border-strong);
+}
+
+.crumb-link {
+  max-width: 240px;
+  padding: 4px 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--muted);
+  border-radius: 6px;
+}
+
+.crumb-link:hover {
+  color: var(--text);
+  background: var(--bg);
+  text-decoration: none;
+}
+
+button.crumb-toggle {
+  width: 26px;
+  min-width: 26px;
+  min-height: 28px;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border-color: transparent;
+  border-radius: 6px;
+}
+
+button.crumb-toggle:hover:not(:disabled),
+button.crumb-toggle[aria-expanded='true'] {
+  color: var(--text);
+  background: var(--bg);
+  border-color: transparent;
+}
+
+/* Текущий уровень: всё название — кнопка переключателя. */
+button.crumb-current {
+  gap: 4px;
+  max-width: 100%;
+  min-height: 30px;
+  padding: 3px 6px 3px 10px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+button.crumb-current:hover:not(:disabled),
+button.crumb-current[aria-expanded='true'] {
+  background: var(--bg);
+  border-color: var(--border-strong);
+}
+
+.crumb-current-label {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+span.crumb-current-static {
+  padding: 4px 6px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ---------- Планшет и телефон: меню выезжает слева ---------- */
+
+@media (max-width: 959px) {
+  .mobilebar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: calc(var(--topbar-height) + var(--safe-top));
+    padding: var(--safe-top) calc(var(--gutter) + var(--safe-right)) 0 calc(var(--gutter) - 8px + var(--safe-left));
+    color: var(--navy-text);
+    background: var(--navy);
+  }
+
+  .mobilebar button.icon-button:hover:not(:disabled) {
+    background: var(--navy-raised);
+  }
+
+  .mobilebar-org {
+    margin-left: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: var(--navy-muted);
+  }
+
+  .sidebar {
+    width: min(300px, 86vw);
+    box-shadow: var(--shadow-pop);
+    visibility: hidden;
+    transform: translateX(-100%);
+    /* visibility с задержкой: панель недоступна для фокуса только после того, как уехала. */
+    transition: transform 0.22s ease, visibility 0s linear 0.22s;
+  }
+
+  .shell--nav-open .sidebar {
+    visibility: visible;
+    transform: none;
+    transition: transform 0.22s ease;
+  }
+
+  .sidebar-close {
+    display: inline-flex;
+  }
+
+  button.shell-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    display: block;
+    width: auto;
+    min-height: 0;
+    padding: 0;
+    background: rgba(15, 27, 45, 0.5);
+    border: 0;
+    border-radius: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  button.shell-backdrop:hover:not(:disabled) {
+    background: rgba(15, 27, 45, 0.5);
+  }
+
+  .shell--nav-open .shell-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  body:has(.shell--nav-open) {
+    overflow: hidden;
+  }
+
+  .shell-main {
+    margin-left: 0;
+  }
+
+  .content {
+    padding-top: 16px;
+    padding-left: calc(var(--gutter) + var(--safe-left));
+  }
+
+  .crumb-link {
+    max-width: 160px;
+  }
+
+  .crumb-current-label {
+    max-width: 200px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .shell--nav-open .sidebar,
+  .shell-backdrop {
+    transition: none;
+  }
+}
+
+/* ---------- Экран входа ---------- */
+
+.login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  min-height: 100dvh;
+  padding: 24px 16px;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(61, 220, 132, 0.12), transparent 60%),
+    var(--navy);
+}
+
+.login .brand-mark {
+  width: 37px;
+  height: 32px;
+}
+
+.login .brand-name {
+  font-size: 18px;
+}
+
+form.login-card {
+  gap: 16px;
+  width: min(380px, 100%);
+  max-width: none;
+  padding: 28px;
+  border: 0;
+  box-shadow: var(--shadow-raised);
+}
+
+.login-card h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+form.login-card button {
+  align-self: stretch;
+  min-height: 42px;
+}

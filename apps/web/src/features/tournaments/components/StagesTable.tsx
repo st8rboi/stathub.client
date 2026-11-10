@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { useDeleteStage, useUpdateStage } from '../hooks'
 import { stageFormatLabels } from '../labels'
@@ -15,6 +16,7 @@ type Props = {
 }
 
 export function StagesTable({ leagueId, tournamentId, stages, rulesLocked }: Props) {
+  const confirm = useConfirm()
   const updateStage = useUpdateStage(leagueId, tournamentId)
   const deleteStage = useDeleteStage(leagueId, tournamentId)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -70,9 +72,13 @@ export function StagesTable({ leagueId, tournamentId, stages, rulesLocked }: Pro
                     disabled={deleteStage.isPending}
                     onClick={() => {
                       // Сервер откажет (409), если в этапе есть заявки или матчи.
-                      if (confirm(`Удалить этап «${s.name}»?`)) {
-                        deleteStage.mutate(s.id, { onSuccess: () => editingId === s.id && setEditingId(null) })
-                      }
+                      void confirm({
+                        title: `Удалить этап «${s.name}»?`,
+                        confirmLabel: 'Удалить',
+                        danger: true,
+                      }).then((ok) => {
+                        if (ok) deleteStage.mutate(s.id, { onSuccess: () => editingId === s.id && setEditingId(null) })
+                      })
                     }}
                   >
                     Удалить

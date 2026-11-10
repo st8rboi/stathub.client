@@ -1,6 +1,7 @@
 import { useTournamentTeams } from '@/features/rosters/hooks'
 import { RefereeAssign } from '@/features/accounts/components/RefereeAssign'
 import { useTeams } from '@/features/teams/hooks'
+import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { useState, type SubmitEvent } from 'react'
 import { useCreateMatch, useDeleteMatch, useStageMatches, useUpdateMatch } from '../hooks'
@@ -29,6 +30,7 @@ interface MatchDraft {
  * на этот турнир: так матч нельзя случайно создать с командой, которой в сезоне нет.
  */
 export function MatchesSection({ stageId }: { stageId: string }) {
+  const confirm = useConfirm()
   const matches = useStageMatches(stageId)
   const allTeams = useTeams()
   // Команды берём из заявок этого этапа: в дивизионе играют только его участники.
@@ -227,14 +229,14 @@ export function MatchesSection({ stageId }: { stageId: string }) {
                             disabled={remove.isPending}
                             onClick={() => {
                               // Сервер откажет (409), если по матчу есть события или оплаченный взнос.
-                              if (
-                                confirm(
-                                  `Удалить матч ${teamName(match.homeTeamId)} — ${teamName(match.awayTeamId)}? ` +
-                                    'Неоплаченные взносы по нему удалятся, назначения судей будут отозваны.',
-                                )
-                              ) {
-                                remove.mutate(match.id)
-                              }
+                              void confirm({
+                                title: `Удалить матч ${teamName(match.homeTeamId)} — ${teamName(match.awayTeamId)}?`,
+                                message: 'Неоплаченные взносы по нему удалятся, назначения судей будут отозваны.',
+                                confirmLabel: 'Удалить матч',
+                                danger: true,
+                              }).then((ok) => {
+                                if (ok) remove.mutate(match.id)
+                              })
                             }}
                           >
                             Удалить
