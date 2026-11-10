@@ -724,3 +724,198 @@
   margin: 0 0 2px;
   font-weight: 600;
 }
+
+/* Пункт меню-кнопка: сброс стилей кнопки. */
+button.menu-item {
+  width: 100%;
+  min-height: 0;
+  justify-content: flex-start;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+}
+
+button.menu-item:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+button.menu-item--danger {
+  color: var(--red);
+}
+
+button.menu-item--danger:hover:not(:disabled) {
+  background: var(--red-soft);
+}
+
+/* ---------- Шаги статуса ---------- */
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.step + .step::before {
+  content: '';
+  width: 28px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--border-strong);
+}
+
+.step--done + .step::before {
+  background: var(--green);
+}
+
+.step-dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--bg);
+}
+
+.step--done .step-dot {
+  color: #fff;
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.step--current {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.step--current .step-dot {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(15, 27, 45, 0.12);
+}
+
+/* ---------- Плитки с цифрами ---------- */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.stat {
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.stat-label {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.stat-value {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat--danger .stat-value {
+  color: var(--red);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- Список этапов ---------- */
+
+.stage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.stage-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 10px 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stage-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-raised);
+}
+
+.stage-order {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  font-weight: 800;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  border-radius: 50%;
+}
+
+.stage-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Вся карточка кликабельна за счёт растянутой ссылки; меню лежит поверх. */
+.stage-card-link {
+  font-weight: 700;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.stage-card-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.stage-card-link:hover {
+  text-decoration: none;
+}
+
+.stage-card .menu {
+  position: relative;
+  z-index: 1;
+}

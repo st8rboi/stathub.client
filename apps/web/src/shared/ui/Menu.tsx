@@ -157,3 +157,28 @@ export function MenuLink({
     </Link>
   )
 }
+
+/** Пункт-действие. `danger` — красный текст для удаления и подобного. */
+export function MenuButton({
+  children,
+  onClick,
+  danger = false,
+  disabled = false,
+}: {
+  children: ReactNode
+  onClick: () => void
+  danger?: boolean
+  disabled?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      className={danger ? 'menu-item menu-item--danger' : 'menu-item'}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  )
+}

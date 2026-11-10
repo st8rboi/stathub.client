@@ -25,3 +25,10 @@ export function plural(count: number, forms: [one: string, few: string, many: st
     mod10 === 1 && mod100 !== 11 ? forms[0] : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? forms[1] : forms[2]
   return `${count} ${form}`
 }
+
+const moneyFormat = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 })
+
+/** Сумма в рублях: «12 500 ₽». */
+export function formatMoney(amount: number): string {
+  return moneyFormat.format(amount)
+}
