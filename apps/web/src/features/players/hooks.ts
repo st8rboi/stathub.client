@@ -8,8 +8,8 @@ export const playerKeys = {
   byIds: (ids: string[]) => [...playerKeys.all, 'ids', ids.join(',')] as const,
 }
 
-export const usePlayers = (query = '') =>
-  useQuery({ queryKey: playerKeys.list(query), queryFn: () => playersApi.list(query) })
+export const usePlayers = (query = '', enabled = true) =>
+  useQuery({ queryKey: playerKeys.list(query), queryFn: () => playersApi.list(query), enabled })
 
 /** Игроки по Id — имена для составов: заявки хранят только идентификаторы. */
 export const usePlayersByIds = (ids: string[]) =>

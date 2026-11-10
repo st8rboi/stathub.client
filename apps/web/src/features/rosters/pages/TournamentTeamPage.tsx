@@ -1,401 +1,353 @@
 import { useState, type SubmitEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
-import { usePlayers, usePlayersByIds } from '@/features/players/hooks'
+import { useNavigate, useParams } from 'react-router'
+import { usePlayersByIds } from '@/features/players/hooks'
 import { useTeams } from '@/features/teams/hooks'
+import { formatDate, plural } from '@/shared/lib/format'
 import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
+import { Icon } from '@/shared/ui/Icon'
+import { Badge, Card, EmptyState, Loading, LogoBadge, PageHeader, type BadgeTone } from '@/shared/ui/layout'
+import { Menu, MenuButton } from '@/shared/ui/Menu'
+import { Modal } from '@/shared/ui/Modal'
+import { RegisterPlayerForm } from '../components/RegisterPlayerForm'
+import { TransferPlayerForm } from '../components/TransferPlayerForm'
 import {
   useChangeSquadNumber,
   useDeleteRegistration,
   useDeleteTournamentTeam,
-  useRegisterPlayer,
   useReleasePlayer,
   useTournamentTeam,
   useTournamentTeams,
-  useTransferPlayer,
   useWithdrawTournamentTeam,
 } from '../hooks'
 import { registrationStatusLabels, tournamentTeamStatusLabels } from '../labels'
+import { parseSquadNumber } from '../squadNumber'
+import type { PlayerRegistration, PlayerRegistrationStatus } from '../types'
 
-function parseSquadNumber(value: FormDataEntryValue | null): number | null {
-  const raw = String(value ?? '').trim()
-  if (!raw) return null
+const registrationTones: Record<PlayerRegistrationStatus, BadgeTone> = {
+  Active: 'success',
+  TransferredOut: 'info',
+  Released: 'neutral',
+}
 
-  const parsed = Number(raw)
-  return Number.isFinite(parsed) ? parsed : null
+/** Активные сверху по номеру (без номера — в конце), потом история — свежие первыми. */
+function byRosterOrder(a: PlayerRegistration, b: PlayerRegistration): number {
+  const aActive = a.status === 'Active'
+  const bActive = b.status === 'Active'
+  if (aActive !== bActive) return aActive ? -1 : 1
+  if (aActive) return (a.squadNumber ?? Infinity) - (b.squadNumber ?? Infinity)
+  return (b.leftOn ?? '').localeCompare(a.leftOn ?? '')
 }
 
 /**
- * Состав команды на этапе: заявка игрока, отзаявка и трансфер.
- * История заявок не скрывается — закрытые строки остаются с датой и статусом.
+ * Состав команды на этапе: заявка игрока, номер, отзаявка и трансфер.
+ * История заявок не скрывается — закрытые строки доступны в фильтре «С историей».
  */
 export default function TournamentTeamPage() {
   const confirm = useConfirm()
+  const navigate = useNavigate()
   const { leagueId = '', tournamentId = '', stageId = '', tournamentTeamId = '' } = useParams()
 
   const details = useTournamentTeam(stageId, tournamentTeamId)
   const tournamentTeams = useTournamentTeams(stageId)
   const allTeams = useTeams()
 
-  const [playerQuery, setPlayerQuery] = useState('')
-  const foundPlayers = usePlayers(playerQuery.trim())
-
-  const [formError, setFormError] = useState<string | null>(null)
-
   const registrations = details.data?.registrations ?? []
-  const playerIds = [...new Set(registrations.map((registration) => registration.playerId))]
-  const playersByIds = usePlayersByIds(playerIds)
+  const playersByIds = usePlayersByIds([...new Set(registrations.map((registration) => registration.playerId))])
 
-  const register = useRegisterPlayer(stageId, tournamentTeamId)
   const release = useReleasePlayer(stageId, tournamentTeamId)
   const withdraw = useWithdrawTournamentTeam(stageId, tournamentTeamId)
   const changeNumber = useChangeSquadNumber(stageId, tournamentTeamId)
   const deleteRegistration = useDeleteRegistration(stageId, tournamentTeamId)
   const deleteTeam = useDeleteTournamentTeam(stageId, tournamentTeamId)
-  const navigate = useNavigate()
 
-  // Заявка, у которой сейчас правится номер, и черновик номера (строка из поля ввода).
-  const [numberDraft, setNumberDraft] = useState<{ registrationId: string; value: string } | null>(null)
+  const [showHistory, setShowHistory] = useState(false)
+  const [registering, setRegistering] = useState(false)
+  // null — окно закрыто; '' — открыто без выбранного игрока.
+  const [transferPlayerId, setTransferPlayerId] = useState<string | null>(null)
+  const [numberEditId, setNumberEditId] = useState<string | null>(null)
 
-  const teamId = details.data?.teamId ?? ''
-  const transfer = useTransferPlayer(stageId, teamId)
-
-  const teamName = (id: string) =>
-    allTeams.data?.find((team) => team.id === id)?.name ?? id.slice(0, 8)
-  const playerName = (id: string) =>
-    playersByIds.data?.find((player) => player.id === id)?.fullName ?? id.slice(0, 8)
+  const teamById = (id: string) => allTeams.data?.find((team) => team.id === id)
+  const teamName = (id: string) => teamById(id)?.name ?? '…'
+  const playerName = (id: string) => playersByIds.data?.find((player) => player.id === id)?.fullName ?? '…'
 
   if (details.error) return <ErrorText error={details.error} />
-  if (!details.data) return <p>Загрузка…</p>
+  if (!details.data) return <Loading />
 
   const { data } = details
-  const activeRegistrations = registrations.filter((registration) => registration.status === 'Active')
-  const otherTeams = (tournamentTeams.data ?? []).filter(
-    (tournamentTeam) => tournamentTeam.id !== tournamentTeamId && tournamentTeam.status === 'Active',
+  const isActiveTeam = data.status === 'Active'
+  const active = registrations.filter((registration) => registration.status === 'Active')
+  const historyCount = registrations.length - active.length
+  const visible = (showHistory ? registrations : active).slice().sort(byRosterOrder)
+
+  const otherTeams = (tournamentTeams.data ?? [])
+    .filter((item) => item.id !== tournamentTeamId && item.status === 'Active')
+    .map((item) => ({ id: item.teamId, name: teamName(item.teamId) }))
+  const canTransfer = isActiveTeam && active.length > 0 && otherTeams.length > 0
+
+  const numberEditing = registrations.find((registration) => registration.id === numberEditId)
+  const name = teamName(data.teamId)
+  const team = teamById(data.teamId)
+
+  const askWithdraw = () =>
+    void confirm({
+      title: 'Снять команду с турнира?',
+      message: 'Все активные заявки игроков закроются. История матчей сохранится.',
+      confirmLabel: 'Снять команду',
+      danger: true,
+    }).then((ok) => {
+      if (ok) withdraw.mutate()
+    })
+
+  const askDeleteTeam = () =>
+    void confirm({
+      title: 'Удалить заявку команды?',
+      message:
+        'Только для ошибочно заявленной команды без матчей на этапе: заявка удалится вместе с составом. Это действие нельзя отменить.',
+      confirmLabel: 'Удалить заявку',
+      danger: true,
+    }).then((ok) => {
+      // Сервер откажет (409), если у команды уже есть матчи на этапе — тогда её снимают.
+      if (ok)
+        deleteTeam.mutate(undefined, {
+          onSuccess: () => void navigate(`/leagues/${leagueId}/tournaments/${tournamentId}/stages/${stageId}/teams`),
+        })
+    })
+
+  const askRelease = (registration: PlayerRegistration) =>
+    void confirm({
+      title: `Отзаявить игрока ${playerName(registration.playerId)}?`,
+      message: 'Заявка закроется и останется в истории.',
+      confirmLabel: 'Отзаявить',
+    }).then((ok) => {
+      if (ok) release.mutate(registration.id)
+    })
+
+  const askDeleteRegistration = (registration: PlayerRegistration) =>
+    void confirm({
+      title: 'Удалить ошибочную заявку?',
+      message: `${playerName(registration.playerId)}: заявка удалится без следа в истории. Только если у игрока нет событий в матчах за команду.`,
+      confirmLabel: 'Удалить',
+      danger: true,
+    }).then((ok) => {
+      // Сервер откажет (409), если у игрока уже есть события в матчах за команду.
+      if (ok) deleteRegistration.mutate(registration.id)
+    })
+
+  const onSaveNumber = (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!numberEditing) return
+    const squadNumber = parseSquadNumber(new FormData(event.currentTarget).get('squadNumber'))
+    changeNumber.mutate({ registrationId: numberEditing.id, squadNumber }, { onSuccess: () => setNumberEditId(null) })
+  }
+
+  const registerButton = isActiveTeam && (
+    <button type="button" onClick={() => setRegistering(true)}>
+      <Icon name="plus" size={18} />
+      Заявить игрока
+    </button>
   )
-
-  // После удаления заявки возвращаемся к списку участников этапа.
-  const stageLink = `/leagues/${leagueId}/tournaments/${tournamentId}/stages/${stageId}/teams`
-
-  const saveNumber = () => {
-    if (!numberDraft) return
-    changeNumber.mutate(
-      { registrationId: numberDraft.registrationId, squadNumber: parseSquadNumber(numberDraft.value) },
-      { onSuccess: () => setNumberDraft(null) },
-    )
-  }
-
-  const onRegister = (e: SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formElement = e.currentTarget
-    const form = new FormData(formElement)
-    const playerId = String(form.get('playerId') ?? '')
-
-    if (!playerId) {
-      setFormError('Выберите игрока из подсказок.')
-      return
-    }
-
-    setFormError(null)
-    register.mutate(
-      { playerId, squadNumber: parseSquadNumber(form.get('squadNumber')) },
-      { onSuccess: () => formElement.reset() },
-    )
-  }
-
-  const onTransfer = (e: SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formElement = e.currentTarget
-    const form = new FormData(formElement)
-    const playerId = String(form.get('playerId') ?? '')
-    const toTeamId = String(form.get('toTeamId') ?? '')
-
-    if (!playerId || !toTeamId) {
-      setFormError('Выберите игрока и команду назначения.')
-      return
-    }
-
-    setFormError(null)
-    transfer.mutate(
-      { playerId, toTeamId, squadNumber: parseSquadNumber(form.get('squadNumber')) },
-      { onSuccess: () => formElement.reset() },
-    )
-  }
 
   return (
     <>
-      <h1>{teamName(data.teamId)}</h1>
-
-      <dl>
-        <dt>Статус заявки</dt>
-        <dd>{tournamentTeamStatusLabels[data.status]}</dd>
-        <dt>Игроков заявлено</dt>
-        <dd>{activeRegistrations.length}</dd>
-      </dl>
-
-      <div className="actions">
-        {data.status === 'Active' && (
-          <button
-            type="button"
-            className="danger"
-            disabled={withdraw.isPending || deleteTeam.isPending}
-            onClick={() => {
-              void confirm({
-                title: 'Снять команду с турнира?',
-                message: 'Все активные заявки игроков закроются.',
-                confirmLabel: 'Снять команду',
-                danger: true,
-              }).then((ok) => {
-                if (ok) withdraw.mutate()
-              })
-            }}
-          >
-            Снять команду с турнира
-          </button>
-        )}
-        <button
-          type="button"
-          className="danger"
-          disabled={withdraw.isPending || deleteTeam.isPending}
-          onClick={() => {
-            // Сервер откажет (409), если у команды уже есть матчи на этапе — тогда её снимают.
-            void confirm({
-              title: 'Удалить заявку команды?',
-              message: 'Ошибочная заявка удалится вместе с составом. Это действие нельзя отменить.',
-              confirmLabel: 'Удалить заявку',
-              danger: true,
-            }).then((ok) => {
-              if (ok) deleteTeam.mutate(undefined, { onSuccess: () => void navigate(stageLink) })
-            })
-          }}
-        >
-          Удалить заявку
-        </button>
-      </div>
-      <p className="hint">
-        «Снять с турнира» сохраняет историю. «Удалить заявку» — только для ошибочно заявленной команды
-        без матчей на этапе.
-      </p>
+      <PageHeader
+        media={<LogoBadge src={team?.logoUrl ?? null} name={name} size="lg" />}
+        eyebrow="Состав на этапе"
+        title={name}
+        meta={
+          <>
+            {!isActiveTeam && <Badge tone="danger">{tournamentTeamStatusLabels[data.status]}</Badge>}
+            <span>{plural(active.length, ['игрок заявлен', 'игрока заявлено', 'игроков заявлено'])}</span>
+          </>
+        }
+        actions={
+          <>
+            {registerButton}
+            {canTransfer && (
+              <button type="button" className="secondary" onClick={() => setTransferPlayerId('')}>
+                Трансфер
+              </button>
+            )}
+            <Menu triggerClassName="icon-button" triggerLabel="Действия с командой" trigger={<Icon name="more" />} align="end">
+              {isActiveTeam && (
+                <MenuButton danger disabled={withdraw.isPending} onClick={askWithdraw}>
+                  Снять с турнира
+                </MenuButton>
+              )}
+              <MenuButton danger disabled={deleteTeam.isPending} onClick={askDeleteTeam}>
+                Удалить ошибочную заявку
+              </MenuButton>
+            </Menu>
+          </>
+        }
+      />
       <ErrorText error={withdraw.error ?? deleteTeam.error} />
+      {!isActiveTeam && <p className="notice">Команда снята с турнира — новые заявки и трансферы недоступны.</p>}
 
-      <h2>Заявки игроков</h2>
       {registrations.length === 0 ? (
-        <p className="notice">Состав пуст — заявите первого игрока ниже.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>№</th>
-              <th>Игрок</th>
-              <th>Статус</th>
-              <th>Заявлен</th>
-              <th>Закрыта</th>
-              <th>Действия</th>
-            </tr>
-          </thead>
-          <tbody>
-            {registrations.map((registration) => (
-              <tr key={registration.id}>
-                <td>
-                  {numberDraft?.registrationId === registration.id ? (
-                    <input
-                      type="number"
-                      min={1}
-                      max={999}
-                      value={numberDraft.value}
-                      onChange={(e) => setNumberDraft({ ...numberDraft, value: e.target.value })}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') saveNumber()
-                        if (e.key === 'Escape') setNumberDraft(null)
-                      }}
-                      aria-label="Игровой номер"
-                      autoFocus
-                    />
-                  ) : (
-                    (registration.squadNumber ?? '—')
-                  )}
-                </td>
-                <td>{playerName(registration.playerId)}</td>
-                <td>{registrationStatusLabels[registration.status]}</td>
-                <td>{registration.joinedOn}</td>
-                <td>{registration.leftOn ?? '—'}</td>
-                <td className="actions-cell">
-                  <div className="actions">
-                    {numberDraft?.registrationId === registration.id ? (
-                      <>
-                        <button type="button" disabled={changeNumber.isPending} onClick={saveNumber}>
-                          Сохранить
-                        </button>
-                        <button type="button" className="secondary" onClick={() => setNumberDraft(null)}>
-                          Отмена
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        {registration.status === 'Active' && (
-                          <>
-                            <button
-                              type="button"
-                              className="secondary"
-                              onClick={() => {
-                                changeNumber.reset()
-                                setNumberDraft({
-                                  registrationId: registration.id,
-                                  value: registration.squadNumber?.toString() ?? '',
-                                })
-                              }}
-                            >
-                              Номер
-                            </button>
-                            <button
-                              type="button"
-                              disabled={release.isPending}
-                              onClick={() => {
-                                void confirm({
-                                  title: 'Отзаявить игрока?',
-                                  message: 'Заявка останется в истории.',
-                                  confirmLabel: 'Отзаявить',
-                                }).then((ok) => {
-                                  if (ok) release.mutate(registration.id)
-                                })
-                              }}
-                            >
-                              Отзаявить
-                            </button>
-                          </>
-                        )}
-                        <button
-                          type="button"
-                          className="danger"
-                          disabled={deleteRegistration.isPending}
-                          onClick={() => {
-                            // Сервер откажет (409), если у игрока уже есть события в матчах за команду.
-                            void confirm({
-                              title: 'Удалить ошибочную заявку?',
-                              message: 'В истории она не останется.',
-                              confirmLabel: 'Удалить',
-                              danger: true,
-                            }).then((ok) => {
-                              if (ok) deleteRegistration.mutate(registration.id)
-                            })
-                          }}
-                        >
-                          Удалить
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      <ErrorText error={release.error ?? changeNumber.error ?? deleteRegistration.error} />
-      {registrations.length > 0 && (
-        <p className="hint">
-          Уход игрока оформляйте отзаявкой или трансфером — заявка останется в истории. «Удалить» —
-          только для ошибочной заявки, по которой нет событий в матчах.
-        </p>
-      )}
-
-      <h2>Заявить игрока</h2>
-      {data.status !== 'Active' ? (
-        <p className="notice">Команда снята с турнира — новые заявки недоступны.</p>
+        <EmptyState icon="user" title="Состав пуст" action={registerButton || undefined}>
+          Заявите игроков из справочника — без заявки игрок не сможет участвовать в матчах этапа.
+        </EmptyState>
       ) : (
         <>
-          <label>
-            Поиск игрока по ФИО (учитывает опечатки)
-            <input
-              value={playerQuery}
-              onChange={(e) => setPlayerQuery(e.target.value)}
-              placeholder="например, Иванов"
-              maxLength={200}
-            />
-          </label>
+          {historyCount > 0 && (
+            <div className="toolbar">
+              <div className="chips" role="group" aria-label="Какие заявки показать">
+                <button type="button" className="chip" aria-pressed={!showHistory} onClick={() => setShowHistory(false)}>
+                  В составе <span className="chip-count">{active.length}</span>
+                </button>
+                <button type="button" className="chip" aria-pressed={showHistory} onClick={() => setShowHistory(true)}>
+                  С историей <span className="chip-count">{registrations.length}</span>
+                </button>
+              </div>
+            </div>
+          )}
 
-          <form onSubmit={onRegister}>
-            <label>
-              Игрок
-              <select name="playerId" required defaultValue="">
-                <option value="" disabled>
-                  Выберите игрока
-                </option>
-                {(foundPlayers.data ?? []).map((player) => (
-                  <option key={player.id} value={player.id}>
-                    {player.fullName}
-                    {player.birthDate ? `, ${player.birthDate}` : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Игровой номер (необязательно)
-              <input name="squadNumber" type="number" min={1} max={999} />
-            </label>
-            {formError && <p className="error">{formError}</p>}
-            <ErrorText error={register.error} />
-            <button type="submit" disabled={register.isPending}>
-              Заявить игрока
-            </button>
-            <p className="hint">
-              Нет нужного игрока? <Link to="/players">Добавьте его в справочник</Link> — заявка
-              ссылается на игрока по идентификатору.
-            </p>
-          </form>
+          <Card flush>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>№</th>
+                  <th>Игрок</th>
+                  {showHistory && <th>Статус</th>}
+                  <th className="col-secondary">Заявлен</th>
+                  {showHistory && <th className="col-secondary">Закрыта</th>}
+                  <th>
+                    <span className="visually-hidden">Действия</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((registration) => {
+                  const isActive = registration.status === 'Active'
+                  return (
+                    <tr key={registration.id} className={isActive ? undefined : 'row-muted'}>
+                      <td>
+                        <span className={registration.squadNumber ? 'squad-number' : 'squad-number squad-number--empty'}>
+                          {registration.squadNumber ?? '—'}
+                        </span>
+                      </td>
+                      <td>
+                        <strong>{playerName(registration.playerId)}</strong>
+                      </td>
+                      {showHistory && (
+                        <td>
+                          <Badge tone={registrationTones[registration.status]}>
+                            {registrationStatusLabels[registration.status]}
+                          </Badge>
+                        </td>
+                      )}
+                      <td className="col-secondary muted">{formatDate(registration.joinedOn)}</td>
+                      {showHistory && (
+                        <td className="col-secondary muted">
+                          {registration.leftOn ? formatDate(registration.leftOn) : '—'}
+                        </td>
+                      )}
+                      <td>
+                        <Menu
+                          triggerClassName="icon-button"
+                          triggerLabel={`Действия с заявкой: ${playerName(registration.playerId)}`}
+                          trigger={<Icon name="more" />}
+                          align="end"
+                        >
+                          {isActive && (
+                            <>
+                              <MenuButton
+                                onClick={() => {
+                                  changeNumber.reset()
+                                  setNumberEditId(registration.id)
+                                }}
+                              >
+                                Изменить номер
+                              </MenuButton>
+                              {canTransfer && (
+                                <MenuButton onClick={() => setTransferPlayerId(registration.playerId)}>
+                                  Перевести в другую команду
+                                </MenuButton>
+                              )}
+                              <MenuButton disabled={release.isPending} onClick={() => askRelease(registration)}>
+                                Отзаявить
+                              </MenuButton>
+                            </>
+                          )}
+                          <MenuButton
+                            danger
+                            disabled={deleteRegistration.isPending}
+                            onClick={() => askDeleteRegistration(registration)}
+                          >
+                            Удалить ошибочную заявку
+                          </MenuButton>
+                        </Menu>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </Card>
+          <ErrorText error={release.error ?? deleteRegistration.error} />
+          <p className="list-footnote">
+            Уход игрока оформляйте отзаявкой или трансфером — заявка останется в истории. Удаление — только для
+            ошибочной заявки.
+          </p>
         </>
       )}
 
-      <h2>Трансфер</h2>
-      {activeRegistrations.length === 0 ? (
-        <p className="notice">Некого переводить: в команде нет активных заявок.</p>
-      ) : otherTeams.length === 0 ? (
-        <p className="notice">В турнире нет других команд — заявите их на странице турнира.</p>
-      ) : data.status !== 'Active' ? (
-        <p className="notice">Команда снята с турнира — трансферы недоступны.</p>
-      ) : (
-        <form onSubmit={onTransfer}>
-          <label>
-            Игрок
-            <select name="playerId" required defaultValue="">
-              <option value="" disabled>
-                Выберите игрока
-              </option>
-              {activeRegistrations.map((registration) => (
-                <option key={registration.id} value={registration.playerId}>
-                  {playerName(registration.playerId)}
-                  {registration.squadNumber ? ` (№${registration.squadNumber})` : ''}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Команда назначения
-            <select name="toTeamId" required defaultValue="">
-              <option value="" disabled>
-                Выберите команду
-              </option>
-              {otherTeams.map((tournamentTeam) => (
-                <option key={tournamentTeam.id} value={tournamentTeam.teamId}>
-                  {teamName(tournamentTeam.teamId)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Новый игровой номер (необязательно)
-            <input name="squadNumber" type="number" min={1} max={999} />
-          </label>
-          <ErrorText error={transfer.error} />
-          <button type="submit" disabled={transfer.isPending}>
-            Перевести игрока
-          </button>
-          <p className="hint">
-            Старая заявка закроется со статусом «Перешёл в другую команду» и датой — история матчей
-            и событий не пострадает.
-          </p>
-        </form>
-      )}
+      <Modal open={registering} onClose={() => setRegistering(false)} title={`Заявить игрока · ${name}`}>
+        <RegisterPlayerForm
+          stageId={stageId}
+          tournamentTeamId={tournamentTeamId}
+          activePlayerIds={new Set(active.map((registration) => registration.playerId))}
+          onDone={() => setRegistering(false)}
+        />
+      </Modal>
+
+      <Modal open={transferPlayerId !== null} onClose={() => setTransferPlayerId(null)} title="Трансфер игрока">
+        <TransferPlayerForm
+          stageId={stageId}
+          fromTeamId={data.teamId}
+          players={active.map((registration) => ({
+            id: registration.playerId,
+            label: `${playerName(registration.playerId)}${registration.squadNumber ? ` (№${registration.squadNumber})` : ''}`,
+          }))}
+          teams={otherTeams}
+          initialPlayerId={transferPlayerId ?? ''}
+          onDone={() => setTransferPlayerId(null)}
+        />
+      </Modal>
+
+      <Modal
+        open={numberEditing !== undefined}
+        onClose={() => setNumberEditId(null)}
+        title={numberEditing ? `Номер: ${playerName(numberEditing.playerId)}` : ''}
+        size="sm"
+      >
+        {numberEditing && (
+          <form onSubmit={onSaveNumber}>
+            <label>
+              Игровой номер
+              <input
+                name="squadNumber"
+                type="number"
+                min={1}
+                max={999}
+                defaultValue={numberEditing.squadNumber ?? ''}
+                placeholder="без номера"
+                autoFocus
+              />
+            </label>
+            <ErrorText error={changeNumber.error} />
+            <div className="actions">
+              <button type="submit" disabled={changeNumber.isPending}>
+                Сохранить
+              </button>
+              <button type="button" className="secondary" onClick={() => setNumberEditId(null)}>
+                Отмена
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </>
   )
 }

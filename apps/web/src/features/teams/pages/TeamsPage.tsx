@@ -1,224 +1,149 @@
 import { useState } from 'react'
-import { useAuth } from '@/features/auth/authContext'
-import { validateLogoFile } from '@/shared/lib/logoFile'
+import { plural } from '@/shared/lib/format'
+import { useDebouncedValue } from '@/shared/lib/useDebouncedValue'
 import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
+import { Icon } from '@/shared/ui/Icon'
+import { Card, EmptyState, Loading, LogoBadge, PageHeader } from '@/shared/ui/layout'
+import { Menu, MenuButton } from '@/shared/ui/Menu'
+import { Modal } from '@/shared/ui/Modal'
 import { CreateTeamForm } from '../components/CreateTeamForm'
-import { useDeleteTeam, useDeleteTeamLogo, useTeams, useUpdateTeam, useUploadTeamLogo } from '../hooks'
+import { TeamEditor } from '../components/TeamEditor'
+import { useDeleteTeam, useTeams } from '../hooks'
 
-interface TeamDraft {
-  id: string
-  name: string
-  city: string
-}
-
+/** Справочник команд: поиск, таблица, создание и карточка команды в модальном окне. */
 export default function TeamsPage() {
   const confirm = useConfirm()
-  const { user } = useAuth()
   const [query, setQuery] = useState('')
-  const [logoError, setLogoError] = useState<string | null>(null)
-  const teams = useTeams(query.trim())
-
-  const uploadLogo = useUploadTeamLogo()
-  const deleteLogo = useDeleteTeamLogo()
-  const updateTeam = useUpdateTeam()
+  const search = useDebouncedValue(query.trim())
+  const teams = useTeams(search)
   const deleteTeam = useDeleteTeam()
 
-  // Редактируемая строка: правка идёт прямо в таблице, одна строка за раз.
-  const [draft, setDraft] = useState<TeamDraft | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const editing = teams.data?.find((team) => team.id === editingId)
 
-  const saveDraft = () => {
-    if (!draft) return
-    updateTeam.mutate(
-      { id: draft.id, body: { name: draft.name, city: draft.city.trim() || null } },
-      { onSuccess: () => setDraft(null) },
-    )
-  }
+  const list = [...(teams.data ?? [])].sort((a, b) => a.name.localeCompare(b.name, 'ru'))
 
-  const uploadingTeamId = uploadLogo.isPending ? uploadLogo.variables?.id : undefined
+  const createButton = (
+    <button type="button" onClick={() => setCreating(true)}>
+      <Icon name="plus" size={18} />
+      Новая команда
+    </button>
+  )
 
   return (
     <>
-      <h1>Команды</h1>
-      <p>
-        Справочник клубов: команда заводится один раз и переиспользуется во всех турнирах.
-        Матчи ссылаются на её идентификатор, поэтому переименование не ломает историю.
-        Команда общая для всех организаторов: изменить её можно, только если она не используется
-        в чужих лигах, а удалить — только если её ещё нет ни в заявках, ни в матчах.
-      </p>
-
-      <label>
-        Поиск по названию
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="например, Звезда"
-          maxLength={150}
-        />
-      </label>
-
-      <ErrorText
-        error={teams.error ?? uploadLogo.error ?? deleteLogo.error ?? updateTeam.error ?? deleteTeam.error}
-      />
-      {logoError && <p className="error">{logoError}</p>}
-      {teams.isPending && <p>Загрузка…</p>}
-      {teams.data?.length === 0 && (
-        <p className="notice">
-          {query.trim() ? 'По этому запросу команд нет.' : 'Команд пока нет — добавьте первую ниже.'}
+      <PageHeader title="Команды" actions={createButton} />
+      <details className="explainer">
+        <summary>Как устроен справочник</summary>
+        <p>
+          Команда заводится один раз и переиспользуется во всех турнирах. Справочник общий для всех организаторов:
+          изменить команду можно, только если она не используется в чужих лигах, а удалить — только если её ещё нет ни
+          в заявках, ни в матчах.
         </p>
-      )}
-      {teams.data && teams.data.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Логотип</th>
-              <th>Название</th>
-              <th>Город</th>
-              <th>ID</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {teams.data.map((team) => {
-              // Логотип закрепляется за организацией, загрузившей его первой (см. Team.SetLogo).
-              const canChangeLogo = !team.logoUrl || team.logoOwnerTenantId === user?.tenantId
-              const isEditing = draft?.id === team.id
+      </details>
 
-              return (
+      <div className="directory-toolbar">
+        <label className="search-field">
+          <span className="visually-hidden">Поиск по названию</span>
+          <Icon name="search" size={18} />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Поиск по названию"
+            maxLength={150}
+          />
+        </label>
+        {teams.data && teams.data.length > 0 && (
+          <p className="muted">{plural(teams.data.length, ['команда', 'команды', 'команд'])}</p>
+        )}
+      </div>
+
+      <ErrorText error={teams.error ?? deleteTeam.error} />
+      {teams.isPending && <Loading />}
+
+      {teams.data?.length === 0 &&
+        (search ? (
+          <EmptyState icon="search" title="Ничего не найдено" action={createButton}>
+            По запросу «{search}» команд нет. Возможно, её ещё не добавили.
+          </EmptyState>
+        ) : (
+          <EmptyState icon="shield" title="Команд пока нет" action={createButton}>
+            Добавьте клубы, которые играют в ваших турнирах.
+          </EmptyState>
+        ))}
+
+      {list.length > 0 && (
+        <Card flush>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Команда</th>
+                <th className="col-secondary">Город</th>
+                <th>
+                  <span className="visually-hidden">Действия</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.map((team) => (
                 <tr key={team.id}>
                   <td>
-                    <div className="logo-cell">
-                      {team.logoUrl ? (
-                        <img src={team.logoUrl} alt="" className="logo" />
-                      ) : (
-                        <span className="muted">—</span>
-                      )}
-
-                      {canChangeLogo ? (
-                        <>
-                          <input
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp"
-                            disabled={uploadingTeamId === team.id}
-                            onChange={(event) => {
-                              const file = event.target.files?.[0]
-                              if (file) {
-                                const error = validateLogoFile(file)
-                                setLogoError(error)
-                                if (!error) uploadLogo.mutate({ id: team.id, file })
-                              }
-                              event.target.value = ''
-                            }}
-                          />
-
-                          {team.logoUrl && (
-                            <button
-                              type="button"
-                              className="danger"
-                              disabled={deleteLogo.isPending}
-                              onClick={() => deleteLogo.mutate(team.id)}
-                            >
-                              Убрать
-                            </button>
-                          )}
-                        </>
-                      ) : (
-                        <span className="muted">Заменить — через техподдержку</span>
-                      )}
+                    <div className="cell-main">
+                      <LogoBadge src={team.logoUrl} name={team.name} size="sm" />
+                      <span className="cell-text">
+                        <button type="button" className="cell-title" onClick={() => setEditingId(team.id)}>
+                          {team.name}
+                        </button>
+                        {/* На телефоне столбца «Город» нет — показываем город под названием. */}
+                        {team.city && <span className="cell-sub mobile-only">{team.city}</span>}
+                      </span>
                     </div>
                   </td>
-                  {isEditing ? (
-                    <>
-                      <td>
-                        <input
-                          value={draft.name}
-                          onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                          onKeyDown={(e) => e.key === 'Enter' && saveDraft()}
-                          required
-                          maxLength={150}
-                          aria-label="Название команды"
-                          autoFocus
-                        />
-                      </td>
-                      <td>
-                        <input
-                          value={draft.city}
-                          onChange={(e) => setDraft({ ...draft, city: e.target.value })}
-                          onKeyDown={(e) => e.key === 'Enter' && saveDraft()}
-                          maxLength={100}
-                          aria-label="Город"
-                        />
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td>{team.name}</td>
-                      <td>{team.city ?? '—'}</td>
-                    </>
-                  )}
-                  <td className="mono">{team.id}</td>
-                  <td className="actions-cell">
-                    {isEditing ? (
-                      <div className="actions">
-                        <button
-                          type="button"
-                          disabled={updateTeam.isPending || !draft.name.trim()}
-                          onClick={saveDraft}
-                        >
-                          Сохранить
-                        </button>
-                        <button
-                          type="button"
-                          className="secondary"
-                          onClick={() => {
-                            setDraft(null)
-                            updateTeam.reset()
-                          }}
-                        >
-                          Отмена
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="actions">
-                        <button
-                          type="button"
-                          className="secondary"
-                          onClick={() => {
-                            updateTeam.reset()
-                            setDraft({ id: team.id, name: team.name, city: team.city ?? '' })
-                          }}
-                        >
-                          Изменить
-                        </button>
-                        <button
-                          type="button"
-                          className="danger"
-                          disabled={deleteTeam.isPending}
-                          onClick={() => {
+                  <td className="col-secondary">{team.city ?? <span className="muted">—</span>}</td>
+                  <td>
+                    <Menu
+                      triggerClassName="icon-button"
+                      triggerLabel={`Действия с командой «${team.name}»`}
+                      trigger={<Icon name="more" />}
+                      align="end"
+                    >
+                      <MenuButton onClick={() => setEditingId(team.id)}>Изменить</MenuButton>
+                      <MenuButton
+                        danger
+                        disabled={deleteTeam.isPending}
+                        onClick={() =>
+                          void confirm({
+                            title: `Удалить команду «${team.name}»?`,
+                            message: 'Команду, которая уже есть в заявках или матчах, удалить не получится.',
+                            confirmLabel: 'Удалить',
+                            danger: true,
+                          }).then((ok) => {
                             // Сервер откажет (409), если команда уже есть в заявках или матчах.
-                            void confirm({
-                              title: `Удалить команду «${team.name}»?`,
-                              confirmLabel: 'Удалить',
-                              danger: true,
-                            }).then((ok) => {
-                              if (ok) deleteTeam.mutate(team.id)
-                            })
-                          }}
-                        >
-                          Удалить
-                        </button>
-                      </div>
-                    )}
+                            if (ok) deleteTeam.mutate(team.id)
+                          })
+                        }
+                      >
+                        Удалить
+                      </MenuButton>
+                    </Menu>
                   </td>
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </Card>
       )}
 
-      <h2>Новая команда</h2>
-      <CreateTeamForm />
+      <Modal open={creating} onClose={() => setCreating(false)} title="Новая команда">
+        <CreateTeamForm onDone={() => setCreating(false)} />
+      </Modal>
+
+      <Modal open={editing !== undefined} onClose={() => setEditingId(null)} title={editing?.name ?? ''}>
+        {editing && <TeamEditor key={editing.id} team={editing} onDone={() => setEditingId(null)} />}
+      </Modal>
     </>
   )
 }

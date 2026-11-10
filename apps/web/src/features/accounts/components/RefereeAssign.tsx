@@ -27,7 +27,10 @@ export function RefereeAssign({ matchId }: { matchId: string }) {
   const existing = (assignments.data ?? []).find(
     (assignment) => assignment.scopeType === 'Match' && assignment.scopeId === matchId,
   )
-  const referees = (users.data ?? []).filter((user) => user.isActive)
+  const active = (users.data ?? []).filter((user) => user.isActive)
+  // Сначала судьи; администраторы тоже могут судить (например, сам организатор).
+  const referees = active.filter((user) => user.role === 'Referee')
+  const others = active.filter((user) => user.role !== 'Referee')
 
   return (
     <>
@@ -72,9 +75,19 @@ export function RefereeAssign({ matchId }: { matchId: string }) {
           ))}
           {referees.length === 0 && (
             <MenuEmpty>
-              Аккаунтов нет — <Link to="/accounts">создать судью</Link>
+              Судей нет — <Link to="/referees">создать</Link>
             </MenuEmpty>
           )}
+          {others.length > 0 && <MenuTitle>Администраторы</MenuTitle>}
+          {others.map((user) => (
+            <MenuButton
+              key={user.id}
+              disabled={assign.isPending}
+              onClick={() => assign.mutate({ userId: user.id, role: 'Referee', scopeType: 'Match', scopeId: matchId })}
+            >
+              {user.displayName}
+            </MenuButton>
+          ))}
         </Menu>
       )}
       <ErrorText error={assign.error ?? revoke.error} />
