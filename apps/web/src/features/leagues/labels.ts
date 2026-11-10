@@ -1,3 +1,4 @@
+import type { BadgeTone } from '@/shared/ui/layout'
 import type { LeagueDataSource, LeagueStatus } from './types'
 
 export const leagueStatusLabels: Record<LeagueStatus, string> = {
@@ -9,4 +10,10 @@ export const leagueStatusLabels: Record<LeagueStatus, string> = {
 export const dataSourceLabels: Record<LeagueDataSource, string> = {
   Native: 'Ведётся на платформе',
   Mirrored: 'Результаты из внешнего источника',
+}
+
+export const leagueStatusTones: Record<LeagueStatus, BadgeTone> = {
+  Draft: 'warning',
+  Published: 'success',
+  Archived: 'neutral',
 }

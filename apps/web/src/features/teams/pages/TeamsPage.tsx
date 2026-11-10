@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/features/auth/authContext'
 import { validateLogoFile } from '@/shared/lib/logoFile'
+import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { CreateTeamForm } from '../components/CreateTeamForm'
 import { useDeleteTeam, useDeleteTeamLogo, useTeams, useUpdateTeam, useUploadTeamLogo } from '../hooks'
@@ -12,6 +13,7 @@ interface TeamDraft {
 }
 
 export default function TeamsPage() {
+  const confirm = useConfirm()
   const { user } = useAuth()
   const [query, setQuery] = useState('')
   const [logoError, setLogoError] = useState<string | null>(null)
@@ -194,7 +196,13 @@ export default function TeamsPage() {
                           disabled={deleteTeam.isPending}
                           onClick={() => {
                             // Сервер откажет (409), если команда уже есть в заявках или матчах.
-                            if (confirm(`Удалить команду «${team.name}»?`)) deleteTeam.mutate(team.id)
+                            void confirm({
+                              title: `Удалить команду «${team.name}»?`,
+                              confirmLabel: 'Удалить',
+                              danger: true,
+                            }).then((ok) => {
+                              if (ok) deleteTeam.mutate(team.id)
+                            })
                           }}
                         >
                           Удалить

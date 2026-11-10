@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
+import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { TournamentFeesSection } from '@/features/finance/components/TournamentFeesSection'
 import { DisciplineSection } from '@/features/discipline/DisciplineSection'
@@ -10,6 +11,7 @@ import { useChangeTournamentStatus, useDeleteTournament, useTournament } from '.
 import { tournamentStatusLabels } from '../labels'
 
 export default function TournamentPage() {
+  const confirm = useConfirm()
   const { leagueId = '', tournamentId = '' } = useParams()
 
   const tournament = useTournament(leagueId, tournamentId)
@@ -27,9 +29,6 @@ export default function TournamentPage() {
 
   return (
     <>
-      <p>
-        <Link to={`/leagues/${leagueId}`}>← К лиге</Link>
-      </p>
       <h1>{data.name}</h1>
 
       {editing ? (
@@ -66,7 +65,15 @@ export default function TournamentPage() {
             className="danger"
             disabled={busy}
             onClick={() => {
-              if (confirm('Отменить турнир?')) changeStatus.mutate('cancel')
+              void confirm({
+                title: 'Отменить турнир?',
+                message: 'Турнир получит статус «Отменён», вернуть его в работу будет нельзя.',
+                confirmLabel: 'Отменить турнир',
+                cancelLabel: 'Не отменять',
+                danger: true,
+              }).then((ok) => {
+                if (ok) changeStatus.mutate('cancel')
+              })
             }}
           >
             Отменить
@@ -77,8 +84,14 @@ export default function TournamentPage() {
           disabled={busy}
           onClick={() => {
             // Сервер откажет (409), если в турнире есть заявки или матчи — тогда его можно отменить.
-            if (confirm(`Удалить турнир «${data.name}» вместе с этапами? Это действие нельзя отменить.`))
-              deleteTournament.mutate(undefined, { onSuccess: () => void navigate(`/leagues/${leagueId}`) })
+            void confirm({
+              title: `Удалить турнир «${data.name}»?`,
+              message: 'Турнир удалится вместе с этапами. Это действие нельзя отменить.',
+              confirmLabel: 'Удалить турнир',
+              danger: true,
+            }).then((ok) => {
+              if (ok) deleteTournament.mutate(undefined, { onSuccess: () => void navigate(`/leagues/${leagueId}`) })
+            })
           }}
         >
           Удалить турнир

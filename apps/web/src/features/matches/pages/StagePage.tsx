@@ -26,9 +26,6 @@ export default function StagePage() {
 
   return (
     <>
-      <p>
-        <Link to={`/leagues/${leagueId}/tournaments/${tournamentId}`}>← К турниру</Link>
-      </p>
       <h1>{stage.name}</h1>
 
       <dl>

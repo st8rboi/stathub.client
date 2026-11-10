@@ -1,17 +1,24 @@
 import { BrowserRouter, Link, Route, Routes } from 'react-router'
 import LoginPage from '@/features/auth/LoginPage'
 import AccountsPage from '@/features/accounts/pages/AccountsPage'
-import LeaguePage from '@/features/leagues/pages/LeaguePage'
+import LeagueLayout from '@/features/leagues/pages/LeagueLayout'
+import LeagueSettingsPage from '@/features/leagues/pages/LeagueSettingsPage'
+import LeagueTournamentsPage from '@/features/leagues/pages/LeagueTournamentsPage'
 import LeaguesPage from '@/features/leagues/pages/LeaguesPage'
 import StagePage from '@/features/matches/pages/StagePage'
 import PlayersPage from '@/features/players/pages/PlayersPage'
 import TournamentTeamPage from '@/features/rosters/pages/TournamentTeamPage'
 import TeamsPage from '@/features/teams/pages/TeamsPage'
 import TournamentPage from '@/features/tournaments/pages/TournamentPage'
-import { Header } from './Header'
+import { EmptyState } from '@/shared/ui/layout'
 import { Providers } from './providers'
 import { RequireAuth } from './RequireAuth'
+import { AppShell } from './shell/AppShell'
 
+/**
+ * Дерево роутов повторяет иерархию соревнования: лига → турнир → этап → команда.
+ * У лиги есть layout (шапка + вкладки); турнир и этап получат такие же на следующих этапах.
+ */
 export default function App() {
   return (
     <Providers>
@@ -20,42 +27,41 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
 
           <Route
-            path="*"
             element={
               <RequireAuth>
-                <Header />
-                <main>
-                  <Routes>
-                    <Route path="/" element={<LeaguesPage />} />
-                    <Route path="/leagues/:leagueId" element={<LeaguePage />} />
-                    <Route
-                      path="/leagues/:leagueId/tournaments/:tournamentId"
-                      element={<TournamentPage />}
-                    />
-                    <Route
-                      path="/leagues/:leagueId/tournaments/:tournamentId/stages/:stageId"
-                      element={<StagePage />}
-                    />
-                    <Route
-                      path="/leagues/:leagueId/tournaments/:tournamentId/stages/:stageId/teams/:tournamentTeamId"
-                      element={<TournamentTeamPage />}
-                    />
-                    <Route path="/teams" element={<TeamsPage />} />
-                    <Route path="/players" element={<PlayersPage />} />
-                    <Route path="/accounts" element={<AccountsPage />} />
-                    <Route
-                      path="*"
-                      element={
-                        <p>
-                          Страница не найдена. <Link to="/">На главную</Link>
-                        </p>
-                      }
-                    />
-                  </Routes>
-                </main>
+                <AppShell />
               </RequireAuth>
             }
-          />
+          >
+            <Route index element={<LeaguesPage />} />
+
+            <Route path="leagues/:leagueId">
+              <Route element={<LeagueLayout />}>
+                <Route index element={<LeagueTournamentsPage />} />
+                <Route path="settings" element={<LeagueSettingsPage />} />
+              </Route>
+              <Route path="tournaments/:tournamentId">
+                <Route index element={<TournamentPage />} />
+                <Route path="stages/:stageId">
+                  <Route index element={<StagePage />} />
+                  <Route path="teams/:tournamentTeamId" element={<TournamentTeamPage />} />
+                </Route>
+              </Route>
+            </Route>
+
+            <Route path="teams" element={<TeamsPage />} />
+            <Route path="players" element={<PlayersPage />} />
+            <Route path="accounts" element={<AccountsPage />} />
+
+            <Route
+              path="*"
+              element={
+                <EmptyState title="Страница не найдена" action={<Link to="/">К списку лиг</Link>}>
+                  Возможно, ссылка устарела или раздел был удалён.
+                </EmptyState>
+              }
+            />
+          </Route>
         </Routes>
       </BrowserRouter>
     </Providers>

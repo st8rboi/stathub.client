@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router'
+import { BrandMark } from '@/shared/ui/BrandMark'
 import { useAuth } from './authContext'
 
 /**
@@ -36,6 +37,11 @@ export default function LoginPage() {
 
   return (
     <main className="login">
+      <div className="brand">
+        <BrandMark className="brand-mark" />
+        <span className="brand-name">Статхаб</span>
+      </div>
+
       <form className="login-card" onSubmit={(event) => void submit(event)}>
         <h1>Вход в админку</h1>
         <p className="hint">Логин и пароль выдаёт организатор или платформа.</p>

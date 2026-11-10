@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { useAccounts, useAssignments, useCreateAccount, useRevokeAssignment } from '../hooks'
 import type { AccountRole } from '../types'
@@ -15,6 +16,7 @@ const roleLabels: Record<AccountRole, string> = {
  * платформа — только организатору. Публичной регистрации нет.
  */
 export default function AccountsPage() {
+  const confirm = useConfirm()
   const users = useAccounts()
   const assignments = useAssignments()
   const create = useCreateAccount()
@@ -143,7 +145,12 @@ export default function AccountsPage() {
                     className="danger"
                     disabled={revoke.isPending}
                     onClick={() => {
-                      if (confirm('Снять назначение?')) revoke.mutate(assignment.id)
+                      void confirm({
+                        title: 'Снять назначение судьи?',
+                        confirmLabel: 'Снять',
+                      }).then((ok) => {
+                        if (ok) revoke.mutate(assignment.id)
+                      })
                     }}
                   >
                     Снять
