@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { financeApi, type PaymentMethod } from './api'
+import { financeApi, type AddManualChargeBody, type PaymentMethod } from './api'
 
 export const financeKeys = {
   all: ['finance'] as const,
@@ -10,6 +10,8 @@ export const financeKeys = {
   summary: (tournamentId: string, stageId?: string) =>
     [...financeKeys.all, 'summary', tournamentId, stageId ?? ''] as const,
   debts: (tournamentId: string) => [...financeKeys.all, 'debts', tournamentId] as const,
+  tournamentCharges: (tournamentId: string, onlyDebt: boolean) =>
+    [...financeKeys.all, 'tournament-charges', tournamentId, onlyDebt] as const,
 }
 
 export const useFeeSettings = (tournamentId: string, stageId?: string) =>
@@ -40,6 +42,14 @@ export const useTeamDebts = (tournamentId: string) =>
     enabled: Boolean(tournamentId),
   })
 
+/** Все начисления турнира, включая ручные без этапа. */
+export const useTournamentCharges = (tournamentId: string, onlyDebt = false) =>
+  useQuery({
+    queryKey: financeKeys.tournamentCharges(tournamentId, onlyDebt),
+    queryFn: () => financeApi.tournamentCharges(tournamentId, onlyDebt),
+    enabled: Boolean(tournamentId),
+  })
+
 const useFinanceMutation = <TVariables,>(mutationFn: (variables: TVariables) => Promise<unknown>) => {
   const queryClient = useQueryClient()
   return useMutation({
@@ -66,4 +76,10 @@ export const usePayCharge = () =>
 export const useCancelCharge = () =>
   useFinanceMutation((input: { chargeId: string; comment: string | null }) =>
     financeApi.cancel(input.chargeId, input.comment),
+  )
+
+/** Ручное начисление команде: вступительный взнос, штраф, прочее. */
+export const useAddManualCharge = () =>
+  useFinanceMutation((input: { tournamentId: string; body: AddManualChargeBody }) =>
+    financeApi.addManualCharge(input.tournamentId, input.body),
   )

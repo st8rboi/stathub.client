@@ -2,34 +2,30 @@ import { useState, type FormEvent } from 'react'
 import { useStageMatches } from '@/features/matches/hooks'
 import { useTeams } from '@/features/teams/hooks'
 import { formatDate, formatMoney } from '@/shared/lib/format'
-import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { Icon } from '@/shared/ui/Icon'
-import { Badge, Card, type BadgeTone } from '@/shared/ui/layout'
-import { Menu, MenuButton, MenuTitle } from '@/shared/ui/Menu'
-import type { ChargeStatus, PaymentMethod } from '../api'
-import {
-  useCancelCharge,
-  useFeeSettings,
-  useFeeSummary,
-  usePayCharge,
-  useSetStageFee,
-  useStageCharges,
-} from '../hooks'
-
-const chargeStatusLabels: Record<ChargeStatus, string> = { Pending: 'Ожидается', Paid: 'Оплачено', Cancelled: 'Отменено' }
-const chargeStatusTones: Record<ChargeStatus, BadgeTone> = { Pending: 'warning', Paid: 'success', Cancelled: 'neutral' }
-const methodLabels: Record<PaymentMethod, string> = {
-  Cash: 'Наличные',
-  Transfer: 'Перевод',
-  Bank: 'Безнал',
-}
+import { Badge, Card, Loading } from '@/shared/ui/layout'
+import { Modal } from '@/shared/ui/Modal'
+import type { Charge } from '../api'
+import { useFeeSettings, useFeeSummary, useSetStageFee, useStageCharges } from '../hooks'
+import { chargeKindLabels, chargeStatusLabels, chargeStatusTones, paymentMethodLabels } from '../labels'
+import { ChargeActions } from './ChargeActions'
+import { FinanceOverview } from './FinanceOverview'
+import { ManualChargeForm } from './ManualChargeForm'
 
 /**
- * Взносы этапа: свой тариф (или турнирный) и начисления по матчам.
- * Команда платит, организатор отмечает оплату и способ.
+ * Взносы этапа: сводка, начисления (за матчи и разовые, выставленные на этот этап),
+ * свой тариф за матч (или турнирный).
  */
-export function StageFeesSection({ tournamentId, stageId }: { tournamentId: string; stageId: string }) {
+export function StageFeesSection({
+  tournamentId,
+  stageId,
+  stageName,
+}: {
+  tournamentId: string
+  stageId: string
+  stageName: string
+}) {
   const settings = useFeeSettings(tournamentId, stageId)
   const summary = useFeeSummary(tournamentId, stageId)
   const [onlyDebt, setOnlyDebt] = useState(false)
@@ -37,21 +33,23 @@ export function StageFeesSection({ tournamentId, stageId }: { tournamentId: stri
   const matches = useStageMatches(stageId)
   const allTeams = useTeams()
   const setStageFee = useSetStageFee()
-  const pay = usePayCharge()
-  const cancel = useCancelCharge()
-  const confirm = useConfirm()
 
+  const [charging, setCharging] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const teamName = (teamId: string) => allTeams.data?.find((team) => team.id === teamId)?.name ?? '…'
-  const matchLabel = (matchId: string) => {
-    const match = matches.data?.find((item) => item.id === matchId)
-    if (!match) return '—'
-    return `${teamName(match.homeTeamId)} — ${teamName(match.awayTeamId)}`
-  }
-  const matchDate = (matchId: string) => {
-    const match = matches.data?.find((item) => item.id === matchId)
-    return match ? formatDate(match.scheduledTimeUtc) : ''
+
+  /** Основание начисления: матч («Команда — Команда», дата) или вид + описание. */
+  const basis = (charge: Charge) => {
+    if (charge.kind !== 'MatchFee') {
+      return { title: chargeKindLabels[charge.kind], hint: charge.description ?? formatDate(charge.createdAtUtc) }
+    }
+    const match = matches.data?.find((item) => item.id === charge.matchId)
+    if (!match) return { title: 'Взнос за матч', hint: '' }
+    return {
+      title: `${teamName(match.homeTeamId)} — ${teamName(match.awayTeamId)}`,
+      hint: formatDate(match.scheduledTimeUtc),
+    }
   }
 
   const onSetFee = (event: FormEvent<HTMLFormElement>) => {
@@ -78,30 +76,99 @@ export function StageFeesSection({ tournamentId, stageId }: { tournamentId: stri
 
   return (
     <>
-      <ErrorText error={settings.error ?? summary.error ?? charges.error} />
-
-      <div className="stats">
-        <div className="stat">
-          <p className="stat-label">Взнос за матч · {ownTariff ? 'свой тариф' : 'как в турнире'}</p>
-          <p className="stat-value">{formatMoney(settings.data?.effectiveAmount ?? 0)}</p>
-        </div>
-        {summary.data && (
-          <>
-            <div className="stat">
-              <p className="stat-label">Начислено · оплачено</p>
-              <p className="stat-value">
-                {formatMoney(summary.data.charged)} · {formatMoney(summary.data.paid)}
-              </p>
-            </div>
-            <div className={summary.data.debt > 0 ? 'stat stat--danger' : 'stat'}>
-              <p className="stat-label">Долг · {summary.data.pendingCount} поз.</p>
-              <p className="stat-value">{formatMoney(summary.data.debt)}</p>
-            </div>
-          </>
-        )}
+      <div className="toolbar">
+        <p className="muted">Начисления этого этапа: взносы за матчи и разовые</p>
+        <button type="button" onClick={() => setCharging(true)}>
+          <Icon name="plus" size={18} />
+          Начислить
+        </button>
       </div>
 
-      <Card title="Тариф этапа">
+      <ErrorText error={settings.error ?? summary.error ?? charges.error} />
+      {summary.isPending && <Loading />}
+
+      {summary.data && (
+        <FinanceOverview
+          summary={summary.data}
+          extra={
+            <div className="stat">
+              <p className="stat-label">Взнос за матч</p>
+              <p className="stat-value">{formatMoney(settings.data?.effectiveAmount ?? 0)}</p>
+              <p className="stat-hint">{ownTariff ? 'свой тариф этапа' : 'как в турнире'}</p>
+            </div>
+          }
+        />
+      )}
+
+      <Card
+        title="Начисления"
+        flush
+        actions={
+          <div className="chips" role="group" aria-label="Фильтр начислений">
+            <button type="button" className="chip" aria-pressed={!onlyDebt} onClick={() => setOnlyDebt(false)}>
+              Все
+            </button>
+            <button type="button" className="chip" aria-pressed={onlyDebt} onClick={() => setOnlyDebt(true)}>
+              Неоплаченные
+            </button>
+          </div>
+        }
+      >
+        {charges.data?.length === 0 ? (
+          <div className="card-body">
+            <p className="muted">
+              {onlyDebt
+                ? 'Долгов нет: все начисления этапа оплачены или отменены.'
+                : 'Начислений нет. Взносы за матчи создаются вместе с матчем, если тариф больше нуля.'}
+            </p>
+          </div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Основание</th>
+                <th>Команда</th>
+                <th>Сумма</th>
+                <th>Статус</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {(charges.data ?? []).map((charge) => {
+                const { title, hint } = basis(charge)
+                const name = charge.teamName || teamName(charge.teamId)
+                return (
+                  <tr key={charge.id}>
+                    <td>
+                      {title}
+                      {hint && <div className="hint">{hint}</div>}
+                    </td>
+                    <td>
+                      {name}
+                      {charge.side && <div className="hint">{charge.side === 'Home' ? 'хозяева' : 'гости'}</div>}
+                    </td>
+                    <td className="num">{formatMoney(charge.amount)}</td>
+                    <td>
+                      <Badge tone={chargeStatusTones[charge.status]}>{chargeStatusLabels[charge.status]}</Badge>
+                      {charge.status === 'Paid' && (
+                        <div className="hint">
+                          {charge.paidAtUtc ? formatDate(charge.paidAtUtc) : ''}
+                          {charge.paymentMethod ? ` · ${paymentMethodLabels[charge.paymentMethod]}` : ''}
+                        </div>
+                      )}
+                    </td>
+                    <td className="actions-cell">
+                      <ChargeActions charge={charge} teamName={name} />
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+      </Card>
+
+      <Card title="Тариф за матч на этапе">
         <form onSubmit={onSetFee}>
           <div className="row">
             <label>
@@ -138,109 +205,14 @@ export function StageFeesSection({ tournamentId, stageId }: { tournamentId: stri
         </form>
       </Card>
 
-      <Card
-        title="Начисления"
-        flush
-        actions={
-          <div className="chips" role="group" aria-label="Фильтр начислений">
-            <button type="button" className="chip" aria-pressed={!onlyDebt} onClick={() => setOnlyDebt(false)}>
-              Все
-            </button>
-            <button type="button" className="chip" aria-pressed={onlyDebt} onClick={() => setOnlyDebt(true)}>
-              Неоплаченные
-            </button>
-          </div>
-        }
-      >
-        {charges.data?.length === 0 ? (
-          <div className="card-body">
-            <p className="muted">
-              {onlyDebt
-                ? 'Долгов нет: все начисления этапа оплачены или отменены.'
-                : 'Начислений нет. Они создаются автоматически при создании матча, если тариф больше нуля.'}
-            </p>
-          </div>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Матч</th>
-                <th>Команда</th>
-                <th>Сумма</th>
-                <th>Статус</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {(charges.data ?? []).map((charge) => (
-                <tr key={charge.id}>
-                  <td>
-                    {matchLabel(charge.matchId)}
-                    <div className="hint">{matchDate(charge.matchId)}</div>
-                  </td>
-                  <td>
-                    {charge.teamName || teamName(charge.teamId)}
-                    <div className="hint">{charge.side === 'Home' ? 'хозяева' : 'гости'}</div>
-                  </td>
-                  <td className="num">{formatMoney(charge.amount)}</td>
-                  <td>
-                    <Badge tone={chargeStatusTones[charge.status]}>{chargeStatusLabels[charge.status]}</Badge>
-                    {charge.status === 'Paid' && (
-                      <div className="hint">
-                        {charge.paidAtUtc ? formatDate(charge.paidAtUtc) : ''}
-                        {charge.paymentMethod ? ` · ${methodLabels[charge.paymentMethod]}` : ''}
-                      </div>
-                    )}
-                  </td>
-                  <td className="actions-cell">
-                    {charge.status === 'Pending' && (
-                      <Menu
-                        triggerClassName="secondary"
-                        align="end"
-                        trigger={
-                          <>
-                            Отметить оплату
-                            <Icon name="chevron-down" size={16} />
-                          </>
-                        }
-                      >
-                        <MenuTitle>Оплачено</MenuTitle>
-                        {(Object.keys(methodLabels) as PaymentMethod[]).map((method) => (
-                          <MenuButton
-                            key={method}
-                            disabled={pay.isPending}
-                            onClick={() => pay.mutate({ chargeId: charge.id, method, comment: null })}
-                          >
-                            {methodLabels[method]}
-                          </MenuButton>
-                        ))}
-                        <MenuButton
-                          danger
-                          disabled={cancel.isPending}
-                          onClick={() =>
-                            void confirm({
-                              title: 'Отменить начисление?',
-                              message: `${charge.teamName || teamName(charge.teamId)}, ${formatMoney(charge.amount)}. Команде больше не нужно будет его оплачивать.`,
-                              confirmLabel: 'Отменить начисление',
-                              cancelLabel: 'Не отменять',
-                              danger: true,
-                            }).then((ok) => {
-                              if (ok) cancel.mutate({ chargeId: charge.id, comment: null })
-                            })
-                          }
-                        >
-                          Отменить начисление
-                        </MenuButton>
-                      </Menu>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
-      <ErrorText error={pay.error ?? cancel.error} />
+      <Modal open={charging} onClose={() => setCharging(false)} title="Начисление команде">
+        <ManualChargeForm
+          tournamentId={tournamentId}
+          stages={[{ id: stageId, name: stageName }]}
+          presetStageId={stageId}
+          onDone={() => setCharging(false)}
+        />
+      </Modal>
     </>
   )
 }
