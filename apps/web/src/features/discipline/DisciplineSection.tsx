@@ -60,7 +60,7 @@ export function DisciplineSection({
           actions={issueButton}
           flush
         >
-          <table>
+          <table className="stack-table">
             <thead>
               <tr>
                 <th>Игрок</th>
@@ -74,13 +74,15 @@ export function DisciplineSection({
             <tbody>
               {items.map((item) => (
                 <tr key={item.id}>
-                  <td>
+                  <td className="cell-wide">
                     <strong>{item.playerName || item.playerId.slice(0, 8)}</strong>
                     <div className="hint">с {formatDate(item.issuedAtUtc)}</div>
                   </td>
-                  <td>{item.teamName || item.teamId.slice(0, 8)}</td>
-                  <td>{item.reason}</td>
-                  <td className="num">
+                  <td data-label="Команда">{item.teamName || item.teamId.slice(0, 8)}</td>
+                  <td data-label="Причина" className="cell-wide">
+                    {item.reason}
+                  </td>
+                  <td data-label="Срок" className="num cell-end">
                     {item.matchesBanned === null
                       ? 'бессрочно'
                       : `${item.matchesServed} из ${item.matchesBanned} матч.`}

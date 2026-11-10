@@ -153,7 +153,7 @@ export function TournamentFeesSection({
             </p>
           </div>
         ) : (
-          <table>
+          <table className="stack-table">
             <thead>
               <tr>
                 <th>Начисление</th>
@@ -166,16 +166,18 @@ export function TournamentFeesSection({
             <tbody>
               {manual.map((charge) => (
                 <tr key={charge.id}>
-                  <td>
-                    {chargeKindLabels[charge.kind]}
+                  <td className="cell-wide">
+                    <strong>{chargeKindLabels[charge.kind]}</strong>
                     <div className="hint">
                       {[charge.description, stageName(charge.stageId), formatDate(charge.createdAtUtc)]
                         .filter(Boolean)
                         .join(' · ')}
                     </div>
                   </td>
-                  <td>{charge.teamName || '…'}</td>
-                  <td className="num">{formatMoney(charge.amount)}</td>
+                  <td data-label="Команда">{charge.teamName || '…'}</td>
+                  <td data-label="Сумма" className="num cell-end">
+                    {formatMoney(charge.amount)}
+                  </td>
                   <td>
                     <Badge tone={chargeStatusTones[charge.status]}>{chargeStatusLabels[charge.status]}</Badge>
                     {charge.status === 'Paid' && (

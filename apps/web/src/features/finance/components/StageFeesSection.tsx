@@ -123,7 +123,7 @@ export function StageFeesSection({
             </p>
           </div>
         ) : (
-          <table>
+          <table className="stack-table">
             <thead>
               <tr>
                 <th>Основание</th>
@@ -139,15 +139,17 @@ export function StageFeesSection({
                 const name = charge.teamName || teamName(charge.teamId)
                 return (
                   <tr key={charge.id}>
-                    <td>
-                      {title}
+                    <td className="cell-wide">
+                      <strong>{title}</strong>
                       {hint && <div className="hint">{hint}</div>}
                     </td>
-                    <td>
+                    <td data-label="Команда">
                       {name}
                       {charge.side && <div className="hint">{charge.side === 'Home' ? 'хозяева' : 'гости'}</div>}
                     </td>
-                    <td className="num">{formatMoney(charge.amount)}</td>
+                    <td data-label="Сумма" className="num cell-end">
+                      {formatMoney(charge.amount)}
+                    </td>
                     <td>
                       <Badge tone={chargeStatusTones[charge.status]}>{chargeStatusLabels[charge.status]}</Badge>
                       {charge.status === 'Paid' && (
