@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react'
+import { formatMoney } from '@/shared/lib/format'
 import { ErrorText } from '@/shared/ui/ErrorText'
+import { Card, EmptyState } from '@/shared/ui/layout'
 import { useFeeSettings, useFeeSummary, useSetTournamentFee, useTeamDebts } from '../hooks'
 
-const statusLabels = { Pending: 'Ожидается', Paid: 'Оплачено', Cancelled: 'Отменено' } as const
-
 /**
- * Взносы турнира: тариф за матч с команды, сводка и долг по командам.
+ * Взносы турнира: сводка, тариф за матч с команды и долг по командам.
  * Тариф этапа задаётся на странице этапа и переопределяет турнирный.
  */
 export function TournamentFeesSection({ tournamentId }: { tournamentId: string }) {
@@ -30,90 +30,84 @@ export function TournamentFeesSection({ tournamentId }: { tournamentId: string }
     setFee.mutate({ tournamentId, amount: Math.round(raw) })
   }
 
+  // Должники сверху: так видно, с кого собирать.
+  const sortedDebts = [...(debts.data ?? [])].sort((a, b) => b.debt - a.debt)
+
   return (
     <>
-      <ErrorText error={settings.error ?? summary.error ?? debts.error ?? setFee.error} />
-
-      <dl>
-        <dt>Тариф турнира</dt>
-        <dd>{settings.data ? `${settings.data.tournamentAmount} ₽ за матч с команды` : '…'}</dd>
-      </dl>
-
-      <form onSubmit={onSubmit}>
-        <label>
-          Взнос за матч с одной команды (₽)
-          <input
-            name="amount"
-            type="number"
-            min={0}
-            step={50}
-            defaultValue={settings.data?.tournamentAmount ?? 0}
-            key={settings.data?.tournamentAmount ?? 'new'}
-          />
-        </label>
-        {error && <p className="error">{error}</p>}
-        <button type="submit" disabled={setFee.isPending}>
-          Сохранить тариф
-        </button>
-        <p className="hint">
-          Тариф применяется к новым матчам. В дивизионах можно задать свою сумму на странице этапа.
-        </p>
-      </form>
+      <ErrorText error={settings.error ?? summary.error ?? debts.error} />
 
       {summary.data && (
-        <table>
-          <thead>
-            <tr>
-              <th>Начислено</th>
-              <th>Оплачено</th>
-              <th>Долг</th>
-              <th>Ожидает</th>
-              <th>Оплачено позиций</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{summary.data.charged} ₽</td>
-              <td>{summary.data.paid} ₽</td>
-              <td>
-                <strong>{summary.data.debt} ₽</strong>
-              </td>
-              <td>{summary.data.pendingCount}</td>
-              <td>{summary.data.paidCount}</td>
-            </tr>
-          </tbody>
-        </table>
+        <div className="stats">
+          <div className="stat">
+            <p className="stat-label">Начислено</p>
+            <p className="stat-value">{formatMoney(summary.data.charged)}</p>
+          </div>
+          <div className="stat">
+            <p className="stat-label">Оплачено · {summary.data.paidCount} поз.</p>
+            <p className="stat-value">{formatMoney(summary.data.paid)}</p>
+          </div>
+          <div className={summary.data.debt > 0 ? 'stat stat--danger' : 'stat'}>
+            <p className="stat-label">Долг · {summary.data.pendingCount} поз. ожидают</p>
+            <p className="stat-value">{formatMoney(summary.data.debt)}</p>
+          </div>
+        </div>
       )}
 
-      <h2>Долг по командам</h2>
+      <Card title="Тариф турнира">
+        <form onSubmit={onSubmit}>
+          <div className="row">
+            <label>
+              Взнос за матч с одной команды, ₽
+              <input
+                name="amount"
+                type="number"
+                min={0}
+                step={50}
+                defaultValue={settings.data?.tournamentAmount ?? 0}
+                key={settings.data?.tournamentAmount ?? 'new'}
+              />
+            </label>
+          </div>
+          {error && <p className="error">{error}</p>}
+          <ErrorText error={setFee.error} />
+          <button type="submit" disabled={setFee.isPending}>
+            {setFee.isPending ? 'Сохраняем…' : 'Сохранить тариф'}
+          </button>
+          <p className="hint">
+            Тариф применяется к новым матчам. В этапе можно задать свою сумму — она заменит турнирную.
+          </p>
+        </form>
+      </Card>
+
       {debts.data?.length === 0 ? (
-        <p className="notice">Начислений пока нет — они появятся вместе с матчами.</p>
+        <EmptyState title="Начислений пока нет">Они появятся вместе с матчами.</EmptyState>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Команда</th>
-              <th>Начислено</th>
-              <th>Оплачено</th>
-              <th>Долг</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(debts.data ?? []).map((debt) => (
-              <tr key={debt.teamId}>
-                <td>{debt.teamName || debt.teamId.slice(0, 8)}</td>
-                <td>{debt.charged} ₽</td>
-                <td>{debt.paid} ₽</td>
-                <td>
-                  <strong>{debt.debt} ₽</strong>
-                </td>
+        <Card title="Долг по командам" flush>
+          <table>
+            <thead>
+              <tr>
+                <th>Команда</th>
+                <th>Начислено</th>
+                <th>Оплачено</th>
+                <th>Долг</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {sortedDebts.map((debt) => (
+                <tr key={debt.teamId}>
+                  <td>{debt.teamName || debt.teamId.slice(0, 8)}</td>
+                  <td className="num">{formatMoney(debt.charged)}</td>
+                  <td className="num">{formatMoney(debt.paid)}</td>
+                  <td className="num">
+                    {debt.debt > 0 ? <strong className="error-text">{formatMoney(debt.debt)}</strong> : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
       )}
     </>
   )
 }
-
-export { statusLabels }

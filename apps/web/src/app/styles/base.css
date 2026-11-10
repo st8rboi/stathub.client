@@ -477,3 +477,7 @@ button.icon-button:hover:not(:disabled) {
 .referee-name {
   font-weight: 600;
 }
+
+.error-text {
+  color: var(--red);
+}
