@@ -73,3 +73,11 @@ export function formatDayHeading(iso: string): string {
   const relative = diffDays === 0 ? 'Сегодня' : diffDays === 1 ? 'Завтра' : diffDays === -1 ? 'Вчера' : null
   return relative ? `${relative}, ${text}` : text.charAt(0).toUpperCase() + text.slice(1)
 }
+
+/** Полных лет на сегодня по дате рождения 'YYYY-MM-DD'. */
+export function ageFromBirthDate(birthDate: string): number {
+  const [year, month, day] = birthDate.split('-').map(Number)
+  const now = new Date()
+  const hadBirthday = now.getMonth() + 1 > month || (now.getMonth() + 1 === month && now.getDate() >= day)
+  return now.getFullYear() - year - (hadBirthday ? 0 : 1)
+}

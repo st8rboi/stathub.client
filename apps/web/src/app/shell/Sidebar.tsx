@@ -65,10 +65,14 @@ export function Sidebar({ id, onClose }: { id: string; onClose: () => void }) {
           Игроки
         </NavLink>
 
-        <p className="sidebar-section">Судейство</p>
-        <NavLink to="/accounts" className="sidebar-link">
+        <p className="sidebar-section">Люди</p>
+        <NavLink to="/referees" className="sidebar-link">
           <Icon name="flag" />
           Судьи
+        </NavLink>
+        <NavLink to="/admins" className="sidebar-link">
+          <Icon name="idcard" />
+          Администраторы
         </NavLink>
       </nav>
 

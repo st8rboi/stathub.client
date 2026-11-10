@@ -1,6 +1,7 @@
-import { BrowserRouter, Link, Route, Routes } from 'react-router'
+import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router'
 import LoginPage from '@/features/auth/LoginPage'
-import AccountsPage from '@/features/accounts/pages/AccountsPage'
+import AdminsPage from '@/features/accounts/pages/AdminsPage'
+import RefereesPage from '@/features/accounts/pages/RefereesPage'
 import LeagueLayout from '@/features/leagues/pages/LeagueLayout'
 import LeagueSettingsPage from '@/features/leagues/pages/LeagueSettingsPage'
 import LeagueTournamentsPage from '@/features/leagues/pages/LeagueTournamentsPage'
@@ -69,7 +70,10 @@ export default function App() {
 
             <Route path="teams" element={<TeamsPage />} />
             <Route path="players" element={<PlayersPage />} />
-            <Route path="accounts" element={<AccountsPage />} />
+            <Route path="referees" element={<RefereesPage />} />
+            <Route path="admins" element={<AdminsPage />} />
+            {/* Старый адрес раздела «Судьи». */}
+            <Route path="accounts" element={<Navigate to="/referees" replace />} />
 
             <Route
               path="*"

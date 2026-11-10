@@ -254,7 +254,8 @@ label.check {
   color: inherit;
 }
 
-input[type='checkbox'] {
+input[type='checkbox'],
+input[type='radio'] {
   width: 18px;
   height: 18px;
   accent-color: var(--green-dark);

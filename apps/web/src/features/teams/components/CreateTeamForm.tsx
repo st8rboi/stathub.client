@@ -2,20 +2,20 @@ import type { SubmitEvent } from 'react'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { useCreateTeam } from '../hooks'
 
-export function CreateTeamForm() {
+/** Новая команда справочника (в модальном окне). Логотип добавляется после создания. */
+export function CreateTeamForm({ onDone }: { onDone: () => void }) {
   const create = useCreateTeam()
 
   const onSubmit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const formElement = e.currentTarget
-    const form = new FormData(formElement)
+    const form = new FormData(e.currentTarget)
 
     create.mutate(
       {
-        name: String(form.get('name')),
-        city: String(form.get('city')) || null,
+        name: String(form.get('name')).trim(),
+        city: String(form.get('city')).trim() || null,
       },
-      { onSuccess: () => formElement.reset() },
+      { onSuccess: onDone },
     )
   }
 
@@ -23,16 +23,22 @@ export function CreateTeamForm() {
     <form onSubmit={onSubmit}>
       <label>
         Название команды
-        <input name="name" required maxLength={150} placeholder="ФК «Звезда»" />
+        <input name="name" required maxLength={150} placeholder="ФК «Звезда»" autoFocus />
       </label>
       <label>
-        Город (необязательно)
-        <input name="city" maxLength={100} />
+        Город
+        <input name="city" maxLength={100} placeholder="необязательно" />
       </label>
+      <p className="hint">Логотип можно загрузить после создания — в карточке команды.</p>
       <ErrorText error={create.error} />
-      <button type="submit" disabled={create.isPending}>
-        Добавить команду
-      </button>
+      <div className="actions">
+        <button type="submit" disabled={create.isPending}>
+          {create.isPending ? 'Добавляем…' : 'Добавить команду'}
+        </button>
+        <button type="button" className="secondary" onClick={onDone}>
+          Отмена
+        </button>
+      </div>
     </form>
   )
 }

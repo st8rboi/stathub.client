@@ -36,6 +36,13 @@ const icons = {
       <path d="m3 13 9 5 9-5" />
     </>
   ),
+  idcard: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="9" cy="11" r="2" />
+      <path d="M15 10h3M15 14h3M6 16c.5-1.5 1.6-2 3-2s2.5.5 3 2" />
+    </>
+  ),
   search: (
     <>
       <circle cx="11" cy="11" r="7" />
