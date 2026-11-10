@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { rostersApi } from './api'
 
 export const rosterKeys = {
@@ -20,6 +20,15 @@ export const useTournamentTeam = (tournamentId: string, tournamentTeamId: string
     queryKey: rosterKeys.team(tournamentId, tournamentTeamId),
     queryFn: () => rostersApi.getTeam(tournamentId, tournamentTeamId),
     enabled: Boolean(tournamentId && tournamentTeamId),
+  })
+
+/** Участники нескольких этапов сразу (например, все команды турнира). */
+export const useTournamentTeamsForStages = (stageIds: string[]) =>
+  useQueries({
+    queries: stageIds.map((stageId) => ({
+      queryKey: rosterKeys.teams(stageId),
+      queryFn: () => rostersApi.listTeams(stageId),
+    })),
   })
 
 /** Любое изменение заявок инвалидирует и список участников, и карточку команды. */

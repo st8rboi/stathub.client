@@ -4,5 +4,10 @@ import { useTournamentOutlet } from '../tournamentOutlet'
 /** Вкладка «Взносы» турнира. */
 export default function TournamentFeesPage() {
   const { tournament } = useTournamentOutlet()
-  return <TournamentFeesSection tournamentId={tournament.id} />
+  return (
+    <TournamentFeesSection
+      tournamentId={tournament.id}
+      stages={tournament.stages.map((stage) => ({ id: stage.id, name: stage.name }))}
+    />
+  )
 }

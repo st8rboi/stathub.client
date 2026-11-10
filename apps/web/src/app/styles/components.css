@@ -979,7 +979,9 @@ button.chip:hover:not(:disabled) {
 }
 
 button.chip[aria-pressed='true'],
-button.chip[aria-pressed='true']:hover:not(:disabled) {
+button.chip[aria-checked='true'],
+button.chip[aria-pressed='true']:hover:not(:disabled),
+button.chip[aria-checked='true']:hover:not(:disabled) {
   color: var(--navy-text);
   background: var(--navy);
   border-color: var(--navy);
@@ -1464,4 +1466,195 @@ tr.row-muted td {
 tr.row-muted .squad-number {
   color: var(--muted);
   background: var(--bg-soft);
+}
+
+/* ---------- Финансы: сводка ---------- */
+
+.stat-hint {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.finance-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(200px, 1fr);
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.finance-main {
+  padding: 16px 18px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.finance-side {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.finance-collected {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 6px;
+  margin: 0 0 10px;
+}
+
+.finance-percent {
+  margin-left: auto;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--green-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.finance-kinds {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 14px 0 0;
+  list-style: none;
+  border-top: 1px solid var(--border-soft);
+}
+
+.finance-kinds li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  font-size: 13px;
+}
+
+.finance-kinds .progress {
+  grid-column: 1 / -1;
+  height: 6px;
+}
+
+.finance-kind-name {
+  font-weight: 600;
+}
+
+.finance-kind-amount {
+  color: var(--muted);
+}
+
+/* Полоса «оплачено из начисленного». */
+.progress {
+  height: 8px;
+  overflow: hidden;
+  background: var(--bg-soft);
+  border-radius: 999px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--amber);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.progress--done .progress-bar {
+  background: var(--green);
+}
+
+/* Полоса под названием команды в таблице долгов. */
+td .progress {
+  max-width: 220px;
+  height: 5px;
+  margin-top: 6px;
+}
+
+@media (max-width: 720px) {
+  .finance-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .finance-side {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+/* ---------- Таблица, которая на телефоне становится карточками ----------
+ * На широком экране — обычная таблица. На телефоне шапка скрыта, каждая строка — карточка-сетка
+ * в две колонки: .cell-wide — во всю ширину, .cell-end — прижата вправо, data-label — подпись
+ * над значением. grid-auto-flow: dense подтягивает короткие ячейки в свободные места.
+ */
+@media (max-width: 720px) {
+  table.stack-table,
+  table.stack-table tbody {
+    display: block;
+    overflow: visible;
+  }
+
+  table.stack-table thead {
+    display: none;
+  }
+
+  table.stack-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-auto-flow: row dense;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  table.stack-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  table.stack-table td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    white-space: normal;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+
+  table.stack-table tbody tr:hover td {
+    background: none;
+  }
+
+  table.stack-table td.cell-wide {
+    grid-column: 1 / -1;
+  }
+
+  table.stack-table td.cell-end,
+  table.stack-table td.actions-cell {
+    justify-self: end;
+    text-align: right;
+  }
+
+  table.stack-table td:empty {
+    display: none;
+  }
+
+  table.stack-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+}
+
+/* Поле с кнопками рядом (пароль): на узком экране кнопки уходят под поле. */
+.input-with-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.input-with-buttons input {
+  flex: 1 1 200px;
 }

@@ -79,7 +79,7 @@ export function CreateAccountForm({
       </label>
       <div className="field">
         <label htmlFor={passwordId}>Пароль</label>
-        <div className="swap-row">
+        <div className="input-with-buttons">
           <input
             id={passwordId}
             name="password"
