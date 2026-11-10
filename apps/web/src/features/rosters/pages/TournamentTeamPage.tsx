@@ -74,7 +74,8 @@ export default function TournamentTeamPage() {
     (tournamentTeam) => tournamentTeam.id !== tournamentTeamId && tournamentTeam.status === 'Active',
   )
 
-  const stageLink = `/leagues/${leagueId}/tournaments/${tournamentId}/stages/${stageId}`
+  // После удаления заявки возвращаемся к списку участников этапа.
+  const stageLink = `/leagues/${leagueId}/tournaments/${tournamentId}/stages/${stageId}/teams`
 
   const saveNumber = () => {
     if (!numberDraft) return

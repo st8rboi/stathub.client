@@ -1,11 +1,12 @@
-import { useState } from 'react'
 import { Link } from 'react-router'
+import { ErrorText } from '@/shared/ui/ErrorText'
+import { Icon } from '@/shared/ui/Icon'
+import { Menu, MenuButton, MenuEmpty, MenuTitle } from '@/shared/ui/Menu'
 import { useAccounts, useAssignments, useAssignReferee, useRevokeAssignment } from '../hooks'
 
 /**
- * Назначение судьи в строке матча. Состояния явные: загрузка, нет доступа,
- * нет аккаунтов (со ссылкой на раздел «Судьи»), уже назначен (имя + снять),
- * либо выбор из аккаунтов организации.
+ * Судья матча в строке списка. Назначен — «чип» с именем (меню: снять назначение);
+ * не назначен — заметная кнопка «Назначить судью» со списком аккаунтов организации.
  */
 export function RefereeAssign({ matchId }: { matchId: string }) {
   const users = useAccounts()
@@ -13,14 +14,11 @@ export function RefereeAssign({ matchId }: { matchId: string }) {
   const assign = useAssignReferee()
   const revoke = useRevokeAssignment()
 
-  const [selectedUserId, setSelectedUserId] = useState('')
-  const [open, setOpen] = useState(false)
-
   if (assignments.isPending || users.isPending) return <span className="muted">…</span>
 
   if (assignments.error || users.error) {
     return (
-      <span className="muted" title="Нет доступа к аккаунтам организации">
+      <span className="hint" title="Нет доступа к аккаунтам организации">
         нет доступа
       </span>
     )
@@ -29,75 +27,57 @@ export function RefereeAssign({ matchId }: { matchId: string }) {
   const existing = (assignments.data ?? []).find(
     (assignment) => assignment.scopeType === 'Match' && assignment.scopeId === matchId,
   )
-
-  if (existing) {
-    return (
-      <span className="referee-cell">
-        <span className="referee-name">{existing.userDisplayName}</span>
-        <button
-          type="button"
-          className="danger"
-          disabled={revoke.isPending}
-          onClick={() => revoke.mutate(existing.id)}
-        >
-          Снять
-        </button>
-      </span>
-    )
-  }
-
   const referees = (users.data ?? []).filter((user) => user.isActive)
 
-  if (referees.length === 0) {
-    return (
-      <span className="muted">
-        нет аккаунтов — <Link to="/accounts">создать</Link>
-      </span>
-    )
-  }
-
-  if (!open) {
-    return (
-      <button type="button" onClick={() => setOpen(true)}>
-        Назначить
-      </button>
-    )
-  }
-
   return (
-    <span className="referee-cell">
-      <select
-        value={selectedUserId}
-        onChange={(event) => setSelectedUserId(event.target.value)}
-        aria-label="Судья"
-      >
-        <option value="">кто судит?</option>
-        {referees.map((user) => (
-          <option key={user.id} value={user.id}>
-            {user.displayName}
-          </option>
-        ))}
-      </select>
-      <button
-        type="button"
-        disabled={!selectedUserId || assign.isPending}
-        onClick={() =>
-          assign.mutate(
-            { userId: selectedUserId, role: 'Referee', scopeType: 'Match', scopeId: matchId },
-            {
-              onSuccess: () => {
-                setSelectedUserId('')
-                setOpen(false)
-              },
-            },
-          )
-        }
-      >
-        ОК
-      </button>
-      <button type="button" onClick={() => setOpen(false)}>
-        Отмена
-      </button>
-    </span>
+    <>
+      {existing ? (
+        <Menu
+          triggerClassName="referee-chip"
+          triggerLabel={`Судья: ${existing.userDisplayName}`}
+          align="end"
+          trigger={
+            <>
+              <Icon name="flag" size={14} />
+              <span className="referee-chip-name">{existing.userDisplayName}</span>
+              <Icon name="chevron-down" size={14} />
+            </>
+          }
+        >
+          <MenuTitle>Судья матча</MenuTitle>
+          <MenuButton danger disabled={revoke.isPending} onClick={() => revoke.mutate(existing.id)}>
+            Снять назначение
+          </MenuButton>
+        </Menu>
+      ) : (
+        <Menu
+          triggerClassName="referee-chip referee-chip--empty"
+          align="end"
+          trigger={
+            <>
+              <span className="referee-chip-name">Назначить судью</span>
+              <Icon name="chevron-down" size={14} />
+            </>
+          }
+        >
+          <MenuTitle>Кто судит?</MenuTitle>
+          {referees.map((user) => (
+            <MenuButton
+              key={user.id}
+              disabled={assign.isPending}
+              onClick={() => assign.mutate({ userId: user.id, role: 'Referee', scopeType: 'Match', scopeId: matchId })}
+            >
+              {user.displayName}
+            </MenuButton>
+          ))}
+          {referees.length === 0 && (
+            <MenuEmpty>
+              Аккаунтов нет — <Link to="/accounts">создать судью</Link>
+            </MenuEmpty>
+          )}
+        </Menu>
+      )}
+      <ErrorText error={assign.error ?? revoke.error} />
+    </>
   )
 }

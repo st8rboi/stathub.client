@@ -1,118 +1,97 @@
-import { useState, type SubmitEvent } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { useTeams } from '@/features/teams/hooks'
+import { plural } from '@/shared/lib/format'
 import { ErrorText } from '@/shared/ui/ErrorText'
-import { useAddTournamentTeam, useTournamentTeams } from '../hooks'
+import { Icon } from '@/shared/ui/Icon'
+import { Badge, EmptyState, Loading, LogoBadge } from '@/shared/ui/layout'
+import { Modal } from '@/shared/ui/Modal'
+import { useTournamentTeams } from '../hooks'
 import { tournamentTeamStatusLabels } from '../labels'
+import { RegisterTeamsForm } from './RegisterTeamsForm'
 
 /**
  * Участники этапа (дивизиона). Команда из справочника заявляется на конкретный этап,
  * дальше её состав живёт на отдельной странице. Одна команда может играть в разных
- * дивизионах одного турнира — это разные заявки.
+ * этапах одного турнира — это разные заявки.
  */
-export function TournamentTeamsSection({
-  leagueId,
-  tournamentId,
-  stageId,
-}: {
-  leagueId: string
-  tournamentId: string
-  stageId: string
-}) {
+export function TournamentTeamsSection({ stageId, basePath }: { stageId: string; basePath: string }) {
   const teams = useTournamentTeams(stageId)
   const allTeams = useTeams()
-  const addTeam = useAddTournamentTeam(stageId)
+  const [adding, setAdding] = useState(false)
 
-  const [formError, setFormError] = useState<string | null>(null)
+  const teamById = (teamId: string) => allTeams.data?.find((team) => team.id === teamId)
+  const list = [...(teams.data ?? [])].sort(
+    (a, b) =>
+      Number(a.status === 'Withdrawn') - Number(b.status === 'Withdrawn') ||
+      (teamById(a.teamId)?.name ?? '').localeCompare(teamById(b.teamId)?.name ?? '', 'ru'),
+  )
+  const activeCount = list.filter((team) => team.status === 'Active').length
 
-  const teamName = (teamId: string) =>
-    allTeams.data?.find((team) => team.id === teamId)?.name ?? teamId.slice(0, 8)
-
-  const registeredTeamIds = new Set((teams.data ?? []).map((team) => team.teamId))
-  const availableTeams = (allTeams.data ?? []).filter((team) => !registeredTeamIds.has(team.id))
-
-  const onSubmit = (e: SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formElement = e.currentTarget
-    const teamId = String(new FormData(formElement).get('teamId') ?? '')
-
-    if (!teamId) {
-      setFormError('Выберите команду.')
-      return
-    }
-
-    setFormError(null)
-    addTeam.mutate(teamId, { onSuccess: () => formElement.reset() })
-  }
-
-  const rosterLink = (tournamentTeamId: string) =>
-    `/leagues/${leagueId}/tournaments/${tournamentId}/stages/${stageId}/teams/${tournamentTeamId}`
+  const addButton = (
+    <button type="button" onClick={() => setAdding(true)}>
+      <Icon name="plus" size={18} />
+      Заявить команды
+    </button>
+  )
 
   return (
     <>
       <ErrorText error={teams.error} />
-      {teams.isPending && <p>Загрузка…</p>}
+      {teams.isPending && <Loading />}
+
       {teams.data?.length === 0 && (
-        <p className="notice">На этом этапе пока нет команд — заявите первую ниже.</p>
-      )}
-      {teams.data && teams.data.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Команда</th>
-              <th>Статус</th>
-              <th>Игроков в заявке</th>
-              <th>Состав</th>
-            </tr>
-          </thead>
-          <tbody>
-            {teams.data.map((tournamentTeam) => (
-              <tr key={tournamentTeam.id}>
-                <td>{teamName(tournamentTeam.teamId)}</td>
-                <td>{tournamentTeamStatusLabels[tournamentTeam.status]}</td>
-                <td>{tournamentTeam.activePlayers}</td>
-                <td>
-                  <Link to={rosterLink(tournamentTeam.id)}>Открыть состав</Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <EmptyState icon="shield" title="На этапе пока нет команд" action={addButton}>
+          Заявите команды из справочника — после этого можно заявить игроков и составить расписание матчей.
+        </EmptyState>
       )}
 
-      <h2>Заявить команду</h2>
-      {availableTeams.length === 0 ? (
-        <p className="notice">
-          Все команды из справочника уже заявлены.{' '}
-          <Link to="/teams">Добавить новую команду</Link>.
-        </p>
-      ) : (
-        <form onSubmit={onSubmit}>
-          <label>
-            Команда
-            <select name="teamId" required defaultValue="">
-              <option value="" disabled>
-                Выберите команду
-              </option>
-              {availableTeams.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.name}
-                  {team.city ? ` (${team.city})` : ''}
-                </option>
-              ))}
-            </select>
-          </label>
-          {formError && <p className="error">{formError}</p>}
-          <ErrorText error={addTeam.error} />
-          <button type="submit" disabled={addTeam.isPending}>
-            Заявить на этап
-          </button>
-          <p className="hint">
-            Одна команда — одна заявка на этап. В разных дивизионах одного турнира команда может
-            играть в каждом — это отдельные заявки.
-          </p>
-        </form>
+      {list.length > 0 && (
+        <>
+          <div className="toolbar">
+            <p className="muted">{plural(activeCount, ['команда участвует', 'команды участвуют', 'команд участвуют'])}</p>
+            {addButton}
+          </div>
+
+          <ul className="entity-grid">
+            {list.map((tournamentTeam) => {
+              const team = teamById(tournamentTeam.teamId)
+              const name = team?.name ?? '…'
+              const withdrawn = tournamentTeam.status === 'Withdrawn'
+              return (
+                <li key={tournamentTeam.id}>
+                  <Link
+                    to={`${basePath}/teams/${tournamentTeam.id}`}
+                    className={withdrawn ? 'entity-card entity-card--muted' : 'entity-card'}
+                  >
+                    <LogoBadge src={team?.logoUrl ?? null} name={name} />
+                    <span className="entity-card-body">
+                      <span className="entity-card-title">{name}</span>
+                      <span className="entity-card-meta">
+                        {withdrawn && <Badge tone="danger">{tournamentTeamStatusLabels.Withdrawn}</Badge>}
+                        {tournamentTeam.activePlayers > 0 ? (
+                          <span>{plural(tournamentTeam.activePlayers, ['игрок', 'игрока', 'игроков'])} в заявке</span>
+                        ) : (
+                          !withdrawn && <span className="error-text">Состав не заявлен</span>
+                        )}
+                      </span>
+                    </span>
+                    <Icon name="chevron-right" className="entity-card-chevron" />
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </>
       )}
+
+      <Modal open={adding} onClose={() => setAdding(false)} title="Заявить команды на этап">
+        <RegisterTeamsForm
+          stageId={stageId}
+          registeredTeamIds={new Set(list.map((team) => team.teamId))}
+          onDone={() => setAdding(false)}
+        />
+      </Modal>
     </>
   )
 }
