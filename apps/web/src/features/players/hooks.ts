@@ -42,3 +42,19 @@ export const useDeletePlayer = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
   })
 }
+
+export const useUploadPlayerPhoto = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { id: string; file: File }) => playersApi.uploadPhoto(input.id, input.file),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+  })
+}
+
+export const useDeletePlayerPhoto = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => playersApi.deletePhoto(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: playerKeys.all }),
+  })
+}

@@ -139,7 +139,6 @@ export type TournamentTeam = {
 export type PlayerRegistration = {
   id: string
   playerId: string
-  squadNumber: number | null
   status: 'Active' | 'TransferredOut' | 'Released'
   joinedOn: string
   leftOn: string | null

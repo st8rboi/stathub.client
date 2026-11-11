@@ -7,11 +7,8 @@ export const rostersApi = {
     request<TournamentTeamDetails>('GET', `/stages/${stageId}/teams/${tournamentTeamId}`),
   addTeam: (stageId: string, teamId: string) =>
     request<{ id: string }>('POST', `/stages/${stageId}/teams`, { teamId }),
-  registerPlayer: (stageId: string, tournamentTeamId: string, playerId: string, squadNumber: number | null) =>
-    request<{ id: string }>('POST', `/stages/${stageId}/teams/${tournamentTeamId}/players`, {
-      playerId,
-      squadNumber,
-    }),
+  registerPlayer: (stageId: string, tournamentTeamId: string, playerId: string) =>
+    request<{ id: string }>('POST', `/stages/${stageId}/teams/${tournamentTeamId}/players`, { playerId }),
   releasePlayer: (stageId: string, tournamentTeamId: string, registrationId: string) =>
     request<void>(
       'POST',
@@ -19,14 +16,8 @@ export const rostersApi = {
     ),
   transferPlayer: (
     stageId: string,
-    body: { playerId: string; fromTeamId: string; toTeamId: string; squadNumber: number | null },
+    body: { playerId: string; fromTeamId: string; toTeamId: string },
   ) => request<void>('POST', `/stages/${stageId}/transfers`, body),
-  changeSquadNumber: (stageId: string, tournamentTeamId: string, registrationId: string, squadNumber: number | null) =>
-    request<void>(
-      'PUT',
-      `/stages/${stageId}/teams/${tournamentTeamId}/players/${registrationId}/squad-number`,
-      { squadNumber },
-    ),
   deleteRegistration: (stageId: string, tournamentTeamId: string, registrationId: string) =>
     request<void>('DELETE', `/stages/${stageId}/teams/${tournamentTeamId}/players/${registrationId}`),
   deleteTeam: (stageId: string, tournamentTeamId: string) =>

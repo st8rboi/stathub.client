@@ -2,6 +2,8 @@ export interface Player {
   id: string
   fullName: string
   birthDate: string | null
+  photoUrl: string | null
+  photoOwnerTenantId: string | null
   createdAtUtc: string
 }
 

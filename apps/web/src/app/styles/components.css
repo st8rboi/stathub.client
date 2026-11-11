@@ -1283,7 +1283,7 @@ button.cell-title:hover:not(:disabled) {
   color: var(--muted);
 }
 
-/* Инициалы человека вместо фото. */
+/* Фото человека или его инициалы, если фото нет. */
 .person-avatar {
   flex: none;
   display: grid;
@@ -1295,6 +1295,13 @@ button.cell-title:hover:not(:disabled) {
   color: var(--text-soft);
   background: var(--bg-soft);
   border-radius: 50%;
+  object-fit: cover;
+}
+
+.person-avatar--lg {
+  width: 64px;
+  height: 64px;
+  font-size: 20px;
 }
 
 .list-footnote {
@@ -1439,33 +1446,13 @@ details.explainer p {
 
 /* ---------- Состав команды ---------- */
 
-.squad-number {
-  display: inline-grid;
-  place-items: center;
-  min-width: 34px;
-  height: 30px;
-  padding: 0 6px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--navy-text);
-  background: var(--navy);
-  border-radius: var(--radius-xs);
-}
-
-.squad-number--empty {
-  font-weight: 600;
-  color: var(--muted);
-  background: var(--bg-soft);
-}
-
 /* Закрытые заявки в истории — приглушены. */
 tr.row-muted td {
   color: var(--muted);
 }
 
-tr.row-muted .squad-number {
-  color: var(--muted);
-  background: var(--bg-soft);
+tr.row-muted .person-avatar {
+  opacity: 0.6;
 }
 
 /* ---------- Финансы: сводка ---------- */

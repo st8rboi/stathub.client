@@ -1,4 +1,4 @@
-import { useState, type SubmitEvent } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { usePlayersByIds } from '@/features/players/hooks'
 import { useTeams } from '@/features/teams/hooks'
@@ -6,13 +6,12 @@ import { formatDate, plural } from '@/shared/lib/format'
 import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { Icon } from '@/shared/ui/Icon'
-import { Badge, Card, EmptyState, Loading, LogoBadge, PageHeader, type BadgeTone } from '@/shared/ui/layout'
+import { Badge, Card, EmptyState, Loading, LogoBadge, PageHeader, PersonAvatar, type BadgeTone } from '@/shared/ui/layout'
 import { Menu, MenuButton } from '@/shared/ui/Menu'
 import { Modal } from '@/shared/ui/Modal'
 import { RegisterPlayerForm } from '../components/RegisterPlayerForm'
 import { TransferPlayerForm } from '../components/TransferPlayerForm'
 import {
-  useChangeSquadNumber,
   useDeleteRegistration,
   useDeleteTournamentTeam,
   useReleasePlayer,
@@ -21,7 +20,6 @@ import {
   useWithdrawTournamentTeam,
 } from '../hooks'
 import { registrationStatusLabels, tournamentTeamStatusLabels } from '../labels'
-import { parseSquadNumber } from '../squadNumber'
 import type { PlayerRegistration, PlayerRegistrationStatus } from '../types'
 
 const registrationTones: Record<PlayerRegistrationStatus, BadgeTone> = {
@@ -30,17 +28,17 @@ const registrationTones: Record<PlayerRegistrationStatus, BadgeTone> = {
   Released: 'neutral',
 }
 
-/** Активные сверху по номеру (без номера — в конце), потом история — свежие первыми. */
+/** Активные сверху в порядке заявки, потом история — свежие первыми. */
 function byRosterOrder(a: PlayerRegistration, b: PlayerRegistration): number {
   const aActive = a.status === 'Active'
   const bActive = b.status === 'Active'
   if (aActive !== bActive) return aActive ? -1 : 1
-  if (aActive) return (a.squadNumber ?? Infinity) - (b.squadNumber ?? Infinity)
+  if (aActive) return a.joinedOn.localeCompare(b.joinedOn)
   return (b.leftOn ?? '').localeCompare(a.leftOn ?? '')
 }
 
 /**
- * Состав команды на этапе: заявка игрока, номер, отзаявка и трансфер.
+ * Состав команды на этапе: заявка игрока, отзаявка и трансфер.
  * История заявок не скрывается — закрытые строки доступны в фильтре «С историей».
  */
 export default function TournamentTeamPage() {
@@ -57,7 +55,6 @@ export default function TournamentTeamPage() {
 
   const release = useReleasePlayer(stageId, tournamentTeamId)
   const withdraw = useWithdrawTournamentTeam(stageId, tournamentTeamId)
-  const changeNumber = useChangeSquadNumber(stageId, tournamentTeamId)
   const deleteRegistration = useDeleteRegistration(stageId, tournamentTeamId)
   const deleteTeam = useDeleteTournamentTeam(stageId, tournamentTeamId)
 
@@ -65,11 +62,11 @@ export default function TournamentTeamPage() {
   const [registering, setRegistering] = useState(false)
   // null — окно закрыто; '' — открыто без выбранного игрока.
   const [transferPlayerId, setTransferPlayerId] = useState<string | null>(null)
-  const [numberEditId, setNumberEditId] = useState<string | null>(null)
 
   const teamById = (id: string) => allTeams.data?.find((team) => team.id === id)
   const teamName = (id: string) => teamById(id)?.name ?? '…'
-  const playerName = (id: string) => playersByIds.data?.find((player) => player.id === id)?.fullName ?? '…'
+  const playerById = (id: string) => playersByIds.data?.find((player) => player.id === id)
+  const playerName = (id: string) => playerById(id)?.fullName ?? '…'
 
   if (details.error) return <ErrorText error={details.error} />
   if (!details.data) return <Loading />
@@ -85,7 +82,6 @@ export default function TournamentTeamPage() {
     .map((item) => ({ id: item.teamId, name: teamName(item.teamId) }))
   const canTransfer = isActiveTeam && active.length > 0 && otherTeams.length > 0
 
-  const numberEditing = registrations.find((registration) => registration.id === numberEditId)
   const name = teamName(data.teamId)
   const team = teamById(data.teamId)
 
@@ -133,13 +129,6 @@ export default function TournamentTeamPage() {
       // Сервер откажет (409), если у игрока уже есть события в матчах за команду.
       if (ok) deleteRegistration.mutate(registration.id)
     })
-
-  const onSaveNumber = (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!numberEditing) return
-    const squadNumber = parseSquadNumber(new FormData(event.currentTarget).get('squadNumber'))
-    changeNumber.mutate({ registrationId: numberEditing.id, squadNumber }, { onSuccess: () => setNumberEditId(null) })
-  }
 
   const registerButton = isActiveTeam && (
     <button type="button" onClick={() => setRegistering(true)}>
@@ -207,7 +196,6 @@ export default function TournamentTeamPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>№</th>
                   <th>Игрок</th>
                   {showHistory && <th>Статус</th>}
                   <th className="col-secondary">Заявлен</th>
@@ -223,12 +211,13 @@ export default function TournamentTeamPage() {
                   return (
                     <tr key={registration.id} className={isActive ? undefined : 'row-muted'}>
                       <td>
-                        <span className={registration.squadNumber ? 'squad-number' : 'squad-number squad-number--empty'}>
-                          {registration.squadNumber ?? '—'}
-                        </span>
-                      </td>
-                      <td>
-                        <strong>{playerName(registration.playerId)}</strong>
+                        <div className="cell-main">
+                          <PersonAvatar
+                            src={playerById(registration.playerId)?.photoUrl ?? null}
+                            name={playerName(registration.playerId)}
+                          />
+                          <strong>{playerName(registration.playerId)}</strong>
+                        </div>
                       </td>
                       {showHistory && (
                         <td>
@@ -252,14 +241,6 @@ export default function TournamentTeamPage() {
                         >
                           {isActive && (
                             <>
-                              <MenuButton
-                                onClick={() => {
-                                  changeNumber.reset()
-                                  setNumberEditId(registration.id)
-                                }}
-                              >
-                                Изменить номер
-                              </MenuButton>
                               {canTransfer && (
                                 <MenuButton onClick={() => setTransferPlayerId(registration.playerId)}>
                                   Перевести в другую команду
@@ -308,45 +289,12 @@ export default function TournamentTeamPage() {
           fromTeamId={data.teamId}
           players={active.map((registration) => ({
             id: registration.playerId,
-            label: `${playerName(registration.playerId)}${registration.squadNumber ? ` (№${registration.squadNumber})` : ''}`,
+            label: playerName(registration.playerId),
           }))}
           teams={otherTeams}
           initialPlayerId={transferPlayerId ?? ''}
           onDone={() => setTransferPlayerId(null)}
         />
-      </Modal>
-
-      <Modal
-        open={numberEditing !== undefined}
-        onClose={() => setNumberEditId(null)}
-        title={numberEditing ? `Номер: ${playerName(numberEditing.playerId)}` : ''}
-        size="sm"
-      >
-        {numberEditing && (
-          <form onSubmit={onSaveNumber}>
-            <label>
-              Игровой номер
-              <input
-                name="squadNumber"
-                type="number"
-                min={1}
-                max={999}
-                defaultValue={numberEditing.squadNumber ?? ''}
-                placeholder="без номера"
-                autoFocus
-              />
-            </label>
-            <ErrorText error={changeNumber.error} />
-            <div className="actions">
-              <button type="submit" disabled={changeNumber.isPending}>
-                Сохранить
-              </button>
-              <button type="button" className="secondary" onClick={() => setNumberEditId(null)}>
-                Отмена
-              </button>
-            </div>
-          </form>
-        )}
       </Modal>
     </>
   )

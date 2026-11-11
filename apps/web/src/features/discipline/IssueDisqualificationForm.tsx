@@ -123,7 +123,6 @@ export function IssueDisqualificationForm({
           {activeRegistrations.map((registration) => (
             <option key={registration.id} value={registration.playerId}>
               {playerName(registration.playerId)}
-              {registration.squadNumber ? ` (№${registration.squadNumber})` : ''}
             </option>
           ))}
         </select>

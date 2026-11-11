@@ -123,6 +123,17 @@ export function Loading({ label = 'Загрузка…' }: { label?: string }) {
 }
 
 /** Логотип сущности (лиги, команды) или заглушка с инициалами, если логотипа нет. */
+/** Фото человека (игрока) в круге; без фото — инициалы. */
+export function PersonAvatar({ src, name, size = 'md' }: { src: string | null; name: string; size?: 'md' | 'lg' }) {
+  const className = size === 'lg' ? 'person-avatar person-avatar--lg' : 'person-avatar'
+  if (src) return <img src={src} alt="" className={className} />
+  return (
+    <span className={className} aria-hidden="true">
+      {initials(name)}
+    </span>
+  )
+}
+
 export function LogoBadge({ src, name, size = 'md' }: { src: string | null; name: string; size?: 'sm' | 'md' | 'lg' }) {
   if (src) return <img src={src} alt="" className={`logo-badge logo-badge--${size}`} />
   return (
