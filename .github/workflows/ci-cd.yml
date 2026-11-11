@@ -1,4 +1,4 @@
-Это # Push в dev — lint и сборка админки (apps/web) и витрины (apps/public). PR в main ничего не запускает.
+# Push в dev — lint и сборка админки (apps/web) и витрины (apps/public). PR в main ничего не запускает.
 # Merge (push) в main — сборка и выкладка dist на VPS, без lint: проверки уже прошли в dev.
 # Секреты репозитория (Settings → Secrets and variables → Actions):
 #   DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS — те же, что в stathub.server.
