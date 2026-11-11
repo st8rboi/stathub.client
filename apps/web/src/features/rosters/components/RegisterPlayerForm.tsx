@@ -6,10 +6,9 @@ import { useDebouncedValue } from '@/shared/lib/useDebouncedValue'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { Icon } from '@/shared/ui/Icon'
 import { useRegisterPlayer } from '../hooks'
-import { parseSquadNumber } from '../squadNumber'
 
 /**
- * Заявка игрока в состав: поиск по справочнику (с учётом опечаток), выбор, номер.
+ * Заявка игрока в состав: поиск по справочнику (с учётом опечаток) и выбор.
  * Окно не закрывается после заявки — состав обычно вносят сразу целиком.
  */
 export function RegisterPlayerForm({
@@ -31,7 +30,6 @@ export function RegisterPlayerForm({
   const found = usePlayers(search, search.length >= 2)
 
   const [playerId, setPlayerId] = useState('')
-  const [squadNumber, setSquadNumber] = useState('')
   const [notice, setNotice] = useState<string | null>(null)
 
   const results = found.data ?? []
@@ -41,17 +39,13 @@ export function RegisterPlayerForm({
     if (!playerId) return
 
     const name = results.find((player) => player.id === playerId)?.fullName ?? 'Игрок'
-    register.mutate(
-      { playerId, squadNumber: parseSquadNumber(squadNumber) },
-      {
-        onSuccess: () => {
-          setNotice(`${name} заявлен${squadNumber ? ` под №${squadNumber}` : ''}.`)
-          setPlayerId('')
-          setSquadNumber('')
-          setQuery('')
-        },
+    register.mutate(playerId, {
+      onSuccess: () => {
+        setNotice(`${name} заявлен.`)
+        setPlayerId('')
+        setQuery('')
       },
-    )
+    })
   }
 
   return (
@@ -106,20 +100,6 @@ export function RegisterPlayerForm({
           })}
         </ul>
       )}
-
-      <div className="row">
-        <label>
-          Игровой номер
-          <input
-            type="number"
-            min={1}
-            max={999}
-            value={squadNumber}
-            onChange={(event) => setSquadNumber(event.target.value)}
-            placeholder="необязательно"
-          />
-        </label>
-      </div>
 
       <ErrorText error={register.error} />
       {notice && <p className="success-text">{notice}</p>}

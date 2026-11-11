@@ -1,4 +1,4 @@
-import { request } from '@/shared/api/client'
+import { request, uploadFile } from '@/shared/api/client'
 import type { CreatePlayerBody, Player, UpdatePlayerBody } from './types'
 
 export const playersApi = {
@@ -8,4 +8,6 @@ export const playersApi = {
   create: (body: CreatePlayerBody) => request<{ id: string }>('POST', '/players', body),
   update: (id: string, body: UpdatePlayerBody) => request<Player>('PUT', `/players/${id}`, body),
   remove: (id: string) => request<void>('DELETE', `/players/${id}`),
+  uploadPhoto: (id: string, file: File) => uploadFile<Player>(`/players/${id}/photo`, file),
+  deletePhoto: (id: string) => request<Player>('DELETE', `/players/${id}/photo`),
 }

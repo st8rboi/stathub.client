@@ -13,7 +13,6 @@ export interface TournamentTeam {
 export interface PlayerRegistration {
   id: string
   playerId: string
-  squadNumber: number | null
   status: PlayerRegistrationStatus
   joinedOn: string
   leftOn: string | null

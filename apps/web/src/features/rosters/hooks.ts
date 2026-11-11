@@ -47,9 +47,7 @@ export const useWithdrawTournamentTeam = (tournamentId: string, tournamentTeamId
   useRosterMutation(() => rostersApi.withdrawTeam(tournamentId, tournamentTeamId))
 
 export const useRegisterPlayer = (tournamentId: string, tournamentTeamId: string) =>
-  useRosterMutation((input: { playerId: string; squadNumber: number | null }) =>
-    rostersApi.registerPlayer(tournamentId, tournamentTeamId, input.playerId, input.squadNumber),
-  )
+  useRosterMutation((playerId: string) => rostersApi.registerPlayer(tournamentId, tournamentTeamId, playerId))
 
 export const useReleasePlayer = (tournamentId: string, tournamentTeamId: string) =>
   useRosterMutation((registrationId: string) =>
@@ -60,18 +58,12 @@ export const useTransferPlayer = (
   tournamentId: string,
   fromTeamId: string,
 ) =>
-  useRosterMutation((input: { playerId: string; toTeamId: string; squadNumber: number | null }) =>
+  useRosterMutation((input: { playerId: string; toTeamId: string }) =>
     rostersApi.transferPlayer(tournamentId, {
       playerId: input.playerId,
       fromTeamId,
       toTeamId: input.toTeamId,
-      squadNumber: input.squadNumber,
     }),
-  )
-
-export const useChangeSquadNumber = (stageId: string, tournamentTeamId: string) =>
-  useRosterMutation((input: { registrationId: string; squadNumber: number | null }) =>
-    rostersApi.changeSquadNumber(stageId, tournamentTeamId, input.registrationId, input.squadNumber),
   )
 
 export const useDeleteRegistration = (stageId: string, tournamentTeamId: string) =>

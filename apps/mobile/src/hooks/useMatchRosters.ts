@@ -6,7 +6,6 @@ import { usePersistedQuery } from './usePersistedQuery'
 export type RosterPlayer = {
   playerId: string
   fullName: string
-  squadNumber: number | null
 }
 
 export type MatchRosters = {
@@ -56,9 +55,9 @@ export async function fetchMatchRosters(match: Match): Promise<MatchRosters> {
       .map((registration) => ({
         playerId: registration.playerId,
         fullName: nameById.get(registration.playerId) ?? 'Игрок',
-        squadNumber: registration.squadNumber,
       }))
-      .sort((left, right) => (left.squadNumber ?? 999) - (right.squadNumber ?? 999))
+      // Номеров нет — судья ищет игрока по фамилии, поэтому по алфавиту.
+      .sort((left, right) => left.fullName.localeCompare(right.fullName, 'ru'))
 
   return { home: toRoster(homeRegistrations), away: toRoster(awayRegistrations) }
 }

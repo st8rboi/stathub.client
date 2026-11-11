@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { ageFromBirthDate, formatDate, plural } from '@/shared/lib/format'
-import { initials } from '@/shared/lib/initials'
 import { useDebouncedValue } from '@/shared/lib/useDebouncedValue'
 import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { Icon } from '@/shared/ui/Icon'
-import { Card, EmptyState, Loading, PageHeader } from '@/shared/ui/layout'
+import { Card, EmptyState, Loading, PageHeader, PersonAvatar } from '@/shared/ui/layout'
 import { Menu, MenuButton } from '@/shared/ui/Menu'
 import { Modal } from '@/shared/ui/Modal'
 import { PlayerForm } from '../components/PlayerForm'
+import { PlayerPhotoEditor } from '../components/PlayerPhotoEditor'
 import { useDeletePlayer, usePlayers } from '../hooks'
 import type { Player } from '../types'
 
@@ -106,9 +106,7 @@ export default function PlayersPage() {
                   <tr key={player.id}>
                     <td>
                       <div className="cell-main">
-                        <span className="person-avatar" aria-hidden="true">
-                          {initials(player.fullName)}
-                        </span>
+                        <PersonAvatar src={player.photoUrl} name={player.fullName} />
                         <span className="cell-text">
                           <button type="button" className="cell-title" onClick={() => setEditingId(player.id)}>
                             {player.fullName}
@@ -160,7 +158,14 @@ export default function PlayersPage() {
       </Modal>
 
       <Modal open={editing !== undefined} onClose={() => setEditingId(null)} title="Игрок">
-        {editing && <PlayerForm key={editing.id} player={editing} onDone={() => setEditingId(null)} />}
+        {editing && (
+          <>
+            <PlayerPhotoEditor player={editing} />
+            <section className="modal-section">
+              <PlayerForm key={editing.id} player={editing} onDone={() => setEditingId(null)} />
+            </section>
+          </>
+        )}
       </Modal>
     </>
   )

@@ -124,8 +124,7 @@ export default function MatchScreen() {
   // Пометка дисквалифицированных: сервер отклонит событие, лучше предупредить заранее.
   const bannedPlayerIds = new Set((stageBans.data ?? []).map((ban) => ban.playerId))
   const playerLabel = (player: RosterPlayer) => {
-    const base = player.squadNumber ? `№${player.squadNumber} ${player.fullName}` : player.fullName
-    return bannedPlayerIds.has(player.playerId) ? `${base} · дисквалифицирован` : base
+    return bannedPlayerIds.has(player.playerId) ? `${player.fullName} · дисквалифицирован` : player.fullName
   }
 
   const rosterFor = (teamId: string): RosterPlayer[] =>

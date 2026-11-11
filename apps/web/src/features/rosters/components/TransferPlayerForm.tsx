@@ -1,7 +1,6 @@
 import { useState, type SubmitEvent } from 'react'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { useTransferPlayer } from '../hooks'
-import { parseSquadNumber } from '../squadNumber'
 
 /**
  * Трансфер игрока в другую команду этапа. Старая заявка закрывается со статусом
@@ -30,11 +29,7 @@ export function TransferPlayerForm({
 
   const onSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const form = new FormData(event.currentTarget)
-    transfer.mutate(
-      { playerId, toTeamId, squadNumber: parseSquadNumber(form.get('squadNumber')) },
-      { onSuccess: onDone },
-    )
+    transfer.mutate({ playerId, toTeamId }, { onSuccess: onDone })
   }
 
   return (
@@ -65,12 +60,6 @@ export function TransferPlayerForm({
           ))}
         </select>
       </label>
-      <div className="row">
-        <label>
-          Новый игровой номер
-          <input name="squadNumber" type="number" min={1} max={999} placeholder="необязательно" />
-        </label>
-      </div>
       <p className="hint">
         Старая заявка закроется со статусом «Перешёл в другую команду» и датой — история матчей и событий не пострадает.
       </p>
