@@ -206,7 +206,7 @@ export function TournamentFeesSection({
                 name="amount"
                 type="number"
                 min={0}
-                step={50}
+                step={1}
                 defaultValue={settings.data?.tournamentAmount ?? 0}
                 key={settings.data?.tournamentAmount ?? 'new'}
               />

@@ -120,7 +120,7 @@ export function ManualChargeForm({
       <div className="row">
         <label>
           Сумма, ₽
-          <input name="amount" type="number" min={1} step={50} required />
+          <input name="amount" type="number" min={1} step={1} required />
         </label>
       </div>
 
