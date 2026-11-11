@@ -6,6 +6,7 @@ import LeaguesPage from '@/pages/LeaguesPage'
 import MatchPage from '@/pages/MatchPage'
 import StagePage from '@/pages/StagePage'
 import StatisticsPage from '@/pages/StatisticsPage'
+import TeamPage from '@/pages/TeamPage'
 
 const svgProps = {
   viewBox: '0 0 24 24',
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/leagues/:slug" element={<LeaguePage />} />
           <Route path="/stages/:stageId" element={<StagePage />} />
           <Route path="/matches/:matchId" element={<MatchPage />} />
+          <Route path="/teams/:teamId" element={<TeamPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
           <Route
             path="*"

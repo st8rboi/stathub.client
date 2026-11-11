@@ -143,3 +143,49 @@ export type TournamentStatistics = {
   tournament: PublicTournamentHeader
   rows: PlayerStatisticsRow[]
 }
+
+export type PublicTeam = {
+  id: string
+  name: string
+  city: string | null
+  logoUrl: string | null
+}
+
+/** Участие команды в этапе опубликованной лиги. status — заявка (Active/Withdrawn) или null. */
+export type PublicTeamParticipation = {
+  stageId: string
+  stageName: string
+  tournamentId: string
+  tournamentName: string
+  leagueName: string
+  leagueSlug: string
+  leagueLogoUrl: string | null
+  status: string | null
+}
+
+/** Игрок заявки со статистикой за матчи команды на выбранном этапе. */
+export type PublicTeamPlayer = {
+  playerId: string
+  fullName: string
+  photoUrl: string | null
+  birthDate: string | null
+  /** Active | TransferredOut | Released */
+  status: string
+  joinedOn: string
+  leftOn: string | null
+  matches: number
+  goals: number
+  assists: number
+  ownGoals: number
+  yellowCards: number
+  redCards: number
+}
+
+export type PublicTeamPage = {
+  team: PublicTeam
+  participations: PublicTeamParticipation[]
+  stage: PublicStage
+  matches: PublicMatch[]
+  standings: StandingsRow[]
+  players: PublicTeamPlayer[]
+}

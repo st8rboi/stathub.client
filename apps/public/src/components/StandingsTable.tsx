@@ -1,10 +1,11 @@
 import type { StandingsRow } from '@/api/types'
+import { TeamLink } from '@/components/TeamLink'
 
 /**
  * Турнирная таблица этапа. Приходит готовой с сервера: она считается на каждый GET
  * из протокола матчей и нигде не кэшируется (documentation/doc.md §9.2).
  */
-export function StandingsTable({ rows }: { rows: StandingsRow[] }) {
+export function StandingsTable({ rows, highlightTeamId }: { rows: StandingsRow[]; highlightTeamId?: string }) {
   if (rows.length === 0) {
     return <p className="notice" style={{ margin: 16 }}>Таблица появится, когда на этапе будут сыгранные матчи.</p>
   }
@@ -27,17 +28,10 @@ export function StandingsTable({ rows }: { rows: StandingsRow[] }) {
         </thead>
         <tbody>
           {rows.map((row, index) => (
-            <tr key={row.teamId}>
+            <tr key={row.teamId} className={row.teamId === highlightTeamId ? 'standings-row--current' : undefined}>
               <td className="muted col-index">{index + 1}</td>
               <td className="col-team">
-                <div className="standings-team">
-                  {row.teamLogoUrl ? (
-                    <img src={row.teamLogoUrl} alt="" className="team-logo team-logo--sm" />
-                  ) : (
-                    <span className="team-logo team-logo--sm team-logo--empty" />
-                  )}
-                  <span>{row.teamName || '—'}</span>
-                </div>
+                <TeamLink teamId={row.teamId} name={row.teamName} logoUrl={row.teamLogoUrl} />
               </td>
               <td className="num">{row.played}</td>
               <td className="num col-extra">{row.wins}</td>

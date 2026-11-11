@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { TeamLink } from '@/components/TeamLink'
 import type { PlayerStatisticsRow } from '@/api/types'
 import { Skeleton } from '@/components/Skeleton'
 import { useLeague, useLeagues, useTournamentStatistics } from '@/hooks'
@@ -203,17 +204,15 @@ export default function StatisticsPage() {
                         <td className="muted col-index">{index + 1}</td>
                         <td className="stats-name">
                           <span className="stats-player">{row.playerName}</span>
-                          <span className="stats-team-inline">{row.teamName ?? '—'}</span>
+                          <TeamLink
+                            teamId={row.teamId}
+                            name={row.teamName}
+                            hideLogo
+                            className="stats-team-inline"
+                          />
                         </td>
                         <td className="col-extra">
-                          <div className="standings-team">
-                            {row.teamLogoUrl ? (
-                              <img src={row.teamLogoUrl} alt="" className="team-logo team-logo--sm" />
-                            ) : (
-                              <span className="team-logo team-logo--sm team-logo--empty" />
-                            )}
-                            <span>{row.teamName ?? '—'}</span>
-                          </div>
+                          <TeamLink teamId={row.teamId} name={row.teamName} logoUrl={row.teamLogoUrl} />
                         </td>
                         {columns.map((column, columnIndex) => (
                           <td key={column.label} className="num">
