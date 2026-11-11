@@ -179,7 +179,7 @@ export function StageFeesSection({
                 name="amount"
                 type="number"
                 min={0}
-                step={50}
+                step={1}
                 placeholder={`как в турнире: ${settings.data?.tournamentAmount ?? 0}`}
                 defaultValue={settings.data?.stageAmount ?? ''}
                 key={settings.data?.stageAmount ?? 'inherit'}
