@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router'
 import type { PublicEvent, PublicMatch } from '@/api/types'
 import type { MatchLinkState } from '@/components/FixtureRow'
 import { MatchEventIcon } from '@/components/MatchEventIcon'
+import { teamPath } from '@/components/TeamLink'
 import { Skeleton } from '@/components/Skeleton'
 import { publicKeys, useMatch, useNow } from '@/hooks'
 import {
@@ -205,14 +206,14 @@ export default function MatchPage() {
       </p>
 
       <div className="matchboard">
-        <div className="matchboard-team">
+        <Link to={teamPath(match.homeTeamId)} className="matchboard-team team-link">
           {match.homeTeamLogoUrl ? (
             <img src={match.homeTeamLogoUrl} alt="" className="team-logo team-logo--lg" />
           ) : (
             <span className="team-logo team-logo--lg team-logo--empty" />
           )}
           <span className="matchboard-name">{match.homeTeamName}</span>
-        </div>
+        </Link>
 
         <div className="matchboard-center">
           <div className="matchboard-score">
@@ -228,14 +229,14 @@ export default function MatchPage() {
           )}
         </div>
 
-        <div className="matchboard-team matchboard-team--away">
+        <Link to={teamPath(match.awayTeamId)} className="matchboard-team matchboard-team--away team-link">
           {match.awayTeamLogoUrl ? (
             <img src={match.awayTeamLogoUrl} alt="" className="team-logo team-logo--lg" />
           ) : (
             <span className="team-logo team-logo--lg team-logo--empty" />
           )}
           <span className="matchboard-name">{match.awayTeamName}</span>
-        </div>
+        </Link>
       </div>
 
       <p className="match-meta">

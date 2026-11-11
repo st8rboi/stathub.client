@@ -5,6 +5,7 @@ import type {
   PublicMatch,
   PublicMatchPage,
   PublicStagePage,
+  PublicTeamPage,
   TournamentStatistics,
 } from './types'
 
@@ -30,6 +31,9 @@ export const publicApi = {
       `/public/matches${query({ fromUtc: fromUtc.toISOString(), toUtc: toUtc.toISOString() })}`,
     ),
   match: (matchId: string) => request<PublicMatchPage>(`/public/matches/${matchId}`),
+  /** Страница команды; без stageId сервер выбирает самый свежий этап. */
+  team: (teamId: string, stageId?: string) =>
+    request<PublicTeamPage>(`/public/teams/${teamId}${query({ stageId })}`),
   live: () => request<PublicMatch[]>('/public/live'),
   /** Статистика игроков — всегда в разрезе конкретного турнира. */
   tournamentStatistics: (tournamentId: string) =>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { TeamLink } from '@/components/TeamLink'
 import type { PublicLeague } from '@/api/types'
 import { useLeague, useStage } from '@/hooks'
 
@@ -59,14 +60,7 @@ export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
                   {index + 1}
                 </td>
                 <td className="col-team">
-                  <div className="standings-team">
-                    {row.teamLogoUrl ? (
-                      <img src={row.teamLogoUrl} alt="" className="team-logo team-logo--sm" />
-                    ) : (
-                      <span className="team-logo team-logo--sm team-logo--empty" />
-                    )}
-                    <span>{row.teamName || '—'}</span>
-                  </div>
+                  <TeamLink teamId={row.teamId} name={row.teamName} logoUrl={row.teamLogoUrl} />
                 </td>
                 <td className="num">{row.played}</td>
                 <td className="num">

@@ -8,6 +8,7 @@ export const publicKeys = {
   league: (slug: string) => ['public', 'league', slug] as const,
   stage: (stageId: string) => ['public', 'stage', stageId] as const,
   match: (matchId: string) => ['public', 'match', matchId] as const,
+  team: (teamId: string, stageId: string) => ['public', 'team', teamId, stageId] as const,
   live: () => ['public', 'live'] as const,
   schedule: (fromUtc: string, toUtc: string) => ['public', 'schedule', fromUtc, toUtc] as const,
   statistics: (tournamentId: string) => ['public', 'statistics', tournamentId] as const,
@@ -28,6 +29,15 @@ export const useSchedule = (from: Date, to: Date) =>
     queryKey: publicKeys.schedule(from.toISOString(), to.toISOString()),
     queryFn: () => publicApi.schedule(from, to),
     refetchInterval: 60_000,
+  })
+
+export const useTeam = (teamId: string, stageId: string) =>
+  useQuery({
+    queryKey: publicKeys.team(teamId, stageId),
+    queryFn: () => publicApi.team(teamId, stageId || undefined),
+    enabled: !!teamId,
+    // Переключение этапа не мигает скелетоном: старые данные видны, пока грузятся новые.
+    placeholderData: (previous) => (previous?.team.id === teamId ? previous : undefined),
   })
 
 /**
