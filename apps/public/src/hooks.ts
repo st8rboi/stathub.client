@@ -10,6 +10,7 @@ export const publicKeys = {
   match: (matchId: string) => ['public', 'match', matchId] as const,
   team: (teamId: string, stageId: string) => ['public', 'team', teamId, stageId] as const,
   live: () => ['public', 'live'] as const,
+  matchDays: (timeZone: string) => ['public', 'match-days', timeZone] as const,
   schedule: (fromUtc: string, toUtc: string) => ['public', 'schedule', fromUtc, toUtc] as const,
   statistics: (tournamentId: string) => ['public', 'statistics', tournamentId] as const,
 }
@@ -23,12 +24,21 @@ export const useLeague = (slug: string) =>
 export const useStage = (stageId: string) =>
   useQuery({ queryKey: publicKeys.stage(stageId), queryFn: () => publicApi.stage(stageId), enabled: !!stageId })
 
-/** Расписание на 7 дней: один запрос даёт и счётчики для полосы дат, и матчи дня. */
-export const useSchedule = (from: Date, to: Date) =>
+/** Матчи за интервал — на главной это сутки, выбранные в полосе дат. */
+export const useSchedule = (from: Date, to: Date, enabled = true) =>
   useQuery({
     queryKey: publicKeys.schedule(from.toISOString(), to.toISOString()),
     queryFn: () => publicApi.schedule(from, to),
+    enabled,
     refetchInterval: 60_000,
+  })
+
+/** Дни с матчами для полосы дат: меняются редко, поэтому опрос реже, чем у расписания. */
+export const useMatchDays = (timeZone: string) =>
+  useQuery({
+    queryKey: publicKeys.matchDays(timeZone),
+    queryFn: () => publicApi.matchDays(timeZone),
+    refetchInterval: 5 * 60_000,
   })
 
 export const useTeam = (teamId: string, stageId: string) =>

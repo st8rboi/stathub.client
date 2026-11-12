@@ -59,6 +59,12 @@ export type PublicStage = {
   lossPoints: number
 }
 
+/** День с матчами в часовом поясе зрителя: `date` — «YYYY-MM-DD». */
+export type PublicMatchDay = {
+  date: string
+  count: number
+}
+
 export type PublicMatch = {
   id: string
   stageId: string
