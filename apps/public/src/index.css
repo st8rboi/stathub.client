@@ -161,6 +161,11 @@ a {
   align-items: start;
 }
 
+/* Плей-офф: таблицы нет (позже здесь будет сетка) — матчи на всю ширину. */
+.stage-columns--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 h1 {
   margin: 0 0 8px;
   font-size: clamp(24px, 3vw, 36px);

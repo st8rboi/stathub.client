@@ -99,7 +99,7 @@ export default function StagePage() {
         </nav>
       )}
 
-      <div className="stage-columns">
+      <div className={playoff ? 'stage-columns stage-columns--single' : 'stage-columns'}>
         <section>
           <div className="section-head">
             <h2>Матчи</h2>
@@ -151,14 +151,17 @@ export default function StagePage() {
           )}
         </section>
 
-        <section>
-          <div className="section-head">
-            <h2>Таблица</h2>
-          </div>
-          <div className="competition competition--plain">
-            <StandingsTable rows={standings} groups={standingsGroups} />
-          </div>
-        </section>
+        {/* В плей-офф таблицы нет: только сетка (будет позже). */}
+        {!playoff && (
+          <section>
+            <div className="section-head">
+              <h2>Таблица</h2>
+            </div>
+            <div className="competition competition--plain">
+              <StandingsTable rows={standings} groups={standingsGroups} />
+            </div>
+          </section>
+        )}
       </div>
     </>
   )

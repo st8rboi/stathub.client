@@ -156,6 +156,8 @@ export default function TeamPage() {
     standingsGroups.find((group) => group.rows.some((row) => row.teamId === info.id))?.rows ?? standings
   const ownRow = ownTable.find((row) => row.teamId === info.id)
   const participation = participations.find((item) => item.stageId === stage.id)
+  // В плей-офф нет таблицы, а значит, нет места и очков.
+  const playoff = stage.formatType === 'Playoff'
 
   // Дивизион приходит, только если их в турнире несколько. Тогда он важнее этапа, а этап
   // дописываем, когда команда играла в нескольких этапах одного дивизиона (круг и плей-офф).
@@ -220,7 +222,7 @@ export default function TeamPage() {
         </label>
       )}
 
-      <Summary row={ownRow} position={ownRow?.position ?? 0} total={ownTable.length} />
+      {!playoff && <Summary row={ownRow} position={ownRow?.position ?? 0} total={ownTable.length} />}
 
       {form.length > 0 && (
         <div className="team-form" aria-label="Последние результаты">
@@ -242,7 +244,7 @@ export default function TeamPage() {
         </div>
       )}
 
-      <div className="stage-columns">
+      <div className={playoff ? 'stage-columns stage-columns--single' : 'stage-columns'}>
         <section>
           {upcoming.length > 0 && (
             <>
@@ -275,14 +277,16 @@ export default function TeamPage() {
           )}
         </section>
 
-        <section>
-          <div className="section-head">
-            <h2>Таблица</h2>
-          </div>
-          <div className="competition competition--plain">
-            <StandingsTable rows={standings} groups={standingsGroups} highlightTeamId={info.id} />
-          </div>
-        </section>
+        {!playoff && (
+          <section>
+            <div className="section-head">
+              <h2>Таблица</h2>
+            </div>
+            <div className="competition competition--plain">
+              <StandingsTable rows={standings} groups={standingsGroups} highlightTeamId={info.id} />
+            </div>
+          </section>
+        )}
       </div>
 
       <div className="section-head">
