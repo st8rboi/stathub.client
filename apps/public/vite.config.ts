@@ -8,6 +8,15 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  build: {
+    // Второй вход — трансляционный оверлей: отдельная лёгкая страница без React.
+    rolldownOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        overlay: fileURLToPath(new URL('./overlay.html', import.meta.url)),
+      },
+    },
+  },
   server: {
     host: '127.0.0.1',
     port: 5174,
