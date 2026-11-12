@@ -1178,6 +1178,43 @@ td.stats-name {
   font-weight: 600;
 }
 
+.stats-player-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.stats-photo {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-soft);
+}
+
+.stats-photo--empty {
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.stats-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats-player {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .stats-team-inline {
   display: none;
   font-size: 12px;
