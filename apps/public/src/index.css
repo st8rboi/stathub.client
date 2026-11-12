@@ -360,15 +360,41 @@ h2 {
 
 .day-strip {
   display: flex;
+  align-items: stretch;
   gap: 4px;
   padding: 10px;
   border-bottom: 1px solid var(--border);
+}
+
+.day-strip-scroller {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
 
-.day-strip::-webkit-scrollbar {
+.day-strip-scroller::-webkit-scrollbar {
   display: none;
+}
+
+.day-strip-arrow {
+  flex: none;
+  width: 28px;
+  border: none;
+  border-radius: 8px;
+  background: var(--bg-soft);
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.day-strip-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .day-tab {
@@ -1583,6 +1609,7 @@ td.stats-name {
   }
 
   .day-tab:not(.active):hover,
+  .day-strip-arrow:not(:disabled):hover,
   .chip:not(.active):hover {
     color: var(--text);
   }
@@ -1714,8 +1741,16 @@ td.stats-name {
   }
 
   .day-strip {
-    gap: 2px;
     padding: 8px;
+  }
+
+  .day-strip-scroller {
+    gap: 2px;
+  }
+
+  /* На телефоне листают свайпом — стрелки только отнимают место. */
+  .day-strip-arrow {
+    display: none;
   }
 
   .day-tab {

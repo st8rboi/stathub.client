@@ -3,6 +3,7 @@ import type {
   PublicLeague,
   PublicLeaguePage,
   PublicMatch,
+  PublicMatchDay,
   PublicMatchPage,
   PublicStagePage,
   PublicTeamPage,
@@ -30,6 +31,9 @@ export const publicApi = {
     request<PublicMatch[]>(
       `/public/matches${query({ fromUtc: fromUtc.toISOString(), toUtc: toUtc.toISOString() })}`,
     ),
+  /** Дни с матчами опубликованных лиг; граница дня — по часовому поясу зрителя (IANA). */
+  matchDays: (timeZone: string) =>
+    request<PublicMatchDay[]>(`/public/match-days${query({ timeZone })}`),
   match: (matchId: string) => request<PublicMatchPage>(`/public/matches/${matchId}`),
   /** Страница команды; без stageId сервер выбирает самый свежий этап. */
   team: (teamId: string, stageId?: string) =>
