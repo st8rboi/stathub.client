@@ -1,24 +1,29 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { TeamLink } from '@/components/TeamLink'
+import { StandingsTable } from '@/components/StandingsTable'
 import type { PublicLeague } from '@/api/types'
 import { useLeague, useStage } from '@/hooks'
 
 /**
- * Правый сайдбар: таблица лиги. Выбор лиги — из опубликованного каталога,
- * этап берём первый у последнего турнира лиги (текущий сезон).
+ * Правый сайдбар: таблица лиги. Выбор лиги — из опубликованного каталога, турнир берём последний
+ * (текущий сезон). Если в турнире несколько дивизионов, появляется их переключатель;
+ * этап — первый в дивизионе.
  */
 export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
   const [slug, setSlug] = useState('')
+  const [divisionId, setDivisionId] = useState('')
   const activeSlug = slug || leagues[0]?.slug || ''
 
   const leaguePage = useLeague(activeSlug)
   const tournament = leaguePage.data?.tournaments.at(-1)
-  const stageId = tournament?.stages[0]?.id ?? ''
+  const divisions = tournament?.divisions ?? []
+  // Выбранного дивизиона может не быть в другой лиге — тогда берём первый.
+  const division = divisions.find((item) => item.id === divisionId) ?? divisions[0]
+  const stageId = division?.stages[0]?.id ?? ''
   const stage = useStage(stageId)
 
-  const rows = stage.data?.standings ?? []
   const stageName = stage.data?.stage.name ?? tournament?.name ?? ''
+  const isEmpty = (stage.data?.standings.length ?? 0) === 0 && (stage.data?.standingsGroups.length ?? 0) === 0
 
   return (
     <div className="side-panel">
@@ -38,41 +43,28 @@ export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
         )}
       </div>
 
+      {divisions.length > 1 && (
+        <div className="side-panel-head" style={{ marginTop: 8 }}>
+          <select
+            value={division?.id ?? ''}
+            onChange={(event) => setDivisionId(event.target.value)}
+            aria-label="Дивизион"
+          >
+            {divisions.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <p className="side-panel-subtitle">{stageName}</p>
 
-      {rows.length === 0 ? (
+      {isEmpty ? (
         <p className="muted side-panel-empty">Таблица появится после первых сыгранных матчей.</p>
       ) : (
-        <table className="standings-table">
-          <thead>
-            <tr>
-              <th className="col-index">#</th>
-              <th className="col-team">Команда</th>
-              <th className="num">И</th>
-              <th className="num">±</th>
-              <th className="num">О</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, index) => (
-              <tr key={row.teamId}>
-                <td className={index < 3 ? 'col-index standings-pos standings-pos--top' : 'col-index standings-pos'}>
-                  {index + 1}
-                </td>
-                <td className="col-team">
-                  <TeamLink teamId={row.teamId} name={row.teamName} logoUrl={row.teamLogoUrl} />
-                </td>
-                <td className="num">{row.played}</td>
-                <td className="num">
-                  {row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}
-                </td>
-                <td className="num">
-                  <strong>{row.points}</strong>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <StandingsTable rows={stage.data?.standings ?? []} groups={stage.data?.standingsGroups} compact />
       )}
     </div>
   )

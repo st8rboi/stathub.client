@@ -3,6 +3,8 @@ export type PlayerRegistrationStatus = 'Active' | 'TransferredOut' | 'Released'
 
 export interface TournamentTeam {
   id: string
+  /** Дивизион заявки — по нему идут все изменения состава. */
+  divisionId: string
   tournamentId: string
   teamId: string
   status: TournamentTeamStatus
@@ -20,6 +22,8 @@ export interface PlayerRegistration {
 
 export interface TournamentTeamDetails {
   id: string
+  /** Дивизион заявки — по нему идут все изменения состава. */
+  divisionId: string
   tournamentId: string
   teamId: string
   status: TournamentTeamStatus

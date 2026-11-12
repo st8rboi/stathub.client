@@ -1,6 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { tournamentsApi } from './api'
-import type { AddStageBody, CreateTournamentBody, TournamentAction, UpdateTournamentBody } from './types'
+import type {
+  AddStageBody,
+  CreateTournamentBody,
+  StageBody,
+  StageGroupBody,
+  TournamentAction,
+  UpdateTournamentBody,
+} from './types'
 
 export const tournamentKeys = {
   all: ['tournaments'] as const,
@@ -50,7 +57,7 @@ export const useDeleteTournament = (leagueId: string, tournamentId: string) => {
 }
 
 export const useUpdateStage = (leagueId: string, tournamentId: string) =>
-  useTournamentMutation((input: { stageId: string; body: AddStageBody }) =>
+  useTournamentMutation((input: { stageId: string; body: StageBody }) =>
     tournamentsApi.updateStage(leagueId, tournamentId, input.stageId, input.body),
   )
 
@@ -65,3 +72,27 @@ export const useDeleteStage = (leagueId: string, tournamentId: string) => {
     },
   })
 }
+
+export const useAddDivision = (leagueId: string, tournamentId: string) =>
+  useTournamentMutation((name: string) => tournamentsApi.addDivision(leagueId, tournamentId, name))
+
+export const useRenameDivision = (leagueId: string, tournamentId: string) =>
+  useTournamentMutation((input: { divisionId: string; name: string }) =>
+    tournamentsApi.renameDivision(leagueId, tournamentId, input.divisionId, input.name),
+  )
+
+export const useDeleteDivision = (leagueId: string, tournamentId: string) =>
+  useTournamentMutation((divisionId: string) => tournamentsApi.removeDivision(leagueId, tournamentId, divisionId))
+
+/** Группа этапа: groupId задан — правка, иначе новая группа. */
+export const useSaveStageGroup = (leagueId: string, tournamentId: string, stageId: string) =>
+  useTournamentMutation<unknown, { groupId?: string; body: StageGroupBody }>((input) =>
+    input.groupId
+      ? tournamentsApi.updateStageGroup(leagueId, tournamentId, stageId, input.groupId, input.body)
+      : tournamentsApi.addStageGroup(leagueId, tournamentId, stageId, input.body),
+  )
+
+export const useDeleteStageGroup = (leagueId: string, tournamentId: string, stageId: string) =>
+  useTournamentMutation((groupId: string) =>
+    tournamentsApi.removeStageGroup(leagueId, tournamentId, stageId, groupId),
+  )

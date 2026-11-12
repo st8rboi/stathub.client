@@ -66,8 +66,9 @@ function mainMetric(section: SectionId, row: PlayerStatisticsRow): number {
 }
 
 /**
- * Статистика игроков. Всегда в разрезе одного турнира: сводки «по лиге» или «по этапу»
- * смешивали бы разные соревнования и правила. Разделы — отдельные «топы» с разной сортировкой.
+ * Статистика игроков. Всегда в разрезе одного дивизиона турнира: дивизионы — независимые
+ * соревнования, общий список бомбардиров на турнир смешивал бы их. Если дивизион один,
+ * переключателя нет. Разделы — отдельные «топы» с разной сортировкой.
  */
 export default function StatisticsPage() {
   const [params, setParams] = useSearchParams()
@@ -85,7 +86,8 @@ export default function StatisticsPage() {
 
   // По умолчанию — последний турнир лиги (текущий сезон).
   const tournamentId = params.get('tournament') ?? tournaments.at(-1)?.id ?? ''
-  const statistics = useTournamentStatistics(tournamentId)
+  const statistics = useTournamentStatistics(tournamentId, params.get('division') ?? '')
+  const divisions = statistics.data?.divisions ?? []
 
   const rows = statistics.data?.rows ?? []
 
@@ -105,8 +107,13 @@ export default function StatisticsPage() {
     setParams({ league: value })
   }
 
+  // Смена турнира сбрасывает дивизион: у другого турнира они свои.
   const onTournamentChange = (value: string) => {
     setParams({ league: activeSlug, tournament: value })
+  }
+
+  const onDivisionChange = (value: string) => {
+    setParams({ league: activeSlug, tournament: tournamentId, division: value })
   }
 
   return (
@@ -141,6 +148,22 @@ export default function StatisticsPage() {
             ))}
           </select>
         </label>
+
+        {divisions.length > 1 && (
+          <label>
+            Дивизион
+            <select
+              value={statistics.data?.divisionId ?? ''}
+              onChange={(event) => onDivisionChange(event.target.value)}
+            >
+              {divisions.map((division) => (
+                <option key={division.id} value={division.id}>
+                  {division.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
 
       {statistics.error && (
@@ -153,11 +176,13 @@ export default function StatisticsPage() {
             ← {statistics.data.tournament.leagueName}
           </Link>{' '}
           · {statistics.data.tournament.name}
+          {divisions.length > 1 &&
+            ` · ${divisions.find((division) => division.id === statistics.data.divisionId)?.name ?? ''}`}
         </p>
       )}
 
       {tournamentId === '' ? (
-        <p className="notice">Выберите турнир — статистика считается отдельно по каждому.</p>
+        <p className="notice">Выберите турнир — статистика считается отдельно по каждому дивизиону турнира.</p>
       ) : (
         <>
           <nav className="date-strip" aria-label="Разделы статистики">
@@ -234,7 +259,7 @@ export default function StatisticsPage() {
       )}
 
       <p className="footnote">
-        М — матчи турнира, в которых у игрока было событие; Г — голы, А — ассисты, Г+П — голы плюс
+        М — матчи, в которых у игрока было событие; Г — голы, А — ассисты, Г+П — голы плюс
         передачи, ЖК/КК — карточки. Отменённые события и голы без указанного автора не учитываются.
       </p>
     </>

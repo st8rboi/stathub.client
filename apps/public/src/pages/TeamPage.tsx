@@ -144,16 +144,31 @@ export default function TeamPage() {
   if (team.error) return <p className="notice">Не удалось загрузить команду: {team.error.message}</p>
   if (!team.data) return <Skeleton rows={6} />
 
-  const { team: info, participations, stage, matches, standings, players } = team.data
+  const { team: info, participations, stage, matches, standings, standingsGroups, players } = team.data
 
   // Идущие и запланированные — сверху; сыгранные и отменённые — в результатах, свежие первыми.
   const upcoming = matches.filter((match) => match.status !== 'Finished' && match.status !== 'Cancelled')
   const results = matches.filter((match) => !upcoming.includes(match)).reverse()
   const form = results.filter((match) => match.status === 'Finished').slice(0, 5)
 
-  const position = standings.findIndex((row) => row.teamId === info.id)
-  const ownRow = position >= 0 ? standings[position] : undefined
+  // На групповом этапе место и число соперников считаем внутри своей группы.
+  const ownTable =
+    standingsGroups.find((group) => group.rows.some((row) => row.teamId === info.id))?.rows ?? standings
+  const ownRow = ownTable.find((row) => row.teamId === info.id)
   const participation = participations.find((item) => item.stageId === stage.id)
+
+  // Дивизион приходит, только если их в турнире несколько. Тогда он важнее этапа, а этап
+  // дописываем, когда команда играла в нескольких этапах одного дивизиона (круг и плей-офф).
+  const stageLabel = (item: { stageName: string; divisionId: string; divisionName: string | null }) => {
+    if (!item.divisionName) return item.stageName
+    const sameDivision = participations.filter((other) => other.divisionId === item.divisionId).length
+    return sameDivision > 1 ? `${item.divisionName} · ${item.stageName}` : item.divisionName
+  }
+  const currentLabel = participation
+    ? stageLabel(participation)
+    : stage.divisionsCount > 1
+      ? stage.divisionName
+      : stage.name
 
   const activePlayers = players.filter((player) => player.status === 'Active')
   const formerPlayers = players.filter((player) => player.status !== 'Active')
@@ -173,7 +188,7 @@ export default function TeamPage() {
     <>
       <p className="crumb">
         <Link to={`/leagues/${stage.leagueSlug}`}>← {stage.leagueName}</Link> ·{' '}
-        <Link to={`/stages/${stage.id}`}>{stage.name}</Link>
+        <Link to={`/stages/${stage.id}`}>{currentLabel}</Link>
       </p>
 
       <div className="league-header team-header">
@@ -186,8 +201,8 @@ export default function TeamPage() {
         <div>
           <h1>{info.name}</h1>
           <p className="muted">
-            {[info.city, `${stage.tournamentName} · ${stage.name}`].filter(Boolean).join(' · ')}
-            {participation?.status === 'Withdrawn' && <span className="team-badge">Снята с этапа</span>}
+            {[info.city, `${stage.tournamentName} · ${currentLabel}`].filter(Boolean).join(' · ')}
+            {participation?.status === 'Withdrawn' && <span className="team-badge">Снята с турнира</span>}
           </p>
         </div>
       </div>
@@ -198,14 +213,14 @@ export default function TeamPage() {
           <select value={stage.id} onChange={(event) => selectStage(event.target.value)}>
             {participations.map((item) => (
               <option key={item.stageId} value={item.stageId}>
-                {item.leagueName} — {item.tournamentName} — {item.stageName}
+                {item.leagueName} — {item.tournamentName} — {stageLabel(item)}
               </option>
             ))}
           </select>
         </label>
       )}
 
-      <Summary row={ownRow} position={position + 1} total={standings.length} />
+      <Summary row={ownRow} position={ownRow?.position ?? 0} total={ownTable.length} />
 
       {form.length > 0 && (
         <div className="team-form" aria-label="Последние результаты">
@@ -265,7 +280,7 @@ export default function TeamPage() {
             <h2>Таблица</h2>
           </div>
           <div className="competition competition--plain">
-            <StandingsTable rows={standings} highlightTeamId={info.id} />
+            <StandingsTable rows={standings} groups={standingsGroups} highlightTeamId={info.id} />
           </div>
         </section>
       </div>

@@ -12,18 +12,18 @@ import { useRegisterPlayer } from '../hooks'
  * Окно не закрывается после заявки — состав обычно вносят сразу целиком.
  */
 export function RegisterPlayerForm({
-  stageId,
+  divisionId,
   tournamentTeamId,
   activePlayerIds,
   onDone,
 }: {
-  stageId: string
+  divisionId: string
   tournamentTeamId: string
   /** Уже заявленные в эту команду — их не предлагаем. */
   activePlayerIds: Set<string>
   onDone: () => void
 }) {
-  const register = useRegisterPlayer(stageId, tournamentTeamId)
+  const register = useRegisterPlayer(divisionId, tournamentTeamId)
 
   const [query, setQuery] = useState('')
   const search = useDebouncedValue(query.trim())

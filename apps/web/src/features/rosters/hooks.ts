@@ -3,23 +3,27 @@ import { rostersApi } from './api'
 
 export const rosterKeys = {
   all: ['rosters'] as const,
-  teams: (tournamentId: string) => [...rosterKeys.all, 'teams', tournamentId] as const,
-  team: (tournamentId: string, tournamentTeamId: string) =>
-    [...rosterKeys.all, 'team', tournamentId, tournamentTeamId] as const,
+  teams: (stageId: string) => [...rosterKeys.all, 'teams', stageId] as const,
+  team: (stageId: string, tournamentTeamId: string) =>
+    [...rosterKeys.all, 'team', stageId, tournamentTeamId] as const,
 }
 
-export const useTournamentTeams = (tournamentId: string) =>
+/**
+ * Команды дивизиона, в который входит этап. Заявка одна на дивизион, поэтому у всех его этапов
+ * список одинаковый; читаем по этапу — экраны этапа знают только его.
+ */
+export const useTournamentTeams = (stageId: string) =>
   useQuery({
-    queryKey: rosterKeys.teams(tournamentId),
-    queryFn: () => rostersApi.listTeams(tournamentId),
-    enabled: Boolean(tournamentId),
+    queryKey: rosterKeys.teams(stageId),
+    queryFn: () => rostersApi.listTeams(stageId),
+    enabled: Boolean(stageId),
   })
 
-export const useTournamentTeam = (tournamentId: string, tournamentTeamId: string) =>
+export const useTournamentTeam = (stageId: string, tournamentTeamId: string) =>
   useQuery({
-    queryKey: rosterKeys.team(tournamentId, tournamentTeamId),
-    queryFn: () => rostersApi.getTeam(tournamentId, tournamentTeamId),
-    enabled: Boolean(tournamentId && tournamentTeamId),
+    queryKey: rosterKeys.team(stageId, tournamentTeamId),
+    queryFn: () => rostersApi.getTeam(stageId, tournamentTeamId),
+    enabled: Boolean(stageId && tournamentTeamId),
   })
 
 /** Участники нескольких этапов сразу (например, все команды турнира). */
@@ -31,7 +35,10 @@ export const useTournamentTeamsForStages = (stageIds: string[]) =>
     })),
   })
 
-/** Любое изменение заявок инвалидирует и список участников, и карточку команды. */
+/**
+ * Любое изменение заявок инвалидирует и список участников, и карточку команды.
+ * Изменения идут по дивизиону заявки (divisionId), чтение — по этапу.
+ */
 function useRosterMutation<TVariables>(mutationFn: (variables: TVariables) => Promise<unknown>) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -40,45 +47,49 @@ function useRosterMutation<TVariables>(mutationFn: (variables: TVariables) => Pr
   })
 }
 
-export const useAddTournamentTeam = (tournamentId: string) =>
-  useRosterMutation((teamId: string) => rostersApi.addTeam(tournamentId, teamId))
+export const useAddTournamentTeam = (divisionId: string) =>
+  useRosterMutation((teamId: string) => rostersApi.addTeam(divisionId, teamId))
 
-export const useWithdrawTournamentTeam = (tournamentId: string, tournamentTeamId: string) =>
-  useRosterMutation(() => rostersApi.withdrawTeam(tournamentId, tournamentTeamId))
+export const useWithdrawTournamentTeam = (divisionId: string, tournamentTeamId: string) =>
+  useRosterMutation(() => rostersApi.withdrawTeam(divisionId, tournamentTeamId))
 
-export const useRegisterPlayer = (tournamentId: string, tournamentTeamId: string) =>
-  useRosterMutation((playerId: string) => rostersApi.registerPlayer(tournamentId, tournamentTeamId, playerId))
+export const useRegisterPlayer = (divisionId: string, tournamentTeamId: string) =>
+  useRosterMutation((playerId: string) => rostersApi.registerPlayer(divisionId, tournamentTeamId, playerId))
 
-export const useReleasePlayer = (tournamentId: string, tournamentTeamId: string) =>
+export const useReleasePlayer = (divisionId: string, tournamentTeamId: string) =>
   useRosterMutation((registrationId: string) =>
-    rostersApi.releasePlayer(tournamentId, tournamentTeamId, registrationId),
+    rostersApi.releasePlayer(divisionId, tournamentTeamId, registrationId),
   )
 
 export const useTransferPlayer = (
-  tournamentId: string,
+  divisionId: string,
   fromTeamId: string,
 ) =>
   useRosterMutation((input: { playerId: string; toTeamId: string }) =>
-    rostersApi.transferPlayer(tournamentId, {
+    rostersApi.transferPlayer(divisionId, {
       playerId: input.playerId,
       fromTeamId,
       toTeamId: input.toTeamId,
     }),
   )
 
-export const useDeleteRegistration = (stageId: string, tournamentTeamId: string) =>
+export const useDeleteRegistration = (divisionId: string, tournamentTeamId: string) =>
   useRosterMutation((registrationId: string) =>
-    rostersApi.deleteRegistration(stageId, tournamentTeamId, registrationId),
+    rostersApi.deleteRegistration(divisionId, tournamentTeamId, registrationId),
   )
 
 // Удалённую заявку команды убираем из кэша, а не перезапрашиваем: иначе открытая карточка мигнёт 404.
-export const useDeleteTournamentTeam = (stageId: string, tournamentTeamId: string) => {
+// Карточка могла быть открыта из любого этапа дивизиона — убираем её под всеми ключами.
+export const useDeleteTournamentTeam = (divisionId: string, tournamentTeamId: string) => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => rostersApi.deleteTeam(stageId, tournamentTeamId),
+    mutationFn: () => rostersApi.deleteTeam(divisionId, tournamentTeamId),
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: rosterKeys.team(stageId, tournamentTeamId) })
-      return queryClient.invalidateQueries({ queryKey: rosterKeys.teams(stageId) })
+      queryClient.removeQueries({
+        queryKey: rosterKeys.all,
+        predicate: (query) => query.queryKey[1] === 'team' && query.queryKey[3] === tournamentTeamId,
+      })
+      return queryClient.invalidateQueries({ queryKey: [...rosterKeys.all, 'teams'] })
     },
   })
 }

@@ -1,7 +1,17 @@
 import { Link, useParams } from 'react-router'
+import type { PublicDivision } from '@/api/types'
 import { Skeleton } from '@/components/Skeleton'
 import { useLeague } from '@/hooks'
 import { stageFormatLabels, tournamentStatusLabels } from '@/labels'
+
+/**
+ * Название строки этапа. Единственный дивизион не показываем; при нескольких дивизион важнее этапа,
+ * а этап дописываем, только если в дивизионе их больше одного («Первый дивизион · Плей-офф»).
+ */
+function stageRowName(multiDivision: boolean, division: PublicDivision, stageName: string): string {
+  if (!multiDivision) return stageName
+  return division.stages.length > 1 ? `${division.name} · ${stageName}` : division.name
+}
 
 export default function LeaguePage() {
   const { slug = '' } = useParams()
@@ -62,12 +72,16 @@ export default function LeaguePage() {
                 Этапы ещё не заданы.
               </p>
             ) : (
-              tournament.stages.map((stage) => (
-                <Link key={stage.id} to={`/stages/${stage.id}`} className="stage-row">
-                  <span className="fixture-name">{stage.name}</span>
-                  <span className="badge">{stageFormatLabels[stage.formatType] ?? stage.formatType}</span>
-                </Link>
-              ))
+              tournament.divisions.flatMap((division) =>
+                division.stages.map((stage) => (
+                  <Link key={stage.id} to={`/stages/${stage.id}`} className="stage-row">
+                    <span className="fixture-name">
+                      {stageRowName(tournament.divisions.length > 1, division, stage.name)}
+                    </span>
+                    <span className="badge">{stageFormatLabels[stage.formatType] ?? stage.formatType}</span>
+                  </Link>
+                )),
+              )
             )}
           </div>
         </section>

@@ -12,7 +12,8 @@ export const publicKeys = {
   live: () => ['public', 'live'] as const,
   matchDays: (timeZone: string) => ['public', 'match-days', timeZone] as const,
   schedule: (fromUtc: string, toUtc: string) => ['public', 'schedule', fromUtc, toUtc] as const,
-  statistics: (tournamentId: string) => ['public', 'statistics', tournamentId] as const,
+  statistics: (tournamentId: string, divisionId: string) =>
+    ['public', 'statistics', tournamentId, divisionId] as const,
 }
 
 export const useLeagues = (club: string, city: string) =>
@@ -68,11 +69,13 @@ export const useMatch = (matchId: string) =>
 export const useLive = () =>
   useQuery({ queryKey: publicKeys.live(), queryFn: () => publicApi.live(), refetchInterval: 30_000 })
 
-export const useTournamentStatistics = (tournamentId: string) =>
+export const useTournamentStatistics = (tournamentId: string, divisionId: string) =>
   useQuery({
-    queryKey: publicKeys.statistics(tournamentId),
-    queryFn: () => publicApi.tournamentStatistics(tournamentId),
+    queryKey: publicKeys.statistics(tournamentId, divisionId),
+    queryFn: () => publicApi.tournamentStatistics(tournamentId, divisionId || undefined),
     enabled: !!tournamentId,
+    // Переключение дивизиона не мигает скелетоном: старые строки видны, пока грузятся новые.
+    placeholderData: (previous) => (previous?.tournament.id === tournamentId ? previous : undefined),
   })
 
 export const isLive = (match: PublicMatch) =>

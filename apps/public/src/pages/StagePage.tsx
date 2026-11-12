@@ -12,7 +12,10 @@ export default function StagePage() {
   if (stage.error) return <p className="notice">Не удалось загрузить этап: {stage.error.message}</p>
   if (!stage.data) return <Skeleton rows={5} />
 
-  const { stage: info, matches, standings } = stage.data
+  const { stage: info, matches, standings, standingsGroups, divisionStages } = stage.data
+  // Дивизион показываем, только когда их несколько: тогда он и есть «соревнование» страницы.
+  const multiDivision = info.divisionsCount > 1
+  const hasSiblings = divisionStages.length > 1
 
   return (
     <>
@@ -28,13 +31,30 @@ export default function StagePage() {
         )}
 
         <div>
-          <h1>{info.name}</h1>
+          <h1>{multiDivision ? info.divisionName : info.name}</h1>
           <p className="muted">
-            {info.tournamentName} · {stageFormatLabels[info.formatType] ?? info.formatType} · очки{' '}
-            {info.winPoints}/{info.drawPoints}/{info.lossPoints}
+            {info.tournamentName}
+            {multiDivision && hasSiblings && ` · ${info.name}`} ·{' '}
+            {stageFormatLabels[info.formatType] ?? info.formatType} · очки {info.winPoints}/{info.drawPoints}/
+            {info.lossPoints}
           </p>
         </div>
       </div>
+
+      {hasSiblings && (
+        <nav className="date-strip" aria-label="Этапы">
+          {divisionStages.map((item) => (
+            <Link
+              key={item.id}
+              to={`/stages/${item.id}`}
+              className={item.id === info.id ? 'date-tab active' : 'date-tab'}
+              aria-current={item.id === info.id ? 'page' : undefined}
+            >
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       <div className="stage-columns">
         <section>
@@ -60,7 +80,7 @@ export default function StagePage() {
             <h2>Таблица</h2>
           </div>
           <div className="competition competition--plain">
-            <StandingsTable rows={standings} />
+            <StandingsTable rows={standings} groups={standingsGroups} />
           </div>
         </section>
       </div>

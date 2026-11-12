@@ -3,18 +3,18 @@ import { ErrorText } from '@/shared/ui/ErrorText'
 import { useTransferPlayer } from '../hooks'
 
 /**
- * Трансфер игрока в другую команду этапа. Старая заявка закрывается со статусом
+ * Трансфер игрока в другую команду дивизиона. Старая заявка закрывается со статусом
  * «Перешёл в другую команду» — история матчей и событий не страдает.
  */
 export function TransferPlayerForm({
-  stageId,
+  divisionId,
   fromTeamId,
   players,
   teams,
   initialPlayerId = '',
   onDone,
 }: {
-  stageId: string
+  divisionId: string
   fromTeamId: string
   /** Активные заявки команды: playerId + подпись. */
   players: { id: string; label: string }[]
@@ -23,7 +23,7 @@ export function TransferPlayerForm({
   initialPlayerId?: string
   onDone: () => void
 }) {
-  const transfer = useTransferPlayer(stageId, fromTeamId)
+  const transfer = useTransferPlayer(divisionId, fromTeamId)
   const [playerId, setPlayerId] = useState(initialPlayerId)
   const [toTeamId, setToTeamId] = useState('')
 
