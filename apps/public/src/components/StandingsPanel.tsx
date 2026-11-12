@@ -7,7 +7,7 @@ import { useLeague, useStage } from '@/hooks'
 /**
  * Правый сайдбар: таблица лиги. Выбор лиги — из опубликованного каталога (самые активные лиги
  * сервер отдаёт первыми), турнир — самый новый (текущий сезон). Если в турнире несколько дивизионов, появляется их переключатель;
- * этап — первый в дивизионе.
+ * этап — первый в дивизионе, кроме плей-офф.
  */
 export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
   const [slug, setSlug] = useState('')
@@ -20,7 +20,8 @@ export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
   const divisions = tournament?.divisions ?? []
   // Выбранного дивизиона может не быть в другой лиге — тогда берём первый.
   const division = divisions.find((item) => item.id === divisionId) ?? divisions[0]
-  const stageId = division?.stages[0]?.id ?? ''
+  // Таблица есть только у этапов с таблицей: плей-офф пропускаем (у него будет сетка).
+  const stageId = division?.stages.find((item) => item.formatType !== 'Playoff')?.id ?? ''
   const stage = useStage(stageId)
 
   const stageName = stage.data?.stage.name ?? tournament?.name ?? ''
