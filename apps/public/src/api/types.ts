@@ -161,6 +161,7 @@ export type PublicStagePage = {
 export type PlayerStatisticsRow = {
   playerId: string
   playerName: string
+  photoUrl: string | null
   teamId: string | null
   teamName: string | null
   teamLogoUrl: string | null

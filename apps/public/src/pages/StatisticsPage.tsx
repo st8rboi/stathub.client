@@ -228,13 +228,24 @@ export default function StatisticsPage() {
                       <tr key={row.playerId}>
                         <td className="muted col-index">{index + 1}</td>
                         <td className="stats-name">
-                          <span className="stats-player">{row.playerName}</span>
-                          <TeamLink
-                            teamId={row.teamId}
-                            name={row.teamName}
-                            hideLogo
-                            className="stats-team-inline"
-                          />
+                          <div className="stats-player-cell">
+                            {row.photoUrl ? (
+                              <img src={row.photoUrl} alt="" className="stats-photo" loading="lazy" />
+                            ) : (
+                              <span className="stats-photo stats-photo--empty" aria-hidden="true">
+                                {row.playerName.charAt(0)}
+                              </span>
+                            )}
+                            <span className="stats-text">
+                              <span className="stats-player">{row.playerName}</span>
+                              <TeamLink
+                                teamId={row.teamId}
+                                name={row.teamName}
+                                hideLogo
+                                className="stats-team-inline"
+                              />
+                            </span>
+                          </div>
                         </td>
                         <td className="col-extra">
                           <TeamLink teamId={row.teamId} name={row.teamName} logoUrl={row.teamLogoUrl} />
