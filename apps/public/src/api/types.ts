@@ -141,6 +141,8 @@ export type PublicEvent = {
   /** Период и игровые секунды от его начала без учёта пауз. */
   period?: number | null
   elapsedSeconds?: number | null
+  /** Фото игрока — для плашек трансляционного оверлея. */
+  playerPhotoUrl?: string | null
 }
 
 export type PublicMatchPage = {
