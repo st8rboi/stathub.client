@@ -7,7 +7,7 @@ import { useTournamentTeams } from '@/features/rosters/hooks'
 import { tournamentTeamStatusLabels } from '@/features/rosters/labels'
 import { useTeamsByIds } from '@/features/teams/hooks'
 import { useTournament, useTournaments } from '@/features/tournaments/hooks'
-import { stageFormatLabels, tournamentStatusLabels } from '@/features/tournaments/labels'
+import { stageDisplayName, stageFormatLabels, tournamentStatusLabels } from '@/features/tournaments/labels'
 import { Icon } from '@/shared/ui/Icon'
 import { Menu, MenuEmpty, MenuLink, MenuTitle } from '@/shared/ui/Menu'
 
@@ -195,7 +195,7 @@ function StageCrumb({
 
   return (
     <Crumb
-      label={stage?.name ?? '…'}
+      label={tournament.data && stage ? stageDisplayName(tournament.data, stage) : '…'}
       to={stagePath(leagueId, tournamentId, stageId)}
       current={current}
       switchLabel="Выбрать этап"
@@ -206,7 +206,7 @@ function StageCrumb({
             <MenuLink
               key={item.id}
               to={stagePath(leagueId, tournamentId, item.id)}
-              label={item.name}
+              label={tournament.data ? stageDisplayName(tournament.data, item) : item.name}
               hint={stageFormatLabels[item.formatType]}
               current={item.id === stageId}
             />
@@ -240,10 +240,10 @@ function TeamCrumb({
       label={current ? teamName(current.teamId) : '…'}
       to={teamPath(leagueId, tournamentId, stageId, tournamentTeamId)}
       current
-      switchLabel="Выбрать команду этапа"
+      switchLabel="Выбрать команду"
       menu={
         <>
-          <MenuTitle>Команды этапа</MenuTitle>
+          <MenuTitle>Команды</MenuTitle>
           {tournamentTeams.data?.map((item) => (
             <MenuLink
               key={item.id}

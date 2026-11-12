@@ -856,6 +856,35 @@ h2 {
   color: var(--green-dark);
 }
 
+/* Зона выхода в следующий этап: зелёная черта слева от места. */
+.standings-table td.standings-pos--qualifies {
+  font-weight: 700;
+  color: var(--green-dark);
+  box-shadow: inset 3px 0 0 var(--green-dark);
+}
+
+.standings-group-name {
+  margin: 0;
+  padding: 10px 16px 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.side-panel .standings-group-name {
+  padding: 10px 5px 4px;
+}
+
+.standings-legend {
+  margin: 0;
+  padding: 8px 16px 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.side-panel .standings-legend {
+  padding: 8px 5px 0;
+}
+
 .side-panel-head {
   display: flex;
   align-items: center;
@@ -1925,4 +1954,10 @@ td.stats-name {
   .pe {
     gap: 8px;
   }
+}
+
+/* Вкладки-ссылки (этапы дивизиона) выглядят как кнопки полосы дат. */
+a.date-tab,
+a.date-tab:hover {
+  text-decoration: none;
 }

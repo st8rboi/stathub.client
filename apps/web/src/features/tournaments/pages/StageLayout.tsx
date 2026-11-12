@@ -4,7 +4,7 @@ import { useTournamentTeams } from '@/features/rosters/hooks'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { EmptyState, Loading, PageHeader, Tabs } from '@/shared/ui/layout'
 import { useTournament } from '../hooks'
-import { stageFormatLabels } from '../labels'
+import { stageDivisionName, stageFormatLabels } from '../labels'
 import type { StageOutletContext } from '../stageOutlet'
 
 /**
@@ -32,12 +32,14 @@ export default function StageLayout() {
   }
 
   const basePath = `${tournamentPath}/stages/${stageId}`
+  // Дивизион показываем, только когда их несколько: единственный — деталь устройства, а не турнира.
+  const divisionName = stageDivisionName(tournament.data, stage)
   const activeTeams = teams.data?.filter((team) => team.status === 'Active').length
 
   return (
     <>
       <PageHeader
-        eyebrow={`Этап ${stage.order} · ${tournament.data.name}`}
+        eyebrow={`${divisionName ?? `Этап ${stage.order}`} · ${tournament.data.name}`}
         title={stage.name}
         meta={
           <>
@@ -45,6 +47,7 @@ export default function StageLayout() {
             <span>
               {stage.periodsCount} × {stage.periodDurationMinutes} мин
             </span>
+            {stage.qualifiersCount !== null && <span>дальше выходят {stage.qualifiersCount}</span>}
           </>
         }
       />

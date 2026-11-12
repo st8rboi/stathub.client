@@ -1,9 +1,9 @@
-import type { SubmitEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { stageFormatLabels } from '../labels'
-import type { AddStageBody, StageFormatType } from '../types'
+import type { StageBody, StageFormatType } from '../types'
 
-const defaults: AddStageBody = {
+const defaults: StageBody = {
   name: '',
   formatType: 'Round',
   winPoints: 3,
@@ -13,21 +13,25 @@ const defaults: AddStageBody = {
   periodsCount: 2,
   extraTimeEnabled: false,
   penaltyShootoutEnabled: false,
+  qualifiersCount: null,
 }
 
 type Props = {
-  initial?: AddStageBody
+  initial?: StageBody
   submitLabel: string
   pending: boolean
   error: unknown
-  /** Правила только для чтения: турнир начат или в этапе есть матчи — менять можно лишь название. */
+  /** Правила только для чтения: турнир начат или в этапе есть матчи — менять можно лишь название и выход дальше. */
   rulesLocked?: boolean
-  onSubmit: (body: AddStageBody, form: HTMLFormElement) => void
+  onSubmit: (body: StageBody, form: HTMLFormElement) => void
   onCancel?: () => void
 }
 
 // Поля этапа: общие для добавления и правки.
 export function StageForm({ initial = defaults, submitLabel, pending, error, rulesLocked, onSubmit, onCancel }: Props) {
+  // Формат влияет на состав полей: выход дальше задаётся только у кругового этапа.
+  const [formatType, setFormatType] = useState<StageFormatType>(initial.formatType)
+
   const submit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formElement = e.currentTarget
@@ -46,7 +50,7 @@ export function StageForm({ initial = defaults, submitLabel, pending, error, rul
           penaltyShootoutEnabled: initial.penaltyShootoutEnabled,
         }
       : {
-          formatType: form.get('formatType') as StageFormatType,
+          formatType,
           winPoints: Number(form.get('winPoints')),
           drawPoints: Number(form.get('drawPoints')),
           lossPoints: Number(form.get('lossPoints')),
@@ -56,7 +60,11 @@ export function StageForm({ initial = defaults, submitLabel, pending, error, rul
           penaltyShootoutEnabled: form.get('penaltyShootoutEnabled') === 'on',
         }
 
-    onSubmit({ ...rules, name: String(form.get('name')).trim() }, formElement)
+    // Пустое поле — этап никого дальше не выводит. У плей-офф поля нет вовсе.
+    const rawQualifiers = String(form.get('qualifiersCount') ?? '').trim()
+    const qualifiersCount = rules.formatType === 'Round' && rawQualifiers ? Number(rawQualifiers) : null
+
+    onSubmit({ ...rules, name: String(form.get('name')).trim(), qualifiersCount }, formElement)
   }
 
   return (
@@ -68,7 +76,11 @@ export function StageForm({ initial = defaults, submitLabel, pending, error, rul
       <fieldset disabled={rulesLocked} className="plain">
         <label>
           Формат
-          <select name="formatType" defaultValue={initial.formatType}>
+          <select
+            name="formatType"
+            value={formatType}
+            onChange={(event) => setFormatType(event.target.value as StageFormatType)}
+          >
             {Object.entries(stageFormatLabels).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -115,8 +127,26 @@ export function StageForm({ initial = defaults, submitLabel, pending, error, rul
           пенальти
         </label>
       </fieldset>
+      {formatType === 'Round' && (
+        <label>
+          Выходят в следующий этап
+          <input
+            name="qualifiersCount"
+            type="number"
+            min={1}
+            placeholder="никто"
+            defaultValue={initial.qualifiersCount ?? ''}
+          />
+          <span className="hint">
+            Сколько первых команд таблицы проходит дальше, например в плей-офф. Если в этапе есть группы — столько из
+            каждой группы. Оставьте пустым для обычного чемпионата.
+          </span>
+        </label>
+      )}
       {rulesLocked && (
-        <p className="hint">Турнир уже начат — правила этапа менять нельзя, только название.</p>
+        <p className="hint">
+          Турнир уже начат — правила этапа менять нельзя, только название и число выходящих дальше.
+        </p>
       )}
       <ErrorText error={error} />
       <div className="actions">

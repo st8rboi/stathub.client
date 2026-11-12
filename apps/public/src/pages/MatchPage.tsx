@@ -15,6 +15,7 @@ import {
   matchStatusLabels,
   shortPlayerName,
 } from '@/labels'
+import { competitionLabel } from '@/labels'
 import { useRealtime } from '@/realtime'
 
 type Side = 'home' | 'away'
@@ -202,7 +203,7 @@ export default function MatchPage() {
         ) : (
           <Link to={`/leagues/${match.leagueSlug}`}>← {match.leagueName}</Link>
         )}{' '}
-        · <Link to={`/stages/${match.stageId}`}>{match.stageName}</Link>
+        · <Link to={`/stages/${match.stageId}`}>{competitionLabel(match.stageName, match.divisionName)}</Link>
       </p>
 
       <div className="matchboard">
@@ -240,7 +241,8 @@ export default function MatchPage() {
       </div>
 
       <p className="match-meta">
-        {match.tournamentName} · {formatTime(match.scheduledTimeUtc)} · {match.stageName}
+        {match.tournamentName} · {formatTime(match.scheduledTimeUtc)} ·{' '}
+        {competitionLabel(match.stageName, match.divisionName)}
       </p>
 
       <div className="section-head">

@@ -10,23 +10,23 @@ import { LogoBadge } from '@/shared/ui/layout'
 import { useAddTournamentTeam } from '../hooks'
 
 /**
- * Заявка команд на этап пачкой: поиск по справочнику и галочки.
+ * Заявка команд в дивизион пачкой: поиск по справочнику и галочки.
  * Ищет сервер — справочник общий для всех организаторов и целиком в один список не помещается.
  * Заявки отправляются по очереди; не прошедшие остаются отмеченными с причиной.
  */
 export function RegisterTeamsForm({
-  stageId,
+  divisionId,
   registeredTeamIds,
   onDone,
 }: {
-  stageId: string
+  divisionId: string
   registeredTeamIds: Set<string>
   onDone: () => void
 }) {
   const [query, setQuery] = useState('')
   const search = useDebouncedValue(query.trim())
   const found = useTeams(search)
-  const addTeam = useAddTournamentTeam(stageId)
+  const addTeam = useAddTournamentTeam(divisionId)
 
   // Отмеченные команды с названиями: после смены запроса их может не быть в списке на экране.
   const [selected, setSelected] = useState<Map<string, string>>(new Map())
@@ -125,8 +125,8 @@ export function RegisterTeamsForm({
       )}
 
       <p className="hint">
-        Одна команда — одна заявка на этап. В разных этапах одного турнира команда может играть в каждом — это отдельные
-        заявки.
+        Команда заявляется один раз и играет во всех этапах своего дивизиона. В турнире команда может быть только в
+        одном дивизионе, игрок — только в одной команде.
       </p>
 
       {failures.map((failure) => (

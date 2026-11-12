@@ -10,6 +10,17 @@ export type StandingsRow = {
   goalsAgainst: number
   goalDifference: number
   points: number
+  /** Место в своей таблице (в группе — внутри группы). */
+  position: number
+  /** Команда в зоне выхода в следующий этап. */
+  qualifies: boolean
+}
+
+/** Таблица одной группы кругового этапа. */
+export type StandingsGroup = {
+  groupId: string
+  name: string
+  rows: StandingsRow[]
 }
 
 export type PublicLeague = {
@@ -28,6 +39,15 @@ export type PublicStageSummary = {
   order: number
   name: string
   formatType: string
+  divisionId: string
+}
+
+/** Дивизион турнира — независимое соревнование со своими командами, таблицей и статистикой. */
+export type PublicDivision = {
+  id: string
+  order: number
+  name: string
+  stages: PublicStageSummary[]
 }
 
 export type PublicTournament = {
@@ -36,7 +56,10 @@ export type PublicTournament = {
   startDate: string
   endDate: string | null
   status: string
+  /** Все этапы плоским списком. */
   stages: PublicStageSummary[]
+  /** Дерево «дивизион → этапы». Один дивизион на витрине не показываем. */
+  divisions: PublicDivision[]
 }
 
 export type PublicLeaguePage = {
@@ -57,6 +80,12 @@ export type PublicStage = {
   winPoints: number
   drawPoints: number
   lossPoints: number
+  divisionId: string
+  divisionName: string
+  /** Сколько дивизионов в турнире: при одном уровень дивизиона скрыт. */
+  divisionsCount: number
+  /** Сколько первых команд выходит дальше (при группах — из каждой); null — никто. */
+  qualifiersCount: number | null
 }
 
 /** День с матчами в часовом поясе зрителя: `date` — «YYYY-MM-DD». */
@@ -91,6 +120,8 @@ export type PublicMatch = {
   periodPausedMilliseconds: number
   /** Длительность периода по регламенту; нужна, чтобы считать минуту как на флешскоре (2-й тайм с 46'). */
   periodDurationMinutes?: number
+  /** Дивизион матча; null, если дивизион в турнире один. */
+  divisionName?: string | null
 }
 
 export type PublicEvent = {
@@ -121,6 +152,10 @@ export type PublicStagePage = {
   stage: PublicStage
   matches: PublicMatch[]
   standings: StandingsRow[]
+  /** Заполнен у группового этапа; тогда standings — те же строки подряд. */
+  standingsGroups: StandingsGroup[]
+  /** Этапы того же дивизиона — переключатель «круг / плей-офф». */
+  divisionStages: PublicStageSummary[]
 }
 
 export type PlayerStatisticsRow = {
@@ -145,9 +180,12 @@ export type PublicTournamentHeader = {
   leagueLogoUrl: string | null
 }
 
+/** Статистика игроков одного дивизиона турнира; divisions — все дивизионы для переключателя. */
 export type TournamentStatistics = {
   tournament: PublicTournamentHeader
   rows: PlayerStatisticsRow[]
+  divisionId: string | null
+  divisions: { id: string; name: string; order: number }[]
 }
 
 export type PublicTeam = {
@@ -167,9 +205,12 @@ export type PublicTeamParticipation = {
   leagueSlug: string
   leagueLogoUrl: string | null
   status: string | null
+  divisionId: string
+  /** null, если дивизион в турнире один. */
+  divisionName: string | null
 }
 
-/** Игрок заявки со статистикой за матчи команды на выбранном этапе. */
+/** Игрок заявки со статистикой за матчи команды во всех этапах дивизиона. */
 export type PublicTeamPlayer = {
   playerId: string
   fullName: string
@@ -194,4 +235,5 @@ export type PublicTeamPage = {
   matches: PublicMatch[]
   standings: StandingsRow[]
   players: PublicTeamPlayer[]
+  standingsGroups: StandingsGroup[]
 }

@@ -5,11 +5,12 @@ import { ErrorText } from '@/shared/ui/ErrorText'
 import { Card } from '@/shared/ui/layout'
 import { Modal } from '@/shared/ui/Modal'
 import { StageForm } from '../components/StageForm'
+import { StageGroupsCard } from '../components/StageGroupsCard'
 import { useDeleteStage, useUpdateStage } from '../hooks'
 import { stageFormatLabels } from '../labels'
 import { useStageOutlet } from '../stageOutlet'
 
-/** Вкладка «Настройки» этапа: регламент и удаление. */
+/** Вкладка «Настройки» этапа: регламент, группы и удаление. */
 export default function StageSettingsPage() {
   const { tournament, stage } = useStageOutlet()
   const confirm = useConfirm()
@@ -57,15 +58,31 @@ export default function StageSettingsPage() {
           <dd>{yesNo(stage.extraTimeEnabled)}</dd>
           <dt>Серия пенальти</dt>
           <dd>{yesNo(stage.penaltyShootoutEnabled)}</dd>
+          {stage.formatType === 'Round' && (
+            <>
+              <dt>Выходят дальше</dt>
+              <dd>
+                {stage.qualifiersCount === null
+                  ? 'никто'
+                  : `первые ${stage.qualifiersCount}${stage.groups.length > 0 ? ' из каждой группы' : ''}`}
+              </dd>
+            </>
+          )}
         </dl>
-        {rulesLocked && <p className="hint">Турнир уже начат — правила этапа менять нельзя, только название.</p>}
+        {rulesLocked && (
+          <p className="hint">
+            Турнир уже начат — правила этапа менять нельзя, только название и число выходящих дальше.
+          </p>
+        )}
       </Card>
+
+      {stage.formatType === 'Round' && <StageGroupsCard tournament={tournament} stage={stage} />}
 
       <Card title="Опасная зона" tone="danger">
         <div className="danger-row">
           <div className="danger-row-text">
             <p className="danger-row-title">Удалить этап</p>
-            <p className="hint">Только для этапа без заявок и матчей. Действие нельзя отменить.</p>
+            <p className="hint">Только для этапа без матчей. Заявки команд остаются в дивизионе. Действие нельзя отменить.</p>
           </div>
           <button
             type="button"
@@ -74,11 +91,11 @@ export default function StageSettingsPage() {
             onClick={() =>
               void confirm({
                 title: `Удалить этап «${stage.name}»?`,
-                message: 'Этап с заявками или матчами удалить не получится.',
+                message: 'Этап с матчами удалить не получится.',
                 confirmLabel: 'Удалить',
                 danger: true,
               }).then((ok) => {
-                // Сервер откажет (409), если в этапе есть заявки или матчи.
+                // Сервер откажет (409), если в этапе есть матчи.
                 if (ok)
                   deleteStage.mutate(stage.id, {
                     onSuccess: () => void navigate(`/leagues/${tournament.leagueId}/tournaments/${tournament.id}`),

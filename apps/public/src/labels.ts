@@ -100,3 +100,11 @@ export function shortPlayerName(fullName: string): string {
   if (!lastName) return fullName
   return firstName ? `${lastName} ${firstName.charAt(0)}.` : lastName
 }
+
+/**
+ * Подпись соревнования матча. Дивизион приходит, только когда их в турнире несколько, —
+ * тогда он важнее названия этапа: «Первый дивизион · Плей-офф».
+ */
+export function competitionLabel(stageName: string, divisionName?: string | null): string {
+  return divisionName ? `${divisionName} · ${stageName}` : stageName
+}

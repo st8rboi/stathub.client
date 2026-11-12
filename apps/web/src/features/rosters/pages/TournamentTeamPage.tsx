@@ -38,7 +38,7 @@ function byRosterOrder(a: PlayerRegistration, b: PlayerRegistration): number {
 }
 
 /**
- * Состав команды на этапе: заявка игрока, отзаявка и трансфер.
+ * Состав команды в дивизионе (один на все его этапы): заявка игрока, отзаявка и трансфер.
  * История заявок не скрывается — закрытые строки доступны в фильтре «С историей».
  */
 export default function TournamentTeamPage() {
@@ -56,10 +56,12 @@ export default function TournamentTeamPage() {
   const registrations = details.data?.registrations ?? []
   const playersByIds = usePlayersByIds([...new Set(registrations.map((registration) => registration.playerId))])
 
-  const release = useReleasePlayer(stageId, tournamentTeamId)
-  const withdraw = useWithdrawTournamentTeam(stageId, tournamentTeamId)
-  const deleteRegistration = useDeleteRegistration(stageId, tournamentTeamId)
-  const deleteTeam = useDeleteTournamentTeam(stageId, tournamentTeamId)
+  // Состав читаем по этапу из адреса, а меняем по дивизиону заявки — он приходит вместе с ней.
+  const divisionId = details.data?.divisionId ?? ''
+  const release = useReleasePlayer(divisionId, tournamentTeamId)
+  const withdraw = useWithdrawTournamentTeam(divisionId, tournamentTeamId)
+  const deleteRegistration = useDeleteRegistration(divisionId, tournamentTeamId)
+  const deleteTeam = useDeleteTournamentTeam(divisionId, tournamentTeamId)
 
   const [showHistory, setShowHistory] = useState(false)
   const [registering, setRegistering] = useState(false)
@@ -102,11 +104,11 @@ export default function TournamentTeamPage() {
     void confirm({
       title: 'Удалить заявку команды?',
       message:
-        'Только для ошибочно заявленной команды без матчей на этапе: заявка удалится вместе с составом. Это действие нельзя отменить.',
+        'Только для ошибочно заявленной команды без матчей: заявка удалится вместе с составом. Это действие нельзя отменить.',
       confirmLabel: 'Удалить заявку',
       danger: true,
     }).then((ok) => {
-      // Сервер откажет (409), если у команды уже есть матчи на этапе — тогда её снимают.
+      // Сервер откажет (409), если у команды уже есть матчи — тогда её снимают.
       if (ok)
         deleteTeam.mutate(undefined, {
           onSuccess: () => void navigate(`/leagues/${leagueId}/tournaments/${tournamentId}/stages/${stageId}/teams`),
@@ -144,7 +146,7 @@ export default function TournamentTeamPage() {
     <>
       <PageHeader
         media={<LogoBadge src={team?.logoUrl ?? null} name={name} size="lg" />}
-        eyebrow="Состав на этапе"
+        eyebrow="Состав на турнир"
         title={name}
         meta={
           <>
@@ -178,7 +180,7 @@ export default function TournamentTeamPage() {
 
       {registrations.length === 0 ? (
         <EmptyState icon="user" title="Состав пуст" action={registerButton || undefined}>
-          Заявите игроков из справочника — без заявки игрок не сможет участвовать в матчах этапа.
+          Заявите игроков из справочника — без заявки игрок не сможет участвовать в матчах.
         </EmptyState>
       ) : (
         <>
@@ -279,7 +281,7 @@ export default function TournamentTeamPage() {
 
       <Modal open={registering} onClose={() => setRegistering(false)} title={`Заявить игрока · ${name}`}>
         <RegisterPlayerForm
-          stageId={stageId}
+          divisionId={divisionId}
           tournamentTeamId={tournamentTeamId}
           activePlayerIds={new Set(active.map((registration) => registration.playerId))}
           onDone={() => setRegistering(false)}
@@ -288,7 +290,7 @@ export default function TournamentTeamPage() {
 
       <Modal open={transferPlayerId !== null} onClose={() => setTransferPlayerId(null)} title="Трансфер игрока">
         <TransferPlayerForm
-          stageId={stageId}
+          divisionId={divisionId}
           fromTeamId={data.teamId}
           players={active.map((registration) => ({
             id: registration.playerId,

@@ -39,7 +39,7 @@ export const publicApi = {
   team: (teamId: string, stageId?: string) =>
     request<PublicTeamPage>(`/public/teams/${teamId}${query({ stageId })}`),
   live: () => request<PublicMatch[]>('/public/live'),
-  /** Статистика игроков — всегда в разрезе конкретного турнира. */
-  tournamentStatistics: (tournamentId: string) =>
-    request<TournamentStatistics>(`/public/tournaments/${tournamentId}/statistics`),
+  /** Статистика игроков одного дивизиона турнира; без divisionId сервер отдаёт первый дивизион. */
+  tournamentStatistics: (tournamentId: string, divisionId?: string) =>
+    request<TournamentStatistics>(`/public/tournaments/${tournamentId}/statistics${query({ divisionId })}`),
 }

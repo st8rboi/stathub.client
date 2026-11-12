@@ -11,11 +11,19 @@ import { tournamentTeamStatusLabels } from '../labels'
 import { RegisterTeamsForm } from './RegisterTeamsForm'
 
 /**
- * Участники этапа (дивизиона). Команда из справочника заявляется на конкретный этап,
- * дальше её состав живёт на отдельной странице. Одна команда может играть в разных
- * этапах одного турнира — это разные заявки.
+ * Участники дивизиона, показанные на странице его этапа. Команда из справочника заявляется
+ * в дивизион один раз — состав общий для всех его этапов и живёт на отдельной странице.
  */
-export function TournamentTeamsSection({ stageId, basePath }: { stageId: string; basePath: string }) {
+export function TournamentTeamsSection({
+  stageId,
+  divisionId,
+  basePath,
+}: {
+  stageId: string
+  /** Дивизион этапа: в него заявляются новые команды. */
+  divisionId: string
+  basePath: string
+}) {
   const teams = useTournamentTeams(stageId)
   const allTeams = useTeamsByIds((teams.data ?? []).map((team) => team.teamId))
   const [adding, setAdding] = useState(false)
@@ -41,7 +49,7 @@ export function TournamentTeamsSection({ stageId, basePath }: { stageId: string;
       {teams.isPending && <Loading />}
 
       {teams.data?.length === 0 && (
-        <EmptyState icon="shield" title="На этапе пока нет команд" action={addButton}>
+        <EmptyState icon="shield" title="Команд пока нет" action={addButton}>
           Заявите команды из справочника — после этого можно заявить игроков и составить расписание матчей.
         </EmptyState>
       )}
@@ -85,9 +93,9 @@ export function TournamentTeamsSection({ stageId, basePath }: { stageId: string;
         </>
       )}
 
-      <Modal open={adding} onClose={() => setAdding(false)} title="Заявить команды на этап">
+      <Modal open={adding} onClose={() => setAdding(false)} title="Заявить команды">
         <RegisterTeamsForm
-          stageId={stageId}
+          divisionId={divisionId}
           registeredTeamIds={new Set(list.map((team) => team.teamId))}
           onDone={() => setAdding(false)}
         />
