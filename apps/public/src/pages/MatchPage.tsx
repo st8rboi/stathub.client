@@ -8,9 +8,9 @@ import { Skeleton } from '@/components/Skeleton'
 import { publicKeys, useMatch, useNow } from '@/hooks'
 import {
   eventTypeLabels,
+  formatDateTime,
   formatElapsed,
   formatMinute,
-  formatTime,
   isLiveMatch,
   matchStatusLabels,
   shortPlayerName,
@@ -241,7 +241,7 @@ export default function MatchPage() {
       </div>
 
       <p className="match-meta">
-        {match.tournamentName} · {formatTime(match.scheduledTimeUtc)} ·{' '}
+        {match.tournamentName} · {formatDateTime(match.scheduledTimeUtc)} ·{' '}
         {competitionLabel(match.stageName, match.divisionName)}
       </p>
 

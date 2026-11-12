@@ -3,7 +3,11 @@ import { Link, useSearchParams } from 'react-router'
 import { TeamLink } from '@/components/TeamLink'
 import type { PlayerStatisticsRow } from '@/api/types'
 import { Skeleton } from '@/components/Skeleton'
+import { publicApi } from '@/api/publicApi'
 import { useLeague, useLeagues, useTournamentStatistics } from '@/hooks'
+
+/** На витрине — только верх каждого раздела, полный список скачивается файлом. */
+const TOP_SIZE = 10
 
 type SectionId = 'goals' | 'assists' | 'points' | 'yellow' | 'red'
 
@@ -84,8 +88,8 @@ export default function StatisticsPage() {
   const leaguePage = useLeague(activeSlug)
   const tournaments = leaguePage.data?.tournaments ?? []
 
-  // По умолчанию — последний турнир лиги (текущий сезон).
-  const tournamentId = params.get('tournament') ?? tournaments.at(-1)?.id ?? ''
+  // По умолчанию — самый новый турнир лиги (текущий сезон): API отдаёт их от новых к старым.
+  const tournamentId = params.get('tournament') ?? tournaments[0]?.id ?? ''
   const statistics = useTournamentStatistics(tournamentId, params.get('division') ?? '')
   const divisions = statistics.data?.divisions ?? []
 
@@ -101,6 +105,10 @@ export default function StatisticsPage() {
   }, [rows, section])
 
   const columns = columnsFor(section)
+  const topRows = sectionRows.slice(0, TOP_SIZE)
+  const xlsxUrl = tournamentId
+    ? publicApi.tournamentStatisticsXlsxUrl(tournamentId, statistics.data?.divisionId ?? undefined)
+    : ''
 
   const onLeagueChange = (value: string) => {
     setSlug(value)
@@ -203,7 +211,7 @@ export default function StatisticsPage() {
 
           {statistics.isPending && <Skeleton rows={6} />}
 
-          {!statistics.isPending && sectionRows.length === 0 && (
+          {statistics.isSuccess && sectionRows.length === 0 && (
             <p className="notice">В этом разделе пока нет данных: всё появится после матчей.</p>
           )}
 
@@ -224,7 +232,7 @@ export default function StatisticsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sectionRows.map((row, index) => (
+                    {topRows.map((row, index) => (
                       <tr key={row.playerId}>
                         <td className="muted col-index">{index + 1}</td>
                         <td className="stats-name">
@@ -264,6 +272,18 @@ export default function StatisticsPage() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {statistics.isSuccess && rows.length > 0 && (
+            <div className="stats-full">
+              <span className="muted">
+                {sectionRows.length > TOP_SIZE && `Топ-${TOP_SIZE} из ${sectionRows.length}. `}
+                Все показатели всех игроков ({rows.length}) — в таблице Excel.
+              </span>
+              <a className="stats-full-button" href={xlsxUrl} download>
+                Полная статистика (.xlsx)
+              </a>
             </div>
           )}
         </>

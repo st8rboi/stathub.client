@@ -42,4 +42,7 @@ export const publicApi = {
   /** Статистика игроков одного дивизиона турнира; без divisionId сервер отдаёт первый дивизион. */
   tournamentStatistics: (tournamentId: string, divisionId?: string) =>
     request<TournamentStatistics>(`/public/tournaments/${tournamentId}/statistics${query({ divisionId })}`),
+  /** Ссылка на полную статистику дивизиона файлом .xlsx (скачивается браузером, без fetch). */
+  tournamentStatisticsXlsxUrl: (tournamentId: string, divisionId?: string) =>
+    `/api/public/tournaments/${tournamentId}/statistics.xlsx${query({ divisionId })}`,
 }

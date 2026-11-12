@@ -5,8 +5,8 @@ import type { PublicLeague } from '@/api/types'
 import { useLeague, useStage } from '@/hooks'
 
 /**
- * Правый сайдбар: таблица лиги. Выбор лиги — из опубликованного каталога, турнир берём последний
- * (текущий сезон). Если в турнире несколько дивизионов, появляется их переключатель;
+ * Правый сайдбар: таблица лиги. Выбор лиги — из опубликованного каталога (самые активные лиги
+ * сервер отдаёт первыми), турнир — самый новый (текущий сезон). Если в турнире несколько дивизионов, появляется их переключатель;
  * этап — первый в дивизионе.
  */
 export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
@@ -15,7 +15,8 @@ export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
   const activeSlug = slug || leagues[0]?.slug || ''
 
   const leaguePage = useLeague(activeSlug)
-  const tournament = leaguePage.data?.tournaments.at(-1)
+  // API отдаёт турниры от новых к старым: текущий сезон — первый.
+  const tournament = leaguePage.data?.tournaments[0]
   const divisions = tournament?.divisions ?? []
   // Выбранного дивизиона может не быть в другой лиге — тогда берём первый.
   const division = divisions.find((item) => item.id === divisionId) ?? divisions[0]

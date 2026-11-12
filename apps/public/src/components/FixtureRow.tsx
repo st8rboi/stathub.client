@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router'
 import type { PublicMatch } from '@/api/types'
 import { useNow } from '@/hooks'
-import { formatMinute, formatTime, isLiveMatch, periodElapsedSeconds } from '@/labels'
+import { formatDayMonth, formatMinute, formatTime, isLiveMatch, periodElapsedSeconds } from '@/labels'
 
 /** Откуда пришли на страницу матча — чтобы там была стрелка «назад» именно туда. */
 export type MatchLinkState = { from: string }
@@ -43,8 +43,11 @@ function TeamLogo({ url }: { url: string | null }) {
  * Строка матча в стиле флешскора: слева две строки команд, справа —
  * идёт: красная минута + красный счёт; завершён: только счёт, победитель жирным;
  * запланирован: время начала; нештатный статус (отменён): короткое слово.
+ *
+ * `showDate` — для списков, где подряд идут матчи разных дней (этап, команда): тогда слева
+ * колонка «день + время», а справа у запланированного матча время не повторяется.
  */
-export function FixtureRow({ match }: { match: PublicMatch }) {
+export function FixtureRow({ match, showDate = false }: { match: PublicMatch; showDate?: boolean }) {
   const location = useLocation()
   const live = isLiveMatch(match.status)
   const finished = match.status === 'Finished'
@@ -58,6 +61,13 @@ export function FixtureRow({ match }: { match: PublicMatch }) {
       state={linkState}
       className={live ? 'fixture fixture--live' : 'fixture'}
     >
+      {showDate && (
+        <span className="fixture-when">
+          <span>{formatDayMonth(match.scheduledTimeUtc)}</span>
+          <span className="fixture-when-time">{formatTime(match.scheduledTimeUtc)}</span>
+        </span>
+      )}
+
       <span className="fixture-lines">
         <span className={'fixture-line' + winClass(match.homeScore, match.awayScore, finished)}>
           <TeamLogo url={match.homeTeamLogoUrl} />
@@ -77,7 +87,7 @@ export function FixtureRow({ match }: { match: PublicMatch }) {
           <span className="fixture-score">{match.homeScore}</span>
           <span className="fixture-score">{match.awayScore}</span>
         </span>
-      ) : (
+      ) : showDate && match.status === 'Scheduled' ? null : (
         <span className="fixture-status">{sideLabel(match)}</span>
       )}
     </Link>
