@@ -4,7 +4,10 @@ import type { PublicMatch } from '@/api/types'
 import { FixtureRow } from '@/components/FixtureRow'
 
 export type Competition = {
+  key: string
   slug: string
+  /** Дивизион, если их в турнире несколько. */
+  division: string | null
   name: string
   logoUrl: string | null
   city: string | null
@@ -41,6 +44,8 @@ export function CompetitionGroup({ competition }: { competition: Competition }) 
         <Link to={`/leagues/${competition.slug}`} className="feed-group-name">
           {competition.name}
         </Link>
+
+        {competition.division && <span className="feed-group-division">{competition.division}</span>}
 
         <span className="feed-group-meta">
           {competition.city ? `${competition.city} · ` : ''}

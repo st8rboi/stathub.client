@@ -39,6 +39,15 @@ export function formatTime(iso: string): string {
   return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
 }
 
+/** «Сб, 12.10» — день матча в списках, где матчи разных дней идут подряд. */
+export function formatDayMonth(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '—'
+
+  const label = date.toLocaleDateString('ru-RU', { weekday: 'short', day: '2-digit', month: '2-digit' })
+  return label.charAt(0).toUpperCase() + label.slice(1)
+}
+
 export function formatDateTime(iso: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return '—'

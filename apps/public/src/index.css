@@ -501,6 +501,20 @@ h2 {
   font-weight: 700;
 }
 
+.feed-group-division {
+  flex: none;
+  max-width: 30%;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
 .feed-group-meta {
   flex: 1;
   min-width: 0;
@@ -1841,6 +1855,10 @@ td.stats-name {
     max-width: none;
   }
 
+  .feed-group-division {
+    max-width: 42%;
+  }
+
   .feed-group-toggle {
     width: 44px;
     height: 36px;
@@ -1918,8 +1936,8 @@ td.stats-name {
     hyphens: auto;
     font-size: 13px;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
   }
 
   .team-logo--lg {
@@ -1997,4 +2015,113 @@ td.stats-name {
 a.date-tab,
 a.date-tab:hover {
   text-decoration: none;
+}
+
+/* ---------- Дата матча в списках разных дней (этап, команда) ---------- */
+
+.fixture-when {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 64px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fixture-when-time {
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+/* ---------- Этап: туры и группы ---------- */
+
+.round-strip {
+  margin-bottom: 12px;
+}
+
+.round-tab {
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  min-height: 44px;
+  line-height: 1.15;
+}
+
+.round-tab-dates {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.stage-filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.stage-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.stage-round-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--bg-hover);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ---------- Статистика: ссылка на полный файл ---------- */
+
+.stats-full {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 16px;
+  font-size: 13px;
+}
+
+.stats-full-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--green-dark);
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.stats-full-button:hover {
+  color: #fff;
+  text-decoration: none;
+  filter: brightness(1.1);
+}
+
+@media (max-width: 640px) {
+  .fixture {
+    gap: 12px;
+  }
+
+  .fixture-when {
+    width: 52px;
+    font-size: 11px;
+  }
+
+  .stats-full-button {
+    width: 100%;
+    justify-content: center;
+  }
 }

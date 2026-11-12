@@ -252,7 +252,7 @@ export default function TeamPage() {
               <div className="competition competition--plain team-block">
                 <div className="competition-body">
                   {upcoming.map((match) => (
-                    <FixtureRow key={match.id} match={match} />
+                    <FixtureRow key={match.id} match={match} showDate />
                   ))}
                 </div>
               </div>
@@ -268,7 +268,7 @@ export default function TeamPage() {
             <div className="competition competition--plain team-block">
               <div className="competition-body">
                 {results.map((match) => (
-                  <FixtureRow key={match.id} match={match} />
+                  <FixtureRow key={match.id} match={match} showDate />
                 ))}
               </div>
             </div>

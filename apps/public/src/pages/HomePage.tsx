@@ -139,16 +139,21 @@ export default function HomePage() {
   const competitions = useMemo<Competition[]>(() => {
     const map = new Map<string, Competition>()
 
+    // Дивизионы одной лиги — разные соревнования: группируем по лиге и дивизиону,
+    // иначе в одной группе перемешаны матчи высшего и второго дивизионов без подписи.
     for (const match of visibleMatches) {
-      const existing = map.get(match.leagueSlug)
+      const key = `${match.leagueSlug}|${match.divisionName ?? ''}`
+      const existing = map.get(key)
 
       if (existing) {
         existing.matches.push(match)
         continue
       }
 
-      map.set(match.leagueSlug, {
+      map.set(key, {
+        key,
         slug: match.leagueSlug,
+        division: match.divisionName ?? null,
         name: match.leagueName,
         logoUrl: match.leagueLogoUrl,
         city: cityBySlug.get(match.leagueSlug) ?? null,
@@ -231,7 +236,7 @@ export default function HomePage() {
         )}
 
         {competitions.map((competition) => (
-          <CompetitionGroup key={competition.slug} competition={competition} />
+          <CompetitionGroup key={competition.key} competition={competition} />
         ))}
       </section>
 
