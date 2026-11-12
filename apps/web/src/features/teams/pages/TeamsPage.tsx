@@ -9,6 +9,7 @@ import { Menu, MenuButton } from '@/shared/ui/Menu'
 import { Modal } from '@/shared/ui/Modal'
 import { CreateTeamForm } from '../components/CreateTeamForm'
 import { TeamEditor } from '../components/TeamEditor'
+import { TEAMS_LIST_LIMIT } from '../api'
 import { useDeleteTeam, useTeams } from '../hooks'
 
 /** Справочник команд: поиск, таблица, создание и карточка команды в модальном окне. */
@@ -57,7 +58,11 @@ export default function TeamsPage() {
           />
         </label>
         {teams.data && teams.data.length > 0 && (
-          <p className="muted">{plural(teams.data.length, ['команда', 'команды', 'команд'])}</p>
+          <p className="muted">
+            {teams.data.length >= TEAMS_LIST_LIMIT
+              ? `Показаны первые ${TEAMS_LIST_LIMIT} — уточните поиск`
+              : plural(teams.data.length, ['команда', 'команды', 'команд'])}
+          </p>
         )}
       </div>
 

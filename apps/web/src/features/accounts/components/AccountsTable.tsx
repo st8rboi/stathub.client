@@ -29,7 +29,7 @@ export function AccountsTable({
         <thead>
           <tr>
             <th>Имя и логин</th>
-            {showRole && <th>Роль</th>}
+            {showRole && <th className="col-secondary">Роль</th>}
             {extraColumn && <th>{extraColumn.title}</th>}
             <th className="col-secondary">Создан</th>
             <th>Статус</th>
@@ -46,11 +46,13 @@ export function AccountsTable({
                   <span className="cell-text">
                     <strong>{user.displayName}</strong>
                     <span className="cell-sub mono">{user.login}</span>
+                    {/* На телефоне столбец «Роль» скрыт — роль под логином. */}
+                    {showRole && <span className="cell-sub mobile-only">{roleLabels[user.role]}</span>}
                   </span>
                 </div>
               </td>
               {showRole && (
-                <td>
+                <td className="col-secondary">
                   <Badge tone={roleTones[user.role]}>{roleLabels[user.role]}</Badge>
                 </td>
               )}

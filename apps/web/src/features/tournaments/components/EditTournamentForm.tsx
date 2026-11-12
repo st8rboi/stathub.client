@@ -14,7 +14,7 @@ export function EditTournamentForm({ tournament, onDone }: { tournament: Tournam
 
     update.mutate(
       {
-        name: String(form.get('name')),
+        name: String(form.get('name')).trim(),
         startDate,
         endDate: String(form.get('endDate')) || null,
       },

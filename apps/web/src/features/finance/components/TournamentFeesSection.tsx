@@ -84,7 +84,8 @@ export function TournamentFeesSection({
         />
       )}
 
-      {teamDebts.length === 0 ? (
+      {/* Пока долги не загружены, «Начислений пока нет» показывать нельзя — это было бы неправдой. */}
+      {debts.data && (teamDebts.length === 0 ? (
         <EmptyState icon="layers" title="Начислений пока нет">
           Взносы за матчи появятся вместе с матчами. Вступительный взнос или штраф можно начислить кнопкой
           «Начислить».
@@ -130,7 +131,7 @@ export function TournamentFeesSection({
             </tbody>
           </table>
         </Card>
-      )}
+      ))}
 
       <Card
         title="Разовые начисления"
@@ -149,7 +150,13 @@ export function TournamentFeesSection({
         {manual.length === 0 ? (
           <div className="card-body">
             <p className="muted">
-              {onlyDebt ? 'Неоплаченных разовых начислений нет.' : 'Вступительных взносов, штрафов и прочих начислений пока нет.'}
+              {!charges.data
+                ? charges.error
+                  ? 'Не удалось загрузить начисления.'
+                  : 'Загрузка…'
+                : onlyDebt
+                  ? 'Неоплаченных разовых начислений нет.'
+                  : 'Вступительных взносов, штрафов и прочих начислений пока нет.'}
             </p>
           </div>
         ) : (

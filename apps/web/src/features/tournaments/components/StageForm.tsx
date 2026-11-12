@@ -56,7 +56,7 @@ export function StageForm({ initial = defaults, submitLabel, pending, error, rul
           penaltyShootoutEnabled: form.get('penaltyShootoutEnabled') === 'on',
         }
 
-    onSubmit({ ...rules, name: String(form.get('name')) }, formElement)
+    onSubmit({ ...rules, name: String(form.get('name')).trim() }, formElement)
   }
 
   return (

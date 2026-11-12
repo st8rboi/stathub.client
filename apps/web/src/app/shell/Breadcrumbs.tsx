@@ -5,7 +5,7 @@ import { leagueStatusLabels } from '@/features/leagues/labels'
 import { useOrganizer } from '@/features/organizer/organizerContext'
 import { useTournamentTeams } from '@/features/rosters/hooks'
 import { tournamentTeamStatusLabels } from '@/features/rosters/labels'
-import { useTeams } from '@/features/teams/hooks'
+import { useTeamsByIds } from '@/features/teams/hooks'
 import { useTournament, useTournaments } from '@/features/tournaments/hooks'
 import { stageFormatLabels, tournamentStatusLabels } from '@/features/tournaments/labels'
 import { Icon } from '@/shared/ui/Icon'
@@ -230,7 +230,7 @@ function TeamCrumb({
   tournamentTeamId: string
 }) {
   const tournamentTeams = useTournamentTeams(stageId)
-  const allTeams = useTeams()
+  const allTeams = useTeamsByIds((tournamentTeams.data ?? []).map((item) => item.teamId))
 
   const teamName = (teamId: string) => allTeams.data?.find((team) => team.id === teamId)?.name ?? '…'
   const current = tournamentTeams.data?.find((item) => item.id === tournamentTeamId)

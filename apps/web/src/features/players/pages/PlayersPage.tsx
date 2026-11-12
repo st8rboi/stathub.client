@@ -9,6 +9,7 @@ import { Menu, MenuButton } from '@/shared/ui/Menu'
 import { Modal } from '@/shared/ui/Modal'
 import { PlayerForm } from '../components/PlayerForm'
 import { PlayerPhotoEditor } from '../components/PlayerPhotoEditor'
+import { PLAYERS_LIST_LIMIT } from '../api'
 import { useDeletePlayer, usePlayers } from '../hooks'
 import type { Player } from '../types'
 
@@ -23,7 +24,7 @@ export default function PlayersPage() {
   const confirm = useConfirm()
   const [query, setQuery] = useState('')
   const search = useDebouncedValue(query.trim())
-  const players = usePlayers(search)
+  const players = usePlayers(search, { keepPrevious: true })
   const deletePlayer = useDeletePlayer()
 
   const [creating, setCreating] = useState(false)
@@ -68,7 +69,13 @@ export default function PlayersPage() {
           />
         </label>
         {players.data && players.data.length > 0 && (
-          <p className="muted">{plural(players.data.length, ['игрок', 'игрока', 'игроков'])}</p>
+          <p className="muted">
+            {players.data.length >= PLAYERS_LIST_LIMIT
+              ? search
+                ? `Показаны первые ${PLAYERS_LIST_LIMIT} — уточните поиск`
+                : `Показаны ${PLAYERS_LIST_LIMIT} недавно добавленных — остальных найдёт поиск`
+              : plural(players.data.length, ['игрок', 'игрока', 'игроков'])}
+          </p>
         )}
       </div>
 

@@ -14,8 +14,8 @@ export function EditLeagueForm({ league, onDone }: { league: League; onDone: () 
       {
         id: league.id,
         body: {
-          name: String(form.get('name')),
-          slug: String(form.get('slug')),
+          name: String(form.get('name')).trim(),
+          slug: String(form.get('slug')).trim(),
           city: String(form.get('city')).trim() || null,
           region: String(form.get('region')).trim() || null,
         },

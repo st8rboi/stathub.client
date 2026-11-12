@@ -1,15 +1,31 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { playersApi } from './api'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { PLAYERS_LIST_LIMIT, playersApi } from './api'
 import type { CreatePlayerBody, UpdatePlayerBody } from './types'
 
 export const playerKeys = {
   all: ['players'] as const,
-  list: (query: string) => [...playerKeys.all, 'list', query] as const,
+  list: (query: string, limit: number) => [...playerKeys.all, 'list', query, limit] as const,
   byIds: (ids: string[]) => [...playerKeys.all, 'ids', ids.join(',')] as const,
 }
 
-export const usePlayers = (query = '', enabled = true) =>
-  useQuery({ queryKey: playerKeys.list(query), queryFn: () => playersApi.list(query), enabled })
+interface UsePlayersOptions {
+  enabled?: boolean
+  /** Сколько записей запросить (не больше PLAYERS_LIST_LIMIT). */
+  limit?: number
+  /** Держать прежний список на экране, пока грузится новый (страница справочника). */
+  keepPrevious?: boolean
+}
+
+export const usePlayers = (
+  query = '',
+  { enabled = true, limit = PLAYERS_LIST_LIMIT, keepPrevious = false }: UsePlayersOptions = {},
+) =>
+  useQuery({
+    queryKey: playerKeys.list(query, limit),
+    queryFn: () => playersApi.list(query, limit),
+    enabled,
+    placeholderData: keepPrevious ? keepPreviousData : undefined,
+  })
 
 /** Игроки по Id — имена для составов: заявки хранят только идентификаторы. */
 export const usePlayersByIds = (ids: string[]) =>

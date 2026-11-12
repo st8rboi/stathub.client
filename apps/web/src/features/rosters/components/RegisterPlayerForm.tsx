@@ -27,7 +27,7 @@ export function RegisterPlayerForm({
 
   const [query, setQuery] = useState('')
   const search = useDebouncedValue(query.trim())
-  const found = usePlayers(search, search.length >= 2)
+  const found = usePlayers(search, { enabled: search.length >= 2, limit: 30 })
 
   const [playerId, setPlayerId] = useState('')
   const [notice, setNotice] = useState<string | null>(null)

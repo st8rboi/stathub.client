@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Icon } from './Icon'
 
 interface ModalProps {
@@ -20,12 +20,20 @@ interface ModalProps {
 export function Modal({ open, onClose, title, children, footer, size = 'md', variant = 'dialog' }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
+  // Содержимое монтируется только после showModal(): в закрытом <dialog> поле с autoFocus
+  // получить фокус не может, и браузер отдал бы его первой кнопке — «Закрыть». Тогда Enter
+  // в окне подтверждения закрывал бы его вместо подтверждения.
+  const [shown, setShown] = useState(false)
+  // Нажатие началось на затемнении? Иначе окно закрывалось бы, когда текст в поле выделяют
+  // мышью и отпускают кнопку за пределами окна.
+  const pressedOnBackdrop = useRef(false)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const dialog = ref.current
     if (!dialog) return
     if (open && !dialog.open) dialog.showModal()
     if (!open && dialog.open) dialog.close()
+    setShown(open)
   }, [open])
 
   return (
@@ -38,12 +46,16 @@ export function Modal({ open, onClose, title, children, footer, size = 'md', var
         event.preventDefault()
         onClose()
       }}
+      onPointerDown={(event) => {
+        pressedOnBackdrop.current = event.target === event.currentTarget
+      }}
       onClick={(event) => {
         // У <dialog> нет внутренних отступов, поэтому клик по нему самому — это клик по фону.
-        if (event.target === event.currentTarget) onClose()
+        if (event.target === event.currentTarget && pressedOnBackdrop.current) onClose()
+        pressedOnBackdrop.current = false
       }}
     >
-      {open && (
+      {open && shown && (
         <div className="modal-panel">
           <header className="modal-head">
             <h2 id={titleId}>{title}</h2>

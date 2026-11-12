@@ -20,7 +20,12 @@ export const useCreateMatch = (stageId: string) => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (body: CreateMatchBody) => matchesApi.create(body),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: matchKeys.byStage(stageId) }),
+    // Вместе с матчем сервер создаёт взносы — сводка и начисления тоже устарели.
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: matchKeys.byStage(stageId) }),
+        queryClient.invalidateQueries({ queryKey: financeKeys.all }),
+      ]),
   })
 }
 
