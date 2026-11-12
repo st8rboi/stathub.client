@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { financeApi, type AddManualChargeBody, type PaymentMethod } from './api'
 
 export const financeKeys = {
@@ -26,6 +26,8 @@ export const useStageCharges = (stageId: string, onlyDebt: boolean) =>
     queryKey: financeKeys.charges(stageId, onlyDebt),
     queryFn: () => financeApi.charges(stageId, onlyDebt),
     enabled: Boolean(stageId),
+    // Переключение фильтра не должно на мгновение показывать пустую таблицу.
+    placeholderData: keepPreviousData,
   })
 
 export const useFeeSummary = (tournamentId: string, stageId?: string) =>

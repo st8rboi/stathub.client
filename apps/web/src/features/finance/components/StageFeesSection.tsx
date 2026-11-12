@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useStageMatches } from '@/features/matches/hooks'
-import { useTeams } from '@/features/teams/hooks'
+import { useTeamsByIds } from '@/features/teams/hooks'
 import { formatDate, formatMoney } from '@/shared/lib/format'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { Icon } from '@/shared/ui/Icon'
@@ -31,7 +31,8 @@ export function StageFeesSection({
   const [onlyDebt, setOnlyDebt] = useState(false)
   const charges = useStageCharges(stageId, onlyDebt)
   const matches = useStageMatches(stageId)
-  const allTeams = useTeams()
+  // Названия команд матча — для основания начисления («Команда — Команда»).
+  const allTeams = useTeamsByIds((matches.data ?? []).flatMap((match) => [match.homeTeamId, match.awayTeamId]))
   const setStageFee = useSetStageFee()
 
   const [charging, setCharging] = useState(false)
@@ -114,10 +115,14 @@ export function StageFeesSection({
           </div>
         }
       >
-        {charges.data?.length === 0 ? (
+        {!charges.data || charges.data.length === 0 ? (
           <div className="card-body">
             <p className="muted">
-              {onlyDebt
+              {!charges.data
+                ? charges.error
+                  ? 'Не удалось загрузить начисления.'
+                  : 'Загрузка…'
+                : onlyDebt
                 ? 'Долгов нет: все начисления этапа оплачены или отменены.'
                 : 'Начислений нет. Взносы за матчи создаются вместе с матчем, если тариф больше нуля.'}
             </p>
@@ -134,7 +139,7 @@ export function StageFeesSection({
               </tr>
             </thead>
             <tbody>
-              {(charges.data ?? []).map((charge) => {
+              {charges.data.map((charge) => {
                 const { title, hint } = basis(charge)
                 const name = charge.teamName || teamName(charge.teamId)
                 return (

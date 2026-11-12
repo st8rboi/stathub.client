@@ -1,6 +1,6 @@
 import { useState, type SubmitEvent } from 'react'
 import { useTournamentTeamsForStages } from '@/features/rosters/hooks'
-import { useTeams } from '@/features/teams/hooks'
+import { useTeamsByIds } from '@/features/teams/hooks'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import type { ManualChargeKind } from '../api'
 import { useAddManualCharge } from '../hooks'
@@ -33,7 +33,6 @@ export function ManualChargeForm({
   onDone: () => void
 }) {
   const add = useAddManualCharge()
-  const allTeams = useTeams()
 
   const [kind, setKind] = useState<ManualChargeKind>('Fine')
   const [stageId, setStageId] = useState(presetStageId)
@@ -43,6 +42,7 @@ export function ManualChargeForm({
   const stageTeams = useTournamentTeamsForStages(stageId ? [stageId] : stages.map((stage) => stage.id))
   const teamIds = new Set(stageTeams.flatMap((query) => query.data ?? []).map((item) => item.teamId))
   if (presetTeamId) teamIds.add(presetTeamId)
+  const allTeams = useTeamsByIds([...teamIds])
   const teamOptions = (allTeams.data ?? [])
     .filter((team) => teamIds.has(team.id))
     .sort((a, b) => a.name.localeCompare(b.name, 'ru'))

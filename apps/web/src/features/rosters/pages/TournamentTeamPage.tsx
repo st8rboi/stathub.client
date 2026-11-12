@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { usePlayersByIds } from '@/features/players/hooks'
-import { useTeams } from '@/features/teams/hooks'
+import { useTeamsByIds } from '@/features/teams/hooks'
 import { formatDate, plural } from '@/shared/lib/format'
 import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
@@ -48,7 +48,10 @@ export default function TournamentTeamPage() {
 
   const details = useTournamentTeam(stageId, tournamentTeamId)
   const tournamentTeams = useTournamentTeams(stageId)
-  const allTeams = useTeams()
+  const allTeams = useTeamsByIds([
+    ...(tournamentTeams.data ?? []).map((item) => item.teamId),
+    ...(details.data ? [details.data.teamId] : []),
+  ])
 
   const registrations = details.data?.registrations ?? []
   const playersByIds = usePlayersByIds([...new Set(registrations.map((registration) => registration.playerId))])

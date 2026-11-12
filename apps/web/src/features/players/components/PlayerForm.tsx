@@ -21,7 +21,11 @@ export function PlayerForm({ player, onDone }: { player?: Player; onDone: () => 
 
   const [fullName, setFullName] = useState(player?.fullName ?? '')
   const search = useDebouncedValue(fullName.trim())
-  const similarQuery = usePlayers(search, search.length >= SIMILAR_MIN_LENGTH && search !== player?.fullName)
+  const similarQuery = usePlayers(search, {
+    enabled: search.length >= SIMILAR_MIN_LENGTH && search !== player?.fullName,
+    // +1: среди найденных может оказаться сам редактируемый игрок.
+    limit: SIMILAR_LIMIT + 1,
+  })
   const similar = (similarQuery.data ?? []).filter((item) => item.id !== player?.id).slice(0, SIMILAR_LIMIT)
 
   const onSubmit = (e: SubmitEvent<HTMLFormElement>) => {

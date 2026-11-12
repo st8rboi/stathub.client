@@ -54,5 +54,14 @@ export const useUpdateStage = (leagueId: string, tournamentId: string) =>
     tournamentsApi.updateStage(leagueId, tournamentId, input.stageId, input.body),
   )
 
-export const useDeleteStage = (leagueId: string, tournamentId: string) =>
-  useTournamentMutation((stageId: string) => tournamentsApi.removeStage(leagueId, tournamentId, stageId))
+// Перезапрос турнира не ждём: страница удалённого этапа сразу уходит на турнир,
+// иначе она успела бы мигнуть сообщением «Этап не найден».
+export const useDeleteStage = (leagueId: string, tournamentId: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (stageId: string) => tournamentsApi.removeStage(leagueId, tournamentId, stageId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: tournamentKeys.all })
+    },
+  })
+}

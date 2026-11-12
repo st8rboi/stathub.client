@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { ApiError, onSessionExpired } from '@/shared/api/client'
 import { clearTokens, getTokens, setTokens } from '@/shared/api/storage'
 import { authApi } from './api'
 import { AuthContext, type AuthStatus } from './authContext'
@@ -28,8 +29,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (cancelled) return
         setUser(profile)
         setStatus('authenticated')
-      } catch {
-        clearTokens()
+      } catch (error) {
+        // Сервер недоступен или нет сети — токены ещё действительны: после перезагрузки
+        // страницы сессия восстановится. Стираем их, только если сервер отклонил сессию.
+        const temporary = !(error instanceof ApiError) || error.status === 0 || error.status >= 500
+        if (!temporary) clearTokens()
         if (cancelled) return
         setUser(null)
         setStatus('anonymous')
@@ -42,6 +46,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true
     }
   }, [])
+
+  // Refresh-токен отклонён посреди работы — показываем вход, а не страницу с ошибками 401.
+  useEffect(
+    () =>
+      onSessionExpired(() => {
+        setUser(null)
+        setStatus('anonymous')
+        queryClient.clear()
+      }),
+    [queryClient],
+  )
 
   const login = useCallback(async (loginValue: string, password: string) => {
     const result = await authApi.login(loginValue, password)

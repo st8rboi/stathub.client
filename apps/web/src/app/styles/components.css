@@ -88,6 +88,33 @@
   box-shadow: none;
 }
 
+/* Карточка без заголовка: таблица скруглена со всех сторон. */
+.card-body--flush:first-child > table {
+  border-radius: var(--radius);
+}
+
+/* Углы ячеек повторяют скругление карточки, а не таблицы «самой по себе»: иначе фон шапки
+   и подсветка строки вылезают за рамку. Под заголовком карточки верхние углы прямые. */
+.card-body--flush > table > :is(thead, tbody) > tr:nth-child(n) > :nth-child(n) {
+  border-radius: 0;
+}
+
+.card-body--flush:first-child > table > :first-child > tr:first-child > :first-child {
+  border-top-left-radius: calc(var(--radius) - 1px);
+}
+
+.card-body--flush:first-child > table > :first-child > tr:first-child > :last-child {
+  border-top-right-radius: calc(var(--radius) - 1px);
+}
+
+.card-body--flush > table > tbody:last-child > tr:last-child > :first-child {
+  border-bottom-left-radius: calc(var(--radius) - 1px);
+}
+
+.card-body--flush > table > tbody:last-child > tr:last-child > :last-child {
+  border-bottom-right-radius: calc(var(--radius) - 1px);
+}
+
 /* ---------- Шапка страницы ---------- */
 
 .page-header {
@@ -188,7 +215,9 @@
   display: flex;
   gap: 4px;
   margin: 0 0 20px;
-  border-bottom: 1px solid var(--border-strong);
+  /* Линия — тенью, а не рамкой: подчёркивание активной вкладки ложится поверх неё без
+     отрицательного отступа, который давал вертикальную прокрутку и срезал подчёркивание. */
+  box-shadow: inset 0 -1px 0 var(--border-strong);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -203,7 +232,6 @@
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  margin-bottom: -1px;
   font-weight: 600;
   color: var(--muted);
   border-bottom: 2px solid transparent;

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { usePlayersByIds } from '@/features/players/hooks'
 import { useTournamentTeam, useTournamentTeams } from '@/features/rosters/hooks'
-import { useTeams } from '@/features/teams/hooks'
+import { useTeamsByIds } from '@/features/teams/hooks'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { useIssueDisqualification } from './api'
 
@@ -29,7 +29,7 @@ export function IssueDisqualificationForm({
   const selectedTeam = (stageTeams.data ?? []).find((team) => team.id === teamRefId)
   const teamId = selectedTeam?.teamId ?? ''
   const teamDetails = useTournamentTeam(stageId, teamRefId)
-  const allTeams = useTeams()
+  const allTeams = useTeamsByIds((stageTeams.data ?? []).map((team) => team.teamId))
 
   // В заявке хранится только TeamId: название берём из справочника команд.
   const teamName = (id: string) => allTeams.data?.find((team) => team.id === id)?.name ?? id.slice(0, 8)

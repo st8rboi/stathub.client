@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { useTeams } from '@/features/teams/hooks'
+import { useTeamsByIds } from '@/features/teams/hooks'
 import { plural } from '@/shared/lib/format'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { Icon } from '@/shared/ui/Icon'
@@ -17,7 +17,7 @@ import { RegisterTeamsForm } from './RegisterTeamsForm'
  */
 export function TournamentTeamsSection({ stageId, basePath }: { stageId: string; basePath: string }) {
   const teams = useTournamentTeams(stageId)
-  const allTeams = useTeams()
+  const allTeams = useTeamsByIds((teams.data ?? []).map((team) => team.teamId))
   const [adding, setAdding] = useState(false)
 
   const teamById = (teamId: string) => allTeams.data?.find((team) => team.id === teamId)

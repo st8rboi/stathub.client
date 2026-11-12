@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { RefereeAssign } from '@/features/accounts/components/RefereeAssign'
 import { useAssignments } from '@/features/accounts/hooks'
 import { useTournamentTeams } from '@/features/rosters/hooks'
-import { useTeams } from '@/features/teams/hooks'
+import { useTeamsByIds } from '@/features/teams/hooks'
 import { useStageOutlet } from '@/features/tournaments/stageOutlet'
 import { dayKey, formatDayHeading, formatTime, plural, toLocalInputValue } from '@/shared/lib/format'
 import { useConfirm } from '@/shared/ui/confirmContext'
@@ -35,9 +35,13 @@ export default function StageMatchesPage() {
   const confirm = useConfirm()
 
   const matches = useStageMatches(stage.id)
-  const allTeams = useTeams()
   // Команды берём из заявок этапа: в дивизионе играют только его участники.
   const stageTeams = useTournamentTeams(stage.id)
+  // Названия — по Id участников и команд матчей (команду могли снять, а матч остался).
+  const allTeams = useTeamsByIds([
+    ...(stageTeams.data ?? []).map((team) => team.teamId),
+    ...(matches.data ?? []).flatMap((match) => [match.homeTeamId, match.awayTeamId]),
+  ])
   const assignments = useAssignments()
 
   const create = useCreateMatch(stage.id)
@@ -60,6 +64,7 @@ export default function StageMatchesPage() {
   const teamOptions = (allTeams.data ?? [])
     .filter((team) => activeTeamIds.has(team.id))
     .map((team) => ({ id: team.id, name: team.name }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
   const noTeams = stageTeams.data !== undefined && activeTeamIds.size === 0
 
   // Без доступа к назначениям (ошибка) не считаем «нет судьи» проблемой — мы этого просто не знаем.

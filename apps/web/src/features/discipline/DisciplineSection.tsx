@@ -10,7 +10,8 @@ import { IssueDisqualificationForm } from './IssueDisqualificationForm'
 
 function statusBadge(item: Disqualification) {
   if (item.isActive) return <Badge tone="danger">Действует</Badge>
-  return <Badge>{item.liftedAtUtc ? 'Снята' : 'Отбыта'}</Badge>
+  // Отбытую дисквалификацию сервер закрывает сам при выдаче следующей — «снятой» её это не делает.
+  return <Badge>{item.liftedAtUtc && item.matchesLeft !== 0 ? 'Снята' : 'Отбыта'}</Badge>
 }
 
 /**
