@@ -6,6 +6,7 @@ import { useTournamentTeams } from '@/features/rosters/hooks'
 import { useTeamsByIds } from '@/features/teams/hooks'
 import { useStageOutlet } from '@/features/tournaments/stageOutlet'
 import { dayKey, formatDayHeading, formatTime, plural, toLocalInputValue } from '@/shared/lib/format'
+import { copyText, overlayUrl } from '@/shared/lib/publicSite'
 import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { Icon } from '@/shared/ui/Icon'
@@ -55,6 +56,13 @@ export default function StageMatchesPage() {
   const [nextStart, setNextStart] = useState<string | null>(null)
   const [createdNotice, setCreatedNotice] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
+  // Ссылка на оверлей последнего матча, для которого её запросили: видна целиком, если буфер недоступен.
+  const [overlayLink, setOverlayLink] = useState<{ number: number; url: string; copied: boolean } | null>(null)
+
+  const copyOverlayLink = async (match: Match) => {
+    const url = overlayUrl(match.number)
+    setOverlayLink({ number: match.number, url, copied: await copyText(url) })
+  }
 
   const teamName = (teamId: string) => allTeams.data?.find((team) => team.id === teamId)?.name ?? '…'
 
@@ -220,6 +228,13 @@ export default function StageMatchesPage() {
             </button>
           </div>
 
+          {overlayLink && (
+            <p className="notice">
+              {overlayLink.copied ? 'Скопирована ссылка' : 'Ссылка'} на оверлей матча №{overlayLink.number}:{' '}
+              <code>{overlayLink.url}</code>
+            </p>
+          )}
+
           {visible.length === 0 && (
             <p className="muted">
               {activeFilter === 'attention' ? 'Всё в порядке: у матчей есть судьи, разбирать нечего.' : 'Матчей нет.'}
@@ -243,6 +258,7 @@ export default function StageMatchesPage() {
                       setEditingId(match.id)
                     }}
                     onDelete={() => askDelete(match)}
+                    onCopyOverlay={() => void copyOverlayLink(match)}
                   />
                 ))}
               </ul>
@@ -313,12 +329,14 @@ function MatchRow({
   needsReferee,
   onEdit,
   onDelete,
+  onCopyOverlay,
 }: {
   match: Match
   teamName: (teamId: string) => string
   needsReferee: boolean
   onEdit: () => void
   onDelete: () => void
+  onCopyOverlay: () => void
 }) {
   const live = LIVE_STATUSES.includes(match.status)
   const notStarted = match.status === 'Scheduled' || match.status === 'Cancelled'
@@ -327,7 +345,12 @@ function MatchRow({
 
   return (
     <li className="match-row" aria-label={`${home} — ${away}, ${formatTime(match.scheduledTimeUtc)}`}>
-      <span className="match-time">{formatTime(match.scheduledTimeUtc)}</span>
+      <span className="match-time">
+        {formatTime(match.scheduledTimeUtc)}
+        <small className="match-number" title="Номер матча — для ссылки на оверлей трансляции">
+          №{match.number}
+        </small>
+      </span>
 
       <span className="match-teams">
         <span className="match-team match-team--home" title={home}>
@@ -356,14 +379,17 @@ function MatchRow({
       </span>
 
       <span className="match-actions">
-        {isEditable(match) && (
-          <Menu triggerClassName="icon-button" triggerLabel={`Действия с матчем ${home} — ${away}`} trigger={<Icon name="more" />} align="end">
-            <MenuButton onClick={onEdit}>Изменить</MenuButton>
-            <MenuButton danger onClick={onDelete}>
-              Удалить
-            </MenuButton>
-          </Menu>
-        )}
+        <Menu triggerClassName="icon-button" triggerLabel={`Действия с матчем ${home} — ${away}`} trigger={<Icon name="more" />} align="end">
+          <MenuButton onClick={onCopyOverlay}>Ссылка на оверлей</MenuButton>
+          {isEditable(match) && (
+            <>
+              <MenuButton onClick={onEdit}>Изменить</MenuButton>
+              <MenuButton danger onClick={onDelete}>
+                Удалить
+              </MenuButton>
+            </>
+          )}
+        </Menu>
       </span>
     </li>
   )

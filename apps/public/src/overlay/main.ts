@@ -1,14 +1,16 @@
 /**
- * Трансляционный оверлей: /overlay.html?match=<id>.
+ * Трансляционный оверлей: /overlay.html?match=<номер матча> (старые ссылки с Id тоже работают).
  * Без React и роутера — DOM строится один раз, дальше меняется только изменившийся текст.
  * Источник истины — REST витрины; SignalR лишь сигналит «перечитай», опрос страхует разрыв.
- * Демо без сервера: /overlay.html?demo (с подложкой-газоном: ?demo&bg).
+ * Демо без сервера: /overlay.html?demo (с подложкой-газоном: ?demo&bg, перерыв: ?demo&break).
+ * Если статистику ведут: на 5:00, 10:00, … часов матча под табло выезжает плашка статистики,
+ * а в перерыве между таймами по центру висит окно со статистикой тайма.
  */
 import './overlay.css'
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import { publicApi } from '@/api/publicApi'
-import type { PublicEvent, PublicMatch, PublicMatchPage } from '@/api/types'
-import { competitionLabel, formatMinute, formatTime, isLiveMatch, periodElapsedSeconds } from '@/labels'
+import type { PublicEvent, PublicMatch, PublicMatchPage, PublicMatchStatistics, PublicTeamStats } from '@/api/types'
+import { formatMinute, formatTime, isLiveMatch, periodElapsedSeconds } from '@/labels'
 
 export type MatchSource = {
   load(): Promise<PublicMatchPage>
@@ -25,6 +27,31 @@ const MAX_QUEUE = 3
 const POLL_LIVE_MS = 15_000
 const POLL_IDLE_MS = 60_000
 const RETRY_MS = 5_000
+/** Плашка статистики выезжает на каждой 5-й минуте часов матча и висит 15 секунд. */
+const STATS_EVERY_SECONDS = 5 * 60
+const STATS_VISIBLE_MS = 15_000
+/**
+ * Остановку после отыгранного тайма считаем перерывом не сразу: судья мог остановить игру
+ * в добавленное время, и окно на полэкрана в этот момент было бы лишним.
+ */
+const HALFTIME_DELAY_MS = 30_000
+
+const STAT_ROWS: { key: keyof PublicTeamStats; short: string; full: string }[] = [
+  { key: 'expectedGoals', short: 'xG', full: 'Ожидаемые голы (xG)' },
+  { key: 'shots', short: 'Удары', full: 'Удары' },
+  { key: 'shotsOnTarget', short: 'В створ', full: 'Удары в створ' },
+  { key: 'corners', short: 'Угловые', full: 'Угловые' },
+  { key: 'fouls', short: 'Фолы', full: 'Фолы' },
+]
+
+const statRowsHtml = (label: 'short' | 'full') =>
+  STAT_ROWS.map(
+    (row) => `
+      <div class="st-row" data-stat="${row.key}">
+        <div class="st-values"><b></b><span>${row[label]}</span><b></b></div>
+        <div class="st-bars"><i><u></u></i><i><u></u></i></div>
+      </div>`,
+  ).join('')
 
 const SILHOUETTE =
   'data:image/svg+xml,' +
@@ -77,7 +104,7 @@ root.innerHTML = `
       <div class="bug-clock"><small data-ref="period"></small><span data-ref="time"></span></div>
     </div>
     <div class="bug-accent"></div>
-    <div class="bug-meta" data-ref="meta"></div>
+    <div class="bug-stats" data-ref="stats">${statRowsHtml('short')}</div>
   </div>
   <div class="l3" aria-live="polite">
     <div class="l3-photo"><img alt="" data-ref="photo"></div>
@@ -91,10 +118,18 @@ root.innerHTML = `
       <div class="l3-meta" data-ref="cardMeta"></div>
     </div>
   </div>
+  <div class="ht">
+    <div class="ht-head"><span class="ht-tag">Перерыв</span><span data-ref="htTitle"></span></div>
+    <div class="ht-teams">
+      <div class="ht-team"><img class="ht-logo" alt="" hidden><span data-ref="htHome"></span></div>
+      <div class="ht-score" data-ref="htScore"></div>
+      <div class="ht-team ht-team--away"><span data-ref="htAway"></span><img class="ht-logo" alt="" hidden></div>
+    </div>
+    <div class="ht-stats">${statRowsHtml('full')}</div>
+  </div>
 `
 
-const ref = <T extends HTMLElement = HTMLElement>(name: string) =>
-  root.querySelector<T>(`[data-ref="${name}"]`)!
+const ref = <T extends HTMLElement = HTMLElement>(name: string) => root.querySelector<T>(`[data-ref="${name}"]`)!
 
 const el = {
   bug: root.querySelector<HTMLElement>('.bug')!,
@@ -108,7 +143,14 @@ const el = {
   clock: root.querySelector<HTMLElement>('.bug-clock')!,
   period: ref('period'),
   time: ref('time'),
-  meta: ref('meta'),
+  stats: ref('stats'),
+  halftime: root.querySelector<HTMLElement>('.ht')!,
+  htTitle: ref('htTitle'),
+  htHomeLogo: root.querySelectorAll<HTMLImageElement>('.ht-logo')[0],
+  htAwayLogo: root.querySelectorAll<HTMLImageElement>('.ht-logo')[1],
+  htHome: ref('htHome'),
+  htAway: ref('htAway'),
+  htScore: ref('htScore'),
   card: root.querySelector<HTMLElement>('.l3')!,
   photoBox: root.querySelector<HTMLElement>('.l3-photo')!,
   photo: ref<HTMLImageElement>('photo'),
@@ -153,7 +195,11 @@ function renderBug(next: PublicMatch) {
   setText(el.awayName, next.awayTeamName)
   setText(el.homeScore, String(next.homeScore))
   setText(el.awayScore, String(next.awayScore))
-  setText(el.meta, [next.leagueName, competitionLabel(next.stageName, next.divisionName)].filter(Boolean).join(' · '))
+  setLogo(el.htHomeLogo, next.homeTeamLogoUrl)
+  setLogo(el.htAwayLogo, next.awayTeamLogoUrl)
+  setText(el.htHome, next.homeTeamName)
+  setText(el.htAway, next.awayTeamName)
+  setText(el.htScore, `${next.homeScore} : ${next.awayScore}`)
 
   // Счёт вырос — короткая вспышка блока счёта. Отмена гола (счёт уменьшился) — без вспышки.
   if (shownScore && next.homeScore + next.awayScore > shownScore[0] + shownScore[1]) {
@@ -171,7 +217,14 @@ function periodLabel(current: PublicMatch): string {
   return current.periodsCount === 2 ? `${period}Т` : `${period} пер`
 }
 
-/** Часы как в ТВ-табло: время матча непрерывно, второй тайм 25-минутных периодов идёт с 25:00. */
+/** Часы матча в секундах: время непрерывно, второй тайм 25-минутных периодов идёт с 25:00. */
+function matchSeconds(current: PublicMatch): number {
+  const elapsed = periodElapsedSeconds(current) ?? 0
+  const offset = (Math.max(1, current.currentPeriod) - 1) * (current.periodDurationMinutes ?? 0) * 60
+  return offset + elapsed
+}
+
+/** Часы как в ТВ-табло. */
 function renderClock() {
   if (!match) return
 
@@ -187,9 +240,7 @@ function renderClock() {
   } else if (match.status === 'Cancelled') {
     time = 'Отменён'
   } else if (isLiveMatch(match.status)) {
-    const elapsed = periodElapsedSeconds(match) ?? 0
-    const offset = (Math.max(1, match.currentPeriod) - 1) * (match.periodDurationMinutes ?? 0) * 60
-    const total = offset + elapsed
+    const total = matchSeconds(match)
 
     period = periodLabel(match)
     time = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
@@ -202,7 +253,112 @@ function renderClock() {
 }
 
 // Тикаем чаще секунды, чтобы смена цифры не отставала; DOM трогаем только при смене строки.
-setInterval(renderClock, 250)
+setInterval(() => {
+  renderClock()
+  renderStatsSchedule()
+}, 250)
+
+// ---------- Статистика ----------
+
+let statistics: PublicMatchStatistics | null = null
+let statsHideTimer: number | undefined
+/** 5-минутка часов матча на прошлом тике: плашка выезжает при переходе на следующую. */
+let lastMark: number | null = null
+
+// Строки и плашки под табло, и окна перерыва.
+const statRows = Array.from(root.querySelectorAll<HTMLElement>('.st-row'), (row) => {
+  const [homeValue, awayValue] = row.querySelectorAll<HTMLElement>('.st-values b')
+  const [homeBar, awayBar] = row.querySelectorAll<HTMLElement>('.st-bars i')
+  return { key: row.dataset.stat as keyof PublicTeamStats, homeValue, awayValue, homeBar, awayBar }
+})
+
+/** Значения обновляются и пока статистика на экране — счёт ударов может смениться при показе. */
+function renderStats(next: PublicMatchStatistics | null | undefined) {
+  statistics = next ?? null
+  if (!statistics) {
+    hideStats()
+    el.halftime.classList.remove('is-in')
+    return
+  }
+
+  for (const row of statRows) {
+    const home = statistics.home[row.key]
+    const away = statistics.away[row.key]
+    const total = home + away
+    const format = (value: number) => (row.key === 'expectedGoals' ? value.toFixed(2) : String(value))
+    const share = (value: number) => `${total === 0 ? 0 : (value / total) * 100}%`
+
+    setText(row.homeValue, format(home))
+    setText(row.awayValue, format(away))
+    row.homeValue.classList.toggle('is-lead', total > 0 && home >= away)
+    row.awayValue.classList.toggle('is-lead', total > 0 && away >= home)
+    row.homeBar.classList.toggle('is-lead', total > 0 && home >= away)
+    row.awayBar.classList.toggle('is-lead', total > 0 && away >= home)
+    row.homeBar.style.setProperty('--share', share(home))
+    row.awayBar.style.setProperty('--share', share(away))
+  }
+}
+
+/**
+ * Перерыв между периодами. В домене это обычная пауза, поэтому отличаем её по часам:
+ * новый период уже объявлен, но игра не возобновлена, — или период отыгран целиком,
+ * впереди есть следующий и пауза длится дольше HALFTIME_DELAY_MS.
+ * Возвращает номер завершённого периода или null.
+ */
+function breakAfterPeriod(current: PublicMatch): number | null {
+  if (current.status !== 'Pause') return null
+
+  const elapsed = periodElapsedSeconds(current) ?? 0
+  if (current.currentPeriod > 1 && elapsed === 0) return current.currentPeriod - 1
+
+  const duration = (current.periodDurationMinutes ?? 0) * 60
+  if (duration === 0 || elapsed < duration || current.currentPeriod >= current.periodsCount) return null
+
+  const pausedMs = current.pausedAtUtc ? Date.now() - new Date(current.pausedAtUtc).getTime() : 0
+  return pausedMs >= HALFTIME_DELAY_MS ? current.currentPeriod : null
+}
+
+/**
+ * В перерыве после первого периода итог матча и есть статистика тайма.
+ * Сервер отдаёт только итог, поэтому после следующих периодов честно пишем «матча».
+ */
+function halftimeTitle(period: number, periodsCount: number): string {
+  if (period !== 1) return 'Статистика матча'
+  return periodsCount === 2 ? 'Статистика 1-го тайма' : 'Статистика 1-го периода'
+}
+
+function renderStatsSchedule() {
+  if (!match) return
+
+  const period = statistics ? breakAfterPeriod(match) : null
+  if (period !== null) {
+    hideStats()
+    setText(el.htTitle, halftimeTitle(period, match.periodsCount))
+  }
+  el.halftime.classList.toggle('is-in', period !== null)
+
+  if (!isLiveMatch(match.status)) {
+    lastMark = null
+    return
+  }
+
+  // Оверлей открыли посреди матча — ждём следующую 5-минутку, а не показываем сразу.
+  const mark = Math.floor(matchSeconds(match) / STATS_EVERY_SECONDS)
+  if (lastMark !== null && mark > lastMark && match.status === 'InProgress') showStats()
+  lastMark = mark
+}
+
+function showStats() {
+  if (!statistics) return
+  window.clearTimeout(statsHideTimer)
+  el.stats.classList.add('is-in')
+  statsHideTimer = window.setTimeout(hideStats, STATS_VISIBLE_MS)
+}
+
+function hideStats() {
+  window.clearTimeout(statsHideTimer)
+  el.stats.classList.remove('is-in')
+}
 
 // ---------- Плашки событий ----------
 
@@ -368,19 +524,34 @@ function dropCard(id: string) {
 
 // ---------- Данные ----------
 
-function createApiSource(matchId: string): MatchSource {
+/**
+ * Матч задаётся коротким номером (?match=125 — так удобно вбивать вручную) или Id (старые ссылки).
+ * Подписка SignalR идёт по Id: в режиме номера он известен после первой загрузки.
+ */
+function createApiSource(matchParam: string): MatchSource {
+  const number = /^\d+$/.test(matchParam) ? Number(matchParam) : null
+  let resolveId: ((id: string) => void) | null = null
+  const matchId =
+    number === null ? Promise.resolve(matchParam) : new Promise<string>((resolve) => (resolveId = resolve))
+
   return {
-    load: () => publicApi.match(matchId),
+    load: async () => {
+      const page = number === null ? await publicApi.match(matchParam) : await publicApi.matchByNumber(number)
+      resolveId?.(page.match.id)
+      return page
+    },
     subscribe(onChange) {
       const connection = new HubConnectionBuilder()
         .withUrl('/hubs/matches')
         // Переподключаемся бесконечно: оверлей может висеть в эфире часами.
-        .withAutomaticReconnect({ nextRetryDelayInMilliseconds: () => RETRY_MS })
+        .withAutomaticReconnect({
+          nextRetryDelayInMilliseconds: () => RETRY_MS,
+        })
         .configureLogging(LogLevel.Warning)
         .build()
       const join = async () => {
         try {
-          await connection.invoke('SubscribeMatch', matchId)
+          await connection.invoke('SubscribeMatch', await matchId)
           onChange()
         } catch {
           // Подписка не прошла — выручит опрос.
@@ -422,6 +593,7 @@ function startOverlay(source: MatchSource) {
     try {
       const page = await source.load()
       renderBug(page.match)
+      renderStats(page.statistics)
       handleEvents(page)
       el.bug.classList.add('is-visible')
       schedulePoll(isLiveMatch(page.match.status) ? POLL_LIVE_MS : POLL_IDLE_MS)
@@ -442,13 +614,15 @@ function startOverlay(source: MatchSource) {
 }
 
 const params = new URLSearchParams(location.search)
-const matchId = params.get('match')
+const matchParam = params.get('match')?.trim()
 
 if (params.has('demo')) {
-  void import('./demo').then(({ createDemoSource }) => startOverlay(createDemoSource(params.has('bg'))))
-} else if (matchId) {
-  startOverlay(createApiSource(matchId))
+  void import('./demo').then(({ createDemoSource }) =>
+    startOverlay(createDemoSource(params.has('bg'), params.has('break'))),
+  )
+} else if (matchParam) {
+  startOverlay(createApiSource(matchParam))
 } else {
-  root.textContent = 'Укажите матч: /overlay.html?match=<id матча>'
+  root.textContent = 'Укажите матч: /overlay.html?match=<номер матча>'
   root.style.cssText = 'color:#fff;font:600 2rem sans-serif;padding:2rem;background:#0a1322cc;inset:auto;'
 }

@@ -1059,9 +1059,18 @@ button.chip--alert:not([aria-pressed='true']) .chip-count {
 
 .match-time {
   grid-area: time;
+  display: flex;
+  flex-direction: column;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--text-soft);
+}
+
+/* Номер матча — по нему оператор трансляции находит матч для оверлея. */
+.match-number {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.75;
 }
 
 .match-teams {

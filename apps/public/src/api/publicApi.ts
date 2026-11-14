@@ -35,6 +35,8 @@ export const publicApi = {
   matchDays: (timeZone: string) =>
     request<PublicMatchDay[]>(`/public/match-days${query({ timeZone })}`),
   match: (matchId: string) => request<PublicMatchPage>(`/public/matches/${matchId}`),
+  /** Матч по короткому сквозному номеру — для ссылки на оверлей трансляции. */
+  matchByNumber: (number: number) => request<PublicMatchPage>(`/public/matches/by-number/${number}`),
   /** Страница команды; без stageId сервер выбирает самый свежий этап. */
   team: (teamId: string, stageId?: string) =>
     request<PublicTeamPage>(`/public/teams/${teamId}${query({ stageId })}`),

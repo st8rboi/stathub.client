@@ -96,6 +96,8 @@ export type PublicMatchDay = {
 
 export type PublicMatch = {
   id: string
+  /** Короткий сквозной номер — по нему оверлей трансляции находит матч. */
+  number?: number
   stageId: string
   stageName: string
   tournamentName: string
