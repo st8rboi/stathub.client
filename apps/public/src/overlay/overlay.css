@@ -338,6 +338,145 @@ body {
   animation-delay: 0.2s;
 }
 
+/* ---------- Превью до начала матча ---------- */
+
+.pre {
+  position: absolute;
+  left: 50%;
+  bottom: 5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: translate(-50%, 2.5rem);
+  visibility: hidden;
+  transition:
+    opacity 0.4s var(--ease-in),
+    transform 0.45s var(--ease-in),
+    visibility 0s linear 0.45s;
+}
+
+.pre.is-in {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  visibility: visible;
+  transition:
+    opacity 0.4s var(--ease-out),
+    transform 0.7s var(--ease-out);
+}
+
+.pre-row {
+  display: flex;
+  align-items: center;
+}
+
+.pre-team {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  width: 30rem;
+  height: 4.6rem;
+  padding: 0 1.6rem;
+  background: var(--panel) var(--gloss);
+  box-shadow: 0 0.4rem 1.6rem rgb(0 0 0 / 35%);
+  color: var(--ink);
+  font-size: 2.3rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pre-team span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pre-team--away {
+  justify-content: flex-start;
+}
+
+.pre-logo {
+  width: 3rem;
+  height: 3rem;
+  flex: none;
+  object-fit: contain;
+}
+
+.pre-logo[hidden],
+.pre-league img[hidden],
+.pre-league span[hidden] {
+  display: none;
+}
+
+/* Логотип лиги — светлый квадрат по центру, выступает над и под строкой команд. */
+.pre-league {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 7.2rem;
+  height: 7.2rem;
+  padding: 0.8rem;
+  border-bottom: 0.3rem solid var(--accent);
+  background: var(--score-bg);
+  box-shadow: 0 0.4rem 1.6rem rgb(0 0 0 / 40%);
+  color: var(--score-ink);
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.pre-league img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pre-info {
+  margin-top: 0.5rem;
+  padding: 0.35rem 1.4rem;
+  background: var(--panel-2);
+  box-shadow: 0 0.3rem 1rem rgb(0 0 0 / 30%);
+  color: var(--ink-dim);
+  font-size: 1.2rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: pre;
+}
+
+.pre-info:empty {
+  display: none;
+}
+
+.pre.is-in .pre-team,
+.pre.is-in .pre-info {
+  animation: rise-in 0.5s var(--ease-out) both;
+}
+
+.pre.is-in .pre-league {
+  animation: pop-in 0.6s var(--ease-out) 0.1s both;
+}
+
+.pre.is-in .pre-team {
+  animation-delay: 0.2s;
+}
+
+.pre.is-in .pre-info {
+  animation-delay: 0.3s;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
 /* ---------- Плашка события ---------- */
 
 .l3 {

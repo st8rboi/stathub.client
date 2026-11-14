@@ -2,7 +2,9 @@
  * Трансляционный оверлей: /overlay.html?match=<номер матча> (старые ссылки с Id тоже работают).
  * Без React и роутера — DOM строится один раз, дальше меняется только изменившийся текст.
  * Источник истины — REST витрины; SignalR лишь сигналит «перечитай», опрос страхует разрыв.
- * Демо без сервера: /overlay.html?demo (с подложкой-газоном: ?demo&bg, перерыв: ?demo&break).
+ * Демо без сервера: /overlay.html?demo (с подложкой-газоном: ?demo&bg, перерыв: ?demo&break,
+ * превью до начала матча: ?demo&pre — через 10 секунд «судья» начинает матч).
+ * До начала матча вместо табло снизу по центру висит превью: команды и логотип лиги.
  * Если статистику ведут: на 5:00, 10:00, … часов матча под табло выезжает плашка статистики,
  * а в перерыве между таймами по центру висит окно со статистикой тайма.
  */
@@ -10,7 +12,7 @@ import './overlay.css'
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import { publicApi } from '@/api/publicApi'
 import type { PublicEvent, PublicMatch, PublicMatchPage, PublicMatchStatistics, PublicTeamStats } from '@/api/types'
-import { formatMinute, formatTime, isLiveMatch, periodElapsedSeconds } from '@/labels'
+import { competitionLabel, formatMinute, formatTime, isLiveMatch, periodElapsedSeconds } from '@/labels'
 
 export type MatchSource = {
   load(): Promise<PublicMatchPage>
@@ -106,6 +108,14 @@ root.innerHTML = `
     <div class="bug-accent"></div>
     <div class="bug-stats" data-ref="stats">${statRowsHtml('short')}</div>
   </div>
+  <div class="pre">
+    <div class="pre-row">
+      <div class="pre-team"><span data-ref="preHome"></span><img class="pre-logo" alt="" hidden></div>
+      <div class="pre-league"><img alt="" data-ref="preLeagueLogo" hidden><span data-ref="preVs">VS</span></div>
+      <div class="pre-team pre-team--away"><img class="pre-logo" alt="" hidden><span data-ref="preAway"></span></div>
+    </div>
+    <div class="pre-info" data-ref="preInfo"></div>
+  </div>
   <div class="l3" aria-live="polite">
     <div class="l3-photo"><img alt="" data-ref="photo"></div>
     <div class="l3-strip"></div>
@@ -144,6 +154,14 @@ const el = {
   period: ref('period'),
   time: ref('time'),
   stats: ref('stats'),
+  preview: root.querySelector<HTMLElement>('.pre')!,
+  preHomeLogo: root.querySelectorAll<HTMLImageElement>('.pre-logo')[0],
+  preAwayLogo: root.querySelectorAll<HTMLImageElement>('.pre-logo')[1],
+  preHome: ref('preHome'),
+  preAway: ref('preAway'),
+  preLeagueLogo: ref<HTMLImageElement>('preLeagueLogo'),
+  preVs: ref('preVs'),
+  preInfo: ref('preInfo'),
   halftime: root.querySelector<HTMLElement>('.ht')!,
   htTitle: ref('htTitle'),
   htHomeLogo: root.querySelectorAll<HTMLImageElement>('.ht-logo')[0],
@@ -210,6 +228,30 @@ function renderBug(next: PublicMatch) {
   shownScore = [next.homeScore, next.awayScore]
 
   renderClock()
+}
+
+// ---------- Превью до начала матча ----------
+
+/**
+ * Пока матч только запланирован, табло прячем, а снизу по центру висит плашка «команда — лига — команда».
+ * Судья начал матч — превью уезжает, выезжает табло.
+ */
+function renderPreview(next: PublicMatch): boolean {
+  const scheduled = next.status === 'Scheduled'
+
+  setLogo(el.preHomeLogo, next.homeTeamLogoUrl)
+  setLogo(el.preAwayLogo, next.awayTeamLogoUrl)
+  setText(el.preHome, next.homeTeamName)
+  setText(el.preAway, next.awayTeamName)
+  setLogo(el.preLeagueLogo, next.leagueLogoUrl)
+  el.preVs.hidden = !!next.leagueLogoUrl
+
+  const info = [next.leagueName, competitionLabel(next.stageName, next.divisionName)]
+  if (scheduled) info.push(`Начало ${formatTime(next.scheduledTimeUtc)}`)
+  setText(el.preInfo, info.filter(Boolean).join('  ·  '))
+
+  el.preview.classList.toggle('is-in', scheduled)
+  return scheduled
 }
 
 function periodLabel(current: PublicMatch): string {
@@ -595,7 +637,8 @@ function startOverlay(source: MatchSource) {
       renderBug(page.match)
       renderStats(page.statistics)
       handleEvents(page)
-      el.bug.classList.add('is-visible')
+      const preview = renderPreview(page.match)
+      el.bug.classList.toggle('is-visible', !preview)
       schedulePoll(isLiveMatch(page.match.status) ? POLL_LIVE_MS : POLL_IDLE_MS)
     } catch {
       schedulePoll(RETRY_MS)
@@ -618,7 +661,7 @@ const matchParam = params.get('match')?.trim()
 
 if (params.has('demo')) {
   void import('./demo').then(({ createDemoSource }) =>
-    startOverlay(createDemoSource(params.has('bg'), params.has('break'))),
+    startOverlay(createDemoSource(params.has('bg'), params.has('break'), params.has('pre'))),
   )
 } else if (matchParam) {
   startOverlay(createApiSource(matchParam))
