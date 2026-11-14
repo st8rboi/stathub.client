@@ -3,6 +3,7 @@
  * событие (гол, жёлтая, красная, автогол), на 05:00 выезжает плашка статистики.
  * Удобно выставить положение оверлея в приложении трансляции.
  * ?demo&break — перерыв после первого тайма с окном статистики.
+ * ?demo&pre — матч ещё не начат (превью снизу), через 10 секунд судья начинает его и выезжает табло.
  * ?demo&bg — с подложкой-газоном, для скриншотов. Грузится отдельным чанком только в демо.
  */
 import type { PublicEvent, PublicMatchPage } from '@/api/types'
@@ -32,17 +33,28 @@ const SCRIPT: { type: string; team: typeof HOME; player: string; withPhoto: bool
 
 const STEP_MS = 12_000
 const PERIOD_MINUTES = 25
+const PRE_START_MS = 10_000
 
-export function createDemoSource(withBackground: boolean, halftime: boolean): MatchSource {
+const LEAGUE_LOGO = svg(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#0a1322"/><circle cx="20" cy="20" r="14" fill="none" stroke="#2e7dff" stroke-width="2.5"/><text x="20" y="25" font-family="Arial" font-weight="700" font-size="12" fill="#fff" text-anchor="middle">ЛБ</text></svg>',
+)
+
+export function createDemoSource(withBackground: boolean, halftime: boolean, preMatch = false): MatchSource {
   if (withBackground) {
     document.body.style.background =
       'radial-gradient(ellipse at 50% 40%, transparent 30%, rgb(0 0 0 / 55%) 100%), repeating-linear-gradient(90deg, #2f7a3a 0 8rem, #34853f 8rem 16rem)'
   }
 
   const nowMs = Date.now()
-  // Перерыв: тайм отыгран полностью, пауза идёт уже минуту. Иначе первый тайм на 04:50.
+  // Перерыв: тайм отыгран полностью, пауза идёт уже минуту. Превью: матч начнётся через PRE_START_MS.
+  // Иначе первый тайм на 04:50.
   const pausedMs = halftime ? nowMs - 60_000 : null
-  const periodStartedMs = halftime ? pausedMs! - PERIOD_MINUTES * 60_000 : nowMs - (4 * 60 + 50) * 1000
+  const periodStartedMs = halftime
+    ? pausedMs! - PERIOD_MINUTES * 60_000
+    : preMatch
+      ? nowMs + PRE_START_MS
+      : nowMs - (4 * 60 + 50) * 1000
+  let started = !preMatch
   const events: PublicEvent[] = []
   let listener: (() => void) | null = null
   let step = 0
@@ -66,21 +78,21 @@ export function createDemoSource(withBackground: boolean, halftime: boolean): Ma
         tournamentName: 'Сезон 2026',
         leagueName: 'Лига Банзай',
         leagueSlug: 'demo',
-        leagueLogoUrl: null,
+        leagueLogoUrl: LEAGUE_LOGO,
         homeTeamId: HOME.id,
         homeTeamName: HOME.name,
         homeTeamLogoUrl: HOME.logo,
         awayTeamId: AWAY.id,
         awayTeamName: AWAY.name,
         awayTeamLogoUrl: AWAY.logo,
-        status: halftime ? 'Pause' : 'InProgress',
+        status: !started ? 'Scheduled' : halftime ? 'Pause' : 'InProgress',
         homeScore,
         awayScore,
         currentPeriod: 1,
         periodsCount: 2,
         scheduledTimeUtc: new Date(periodStartedMs).toISOString(),
-        startedAtUtc: new Date(periodStartedMs).toISOString(),
-        periodStartedAtUtc: new Date(periodStartedMs).toISOString(),
+        startedAtUtc: started ? new Date(periodStartedMs).toISOString() : null,
+        periodStartedAtUtc: started ? new Date(periodStartedMs).toISOString() : null,
         pausedAtUtc: pausedMs ? new Date(pausedMs).toISOString() : null,
         periodPausedMilliseconds: 0,
         periodDurationMinutes: PERIOD_MINUTES,
@@ -134,8 +146,16 @@ export function createDemoSource(withBackground: boolean, halftime: boolean): Ma
     subscribe(onChange) {
       listener = onChange
       if (halftime) return
-      setTimeout(fire, 2500)
-      setInterval(fire, STEP_MS)
+      const run = () => {
+        setTimeout(fire, 2500)
+        setInterval(fire, STEP_MS)
+      }
+      if (started) return run()
+      setTimeout(() => {
+        started = true
+        onChange()
+        run()
+      }, PRE_START_MS)
     },
   }
 }
