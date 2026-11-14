@@ -145,12 +145,13 @@ export type PublicEvent = {
   playerPhotoUrl?: string | null
 }
 
-/** Командная статистика матча. shots — все удары, включая удары в створ. */
+/** Командная статистика матча. shots — все удары, включая удары в створ; expectedGoals — сумма xG ударов. */
 export type PublicTeamStats = {
   shots: number
   shotsOnTarget: number
   fouls: number
   corners: number
+  expectedGoals: number
 }
 
 export type PublicMatchStatistics = {

@@ -42,6 +42,8 @@ export interface MatchEvent {
   targetEventId: string | null
   sequenceNumber: number
   isVoided: boolean
+  /** xG удара; у остальных событий — null. */
+  expectedGoals: number | null
 }
 
 export interface StateMatch {
@@ -69,6 +71,8 @@ export interface NewMatchEvent {
   reason: string | null
   clientTimestampUtc: string
   sequenceNumber: number
+  /** xG удара — обязателен у Shot/ShotOnTarget, у остального null. */
+  expectedGoals: number | null
 }
 
 export interface AppendEventsResult {
@@ -83,4 +87,6 @@ export interface TeamStats {
   shotsOnTarget: number
   fouls: number
   corners: number
+  /** Сумма xG ударов команды. */
+  expectedGoals: number
 }

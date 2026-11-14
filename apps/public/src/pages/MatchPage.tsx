@@ -165,7 +165,9 @@ function EventLine({ row }: { row: EventRow }) {
   )
 }
 
+// xG — первой строкой, как на флешскоре.
 const STAT_ROWS: { key: keyof PublicTeamStats; label: string }[] = [
+  { key: 'expectedGoals', label: 'Ожидаемые голы (xG)' },
   { key: 'shots', label: 'Удары' },
   { key: 'shotsOnTarget', label: 'Удары в створ' },
   { key: 'corners', label: 'Угловые' },
@@ -184,13 +186,14 @@ function MatchStatistics({ statistics }: { statistics: PublicMatchStatistics }) 
         const away = statistics.away[key]
         const total = home + away
         const share = (value: number) => (total === 0 ? 0 : (value / total) * 100)
+        const format = (value: number) => (key === 'expectedGoals' ? value.toFixed(2) : String(value))
 
         return (
           <div key={key} className="ms-row">
             <div className="ms-values">
-              <span className={home >= away && total > 0 ? 'ms-value ms-value--lead' : 'ms-value'}>{home}</span>
+              <span className={home >= away && total > 0 ? 'ms-value ms-value--lead' : 'ms-value'}>{format(home)}</span>
               <span className="ms-label">{label}</span>
-              <span className={away >= home && total > 0 ? 'ms-value ms-value--lead' : 'ms-value'}>{away}</span>
+              <span className={away >= home && total > 0 ? 'ms-value ms-value--lead' : 'ms-value'}>{format(away)}</span>
             </div>
             <div className="ms-bars" aria-hidden="true">
               <span className="ms-bar ms-bar--home">

@@ -161,6 +161,27 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* xG под счётом: как строка ожидаемых голов на флешскоре. */
+.stat-board-xg {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-board-xg span:last-child {
+  text-align: right;
+}
+
+.stat-board-xg-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
 .stat-board-note {
   margin: 0;
 }
@@ -217,8 +238,61 @@ button.stat-button--away {
 }
 
 .stat-button-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 16px;
   font-weight: 600;
+}
+
+.stat-icon {
+  flex: none;
+  color: var(--text-soft);
+}
+
+/* ---------- Окно опасности удара (xG) ---------- */
+
+.danger-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Цвет нарастает вместе с опасностью: от серого к красному. */
+button.danger-option {
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 10px 16px;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-left-width: 6px;
+  border-radius: var(--radius-sm);
+  touch-action: manipulation;
+}
+
+button.danger-option:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+button.danger-option--1 { border-left-color: var(--border-strong); }
+button.danger-option--2 { border-left-color: var(--green); }
+button.danger-option--3 { border-left-color: #e0b100; }
+button.danger-option--4 { border-left-color: #ea7a12; }
+button.danger-option--5 { border-left-color: var(--red); }
+
+button.danger-option--1:hover:not(:disabled) { border-left-color: var(--border-strong); }
+button.danger-option--2:hover:not(:disabled) { border-left-color: var(--green); }
+button.danger-option--3:hover:not(:disabled) { border-left-color: #e0b100; }
+button.danger-option--4:hover:not(:disabled) { border-left-color: #ea7a12; }
+button.danger-option--5:hover:not(:disabled) { border-left-color: var(--red); }
+
+.danger-option-xg {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-soft);
 }
 
 .stat-button-count {
