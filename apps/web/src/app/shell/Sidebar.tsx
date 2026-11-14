@@ -70,6 +70,10 @@ export function Sidebar({ id, onClose }: { id: string; onClose: () => void }) {
           <Icon name="flag" />
           Судьи
         </NavLink>
+        <NavLink to="/statisticians" className="sidebar-link">
+          <Icon name="chart" />
+          Статистики
+        </NavLink>
         <NavLink to="/admins" className="sidebar-link">
           <Icon name="idcard" />
           Администраторы

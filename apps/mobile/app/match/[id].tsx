@@ -13,6 +13,7 @@ import {
   mergeEvents,
   periodNumbers,
   projectMatch,
+  refereeProtocol,
 } from '../../src/events/projection'
 import { useMatchEvents, useMatchStateQuery } from '../../src/hooks/useMatchEvents'
 import { useMatchRosters, type RosterPlayer } from '../../src/hooks/useMatchRosters'
@@ -113,6 +114,7 @@ export default function MatchScreen() {
     ? queuedScore
     : { home: match.homeScore + queuedScore.home, away: match.awayScore + queuedScore.away }
   const periods = periodNumbers(mergedEvents)
+  const protocol = refereeProtocol(mergedEvents)
   const pendingIds = new Set(events.pending.map((event) => event.id))
   const eventsLocked = match.status === 'Finished' || match.status === 'Cancelled'
 
@@ -521,10 +523,10 @@ export default function MatchScreen() {
 
         <Card>
           <SectionTitle>Протокол</SectionTitle>
-          {mergedEvents.length === 0 ? (
+          {protocol.length === 0 ? (
             <MutedText>Событий пока нет. Гол и карточка отмечаются кнопками выше.</MutedText>
           ) : (
-            mergedEvents.map((event) => (
+            protocol.map((event) => (
               <View key={event.id} style={styles.eventRow}>
                 <View style={styles.eventText}>
                   <Text style={[styles.eventTitle, event.isVoided && styles.eventVoided]}>

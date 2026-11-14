@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Link, useLocation, useParams } from 'react-router'
-import type { PublicEvent, PublicMatch } from '@/api/types'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router'
+import type { PublicEvent, PublicMatch, PublicMatchStatistics, PublicTeamStats } from '@/api/types'
 import type { MatchLinkState } from '@/components/FixtureRow'
 import { MatchEventIcon } from '@/components/MatchEventIcon'
 import { teamPath } from '@/components/TeamLink'
@@ -165,8 +165,59 @@ function EventLine({ row }: { row: EventRow }) {
   )
 }
 
+const STAT_ROWS: { key: keyof PublicTeamStats; label: string }[] = [
+  { key: 'shots', label: 'Удары' },
+  { key: 'shotsOnTarget', label: 'Удары в створ' },
+  { key: 'corners', label: 'Угловые' },
+  { key: 'fouls', label: 'Фолы' },
+]
+
+/**
+ * Статистика как на флешскоре: значения по краям, название по центру, под ними две полосы,
+ * растущие от центра к краям. Полоса лидера выделена цветом, при равенстве — обе.
+ */
+function MatchStatistics({ statistics }: { statistics: PublicMatchStatistics }) {
+  return (
+    <div className="competition competition--plain ms">
+      {STAT_ROWS.map(({ key, label }) => {
+        const home = statistics.home[key]
+        const away = statistics.away[key]
+        const total = home + away
+        const share = (value: number) => (total === 0 ? 0 : (value / total) * 100)
+
+        return (
+          <div key={key} className="ms-row">
+            <div className="ms-values">
+              <span className={home >= away && total > 0 ? 'ms-value ms-value--lead' : 'ms-value'}>{home}</span>
+              <span className="ms-label">{label}</span>
+              <span className={away >= home && total > 0 ? 'ms-value ms-value--lead' : 'ms-value'}>{away}</span>
+            </div>
+            <div className="ms-bars" aria-hidden="true">
+              <span className="ms-bar ms-bar--home">
+                <span
+                  className={home >= away ? 'ms-fill ms-fill--lead' : 'ms-fill'}
+                  style={{ width: `${share(home)}%` }}
+                />
+              </span>
+              <span className="ms-bar ms-bar--away">
+                <span
+                  className={away >= home ? 'ms-fill ms-fill--lead' : 'ms-fill'}
+                  style={{ width: `${share(away)}%` }}
+                />
+              </span>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+type Tab = 'protocol' | 'stats'
+
 export default function MatchPage() {
   const { matchId = '' } = useParams()
+  const [params, setParams] = useSearchParams()
   const location = useLocation()
   const queryClient = useQueryClient()
   const matchQuery = useMatch(matchId)
@@ -186,8 +237,20 @@ export default function MatchPage() {
 
   if (!matchQuery.data) return <Skeleton rows={5} />
 
-  const { match, events } = matchQuery.data
+  const { match, events, statistics } = matchQuery.data
   const protocol = buildProtocol(match, events)
+
+  // Вкладка — в адресе (replace): ссылку на статистику можно отправить, «назад» не засоряется.
+  const tab: Tab = params.get('tab') === 'stats' && statistics ? 'stats' : 'protocol'
+  const selectTab = (next: Tab) =>
+    setParams(
+      (current) => {
+        if (next === 'stats') current.set('tab', 'stats')
+        else current.delete('tab')
+        return current
+      },
+      { replace: true, state: location.state },
+    )
 
   // С главной (ленты матчей) возвращаемся туда же, а не только в лигу или этап.
   const from = (location.state as MatchLinkState | null)?.from
@@ -245,11 +308,32 @@ export default function MatchPage() {
         {competitionLabel(match.stageName, match.divisionName)}
       </p>
 
-      <div className="section-head">
-        <h2>Протокол</h2>
+      <div className="match-tabs" role="tablist" aria-label="Разделы матча">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'protocol'}
+          className={tab === 'protocol' ? 'match-tab active' : 'match-tab'}
+          onClick={() => selectTab('protocol')}
+        >
+          Протокол
+        </button>
+        {statistics && (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'stats'}
+            className={tab === 'stats' ? 'match-tab active' : 'match-tab'}
+            onClick={() => selectTab('stats')}
+          >
+            Статистика
+          </button>
+        )}
       </div>
 
-      {protocol.length === 0 ? (
+      {tab === 'stats' && statistics ? (
+        <MatchStatistics statistics={statistics} />
+      ) : protocol.length === 0 ? (
         <p className="notice">Событий пока нет.</p>
       ) : (
         <div className="competition competition--plain protocol-card">

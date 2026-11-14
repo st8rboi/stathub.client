@@ -1518,6 +1518,125 @@ td.stats-name {
   color: var(--muted);
 }
 
+/* ---------- Вкладки матча: Протокол / Статистика (как на флешскоре) ---------- */
+
+.match-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.match-tab {
+  position: relative;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.match-tab:hover {
+  color: var(--text);
+}
+
+.match-tab.active {
+  color: var(--text);
+}
+
+/* Активная вкладка подчёркнута акцентом поверх общей линии. */
+.match-tab.active::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  bottom: -1px;
+  left: 8px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--green);
+}
+
+.match-tab:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- Статистика матча (пропорции флешскора) ---------- */
+
+.ms {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+
+.ms-values {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.ms-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+.ms-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ms-value:last-child {
+  text-align: right;
+}
+
+.ms-value--lead {
+  font-weight: 800;
+  color: var(--text);
+}
+
+/* Две полосы растут от центра к краям: хозяева влево, гости вправо. */
+.ms-bars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.ms-bar {
+  display: flex;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-soft);
+}
+
+.ms-bar--home {
+  justify-content: flex-end;
+}
+
+.ms-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--border-strong);
+  transition: width 300ms ease;
+}
+
+.ms-fill--lead {
+  background: var(--green);
+}
+
 /* ---------- Протокол матча (пропорции флешскора) ---------- */
 
 .protocol {

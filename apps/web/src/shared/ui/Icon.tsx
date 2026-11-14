@@ -22,6 +22,7 @@ const icons = {
     </>
   ),
   flag: <path d="M5 21V4M5 4h11l-2 4 2 4H5" />,
+  chart: <path d="M4 20h16M7 16v-5M12 16V6M17 16v-8" />,
   logout: <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4" />,
   more: (
     <>

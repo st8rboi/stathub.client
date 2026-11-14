@@ -6,17 +6,21 @@ import { useLeague, useStage } from '@/hooks'
 
 /**
  * Правый сайдбар: таблица лиги. Выбор лиги — из опубликованного каталога (самые активные лиги
- * сервер отдаёт первыми), турнир — самый новый (текущий сезон). Если в турнире несколько дивизионов, появляется их переключатель;
+ * сервер отдаёт первыми), турнир — по умолчанию самый новый (текущий сезон), при нескольких турнирах появляется
+ * их переключатель. Если в турнире несколько дивизионов, появляется их переключатель;
  * этап — первый в дивизионе, кроме плей-офф.
  */
 export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
   const [slug, setSlug] = useState('')
+  const [tournamentId, setTournamentId] = useState('')
   const [divisionId, setDivisionId] = useState('')
   const activeSlug = slug || leagues[0]?.slug || ''
 
   const leaguePage = useLeague(activeSlug)
-  // API отдаёт турниры от новых к старым: текущий сезон — первый.
-  const tournament = leaguePage.data?.tournaments[0]
+  const tournaments = leaguePage.data?.tournaments ?? []
+  // API отдаёт турниры от новых к старым: по умолчанию — текущий сезон (первый).
+  // Выбранного турнира может не быть в другой лиге — тогда берём первый.
+  const tournament = tournaments.find((item) => item.id === tournamentId) ?? tournaments[0]
   const divisions = tournament?.divisions ?? []
   // Выбранного дивизиона может не быть в другой лиге — тогда берём первый.
   const division = divisions.find((item) => item.id === divisionId) ?? divisions[0]
@@ -44,6 +48,22 @@ export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
           </Link>
         )}
       </div>
+
+      {tournaments.length > 1 && (
+        <div className="side-panel-head" style={{ marginTop: 8 }}>
+          <select
+            value={tournament?.id ?? ''}
+            onChange={(event) => setTournamentId(event.target.value)}
+            aria-label="Турнир"
+          >
+            {tournaments.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {divisions.length > 1 && (
         <div className="side-panel-head" style={{ marginTop: 8 }}>

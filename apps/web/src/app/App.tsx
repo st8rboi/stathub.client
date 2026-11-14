@@ -2,12 +2,16 @@ import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router'
 import LoginPage from '@/features/auth/LoginPage'
 import AdminsPage from '@/features/accounts/pages/AdminsPage'
 import RefereesPage from '@/features/accounts/pages/RefereesPage'
+import StatisticiansPage from '@/features/accounts/pages/StatisticiansPage'
 import LeagueLayout from '@/features/leagues/pages/LeagueLayout'
 import LeagueSettingsPage from '@/features/leagues/pages/LeagueSettingsPage'
 import LeagueTournamentsPage from '@/features/leagues/pages/LeagueTournamentsPage'
 import LeaguesPage from '@/features/leagues/pages/LeaguesPage'
 import StageMatchesPage from '@/features/matches/pages/StageMatchesPage'
 import PlayersPage from '@/features/players/pages/PlayersPage'
+import StatMatchesPage from '@/features/statistician/pages/StatMatchesPage'
+import StatPanelPage from '@/features/statistician/pages/StatPanelPage'
+import { StatisticianShell } from '@/features/statistician/StatisticianShell'
 import TournamentTeamPage from '@/features/rosters/pages/TournamentTeamPage'
 import TeamsPage from '@/features/teams/pages/TeamsPage'
 import StageFeesPage from '@/features/tournaments/pages/StageFeesPage'
@@ -21,7 +25,7 @@ import TournamentSettingsPage from '@/features/tournaments/pages/TournamentSetti
 import TournamentStagesPage from '@/features/tournaments/pages/TournamentStagesPage'
 import { EmptyState } from '@/shared/ui/layout'
 import { Providers } from './providers'
-import { RequireAuth } from './RequireAuth'
+import { RequireAuth, RequireStaff } from './RequireAuth'
 import { AppShell } from './shell/AppShell'
 
 /**
@@ -35,10 +39,25 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
+          {/* Рабочее место статистика: свой каркас без меню админки, только назначенные матчи. */}
+          <Route
+            path="stats"
+            element={
+              <RequireAuth>
+                <StatisticianShell />
+              </RequireAuth>
+            }
+          >
+            <Route index element={<StatMatchesPage />} />
+            <Route path=":matchId" element={<StatPanelPage />} />
+          </Route>
+
           <Route
             element={
               <RequireAuth>
-                <AppShell />
+                <RequireStaff>
+                  <AppShell />
+                </RequireStaff>
               </RequireAuth>
             }
           >
@@ -71,6 +90,7 @@ export default function App() {
             <Route path="teams" element={<TeamsPage />} />
             <Route path="players" element={<PlayersPage />} />
             <Route path="referees" element={<RefereesPage />} />
+            <Route path="statisticians" element={<StatisticiansPage />} />
             <Route path="admins" element={<AdminsPage />} />
             {/* Старый адрес раздела «Судьи». */}
             <Route path="accounts" element={<Navigate to="/referees" replace />} />
