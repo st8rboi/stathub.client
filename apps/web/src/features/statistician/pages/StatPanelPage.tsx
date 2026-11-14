@@ -1,12 +1,23 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { matchStatusLabels, matchStatusTones } from '@/features/matches/labels'
 import { plural } from '@/shared/lib/format'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { Badge, Loading } from '@/shared/ui/layout'
+import { Modal } from '@/shared/ui/Modal'
 import { statisticianApi, statisticianKeys } from '../api'
-import { computeStats, isStatType, statButtons, statLabels } from '../statistics'
-import type { AssignedMatch } from '../types'
+import { StatIcon } from '../StatIcon'
+import {
+  computeStats,
+  dangerLevels,
+  formatXg,
+  isShotType,
+  isStatType,
+  statButtons,
+  statLabels,
+} from '../statistics'
+import type { AssignedMatch, StatType } from '../types'
 import { useStatQueue } from '../useStatQueue'
 
 /** Ключ по матчу: при переходе между матчами очередь и счётчики создаются заново. */
@@ -34,6 +45,9 @@ function StatPanel({ matchId }: { matchId: string }) {
 
   const queue = useStatQueue(matchId, stateQuery.data)
 
+  // Удар ждёт выбора опасности: без xG сервер его не примет.
+  const [shot, setShot] = useState<{ type: StatType; teamId: string } | null>(null)
+
   if (!stateQuery.data) {
     return (
       <>
@@ -53,7 +67,15 @@ function StatPanel({ matchId }: { matchId: string }) {
 
   const lastAction = queue.lastAction
   const lastLabel =
-    lastAction && isStatType(lastAction.type) ? `${statLabels[lastAction.type]} · ${teamName(lastAction.teamId)}` : null
+    lastAction && isStatType(lastAction.type)
+      ? [
+          statLabels[lastAction.type],
+          lastAction.expectedGoals !== null ? `xG ${formatXg(lastAction.expectedGoals)}` : null,
+          teamName(lastAction.teamId),
+        ]
+          .filter(Boolean)
+          .join(' · ')
+      : null
 
   const syncText = queue.problem
     ? queue.problem
@@ -96,6 +118,11 @@ function StatPanel({ matchId }: { matchId: string }) {
           </span>
           <span className="stat-board-team stat-board-team--away">{awayName}</span>
         </div>
+        <div className="stat-board-xg" aria-label="Ожидаемые голы">
+          <span>{formatXg(stats.home.expectedGoals)}</span>
+          <span className="stat-board-xg-label">xG</span>
+          <span>{formatXg(stats.away.expectedGoals)}</span>
+        </div>
         {match.status === 'Scheduled' && (
           <p className="hint stat-board-note">Судья ещё не начал матч. Отмечать можно — нажатия войдут в статистику.</p>
         )}
@@ -120,9 +147,16 @@ function StatPanel({ matchId }: { matchId: string }) {
                   className={`stat-button stat-button--${side}`}
                   disabled={locked}
                   aria-label={`${button.label} — ${side === 'home' ? homeName : awayName}: ${count}`}
-                  onClick={() => queue.record(button.type, teamId)}
+                  onClick={() =>
+                    isShotType(button.type)
+                      ? setShot({ type: button.type, teamId })
+                      : queue.record(button.type, teamId)
+                  }
                 >
-                  <span className="stat-button-label">{button.label}</span>
+                  <span className="stat-button-label">
+                    <StatIcon type={button.type} />
+                    {button.label}
+                  </span>
                   <span className="stat-button-count">{count}</span>
                 </button>
               )
@@ -142,6 +176,32 @@ function StatPanel({ matchId }: { matchId: string }) {
         {syncText}
       </p>
       <p className="hint">«Удар» — все удары команды, включая удары в створ: «В створ» прибавляет к обоим счётчикам.</p>
+
+      <Modal
+        open={shot !== null}
+        onClose={() => setShot(null)}
+        title={shot ? `${statLabels[shot.type]} · ${teamName(shot.teamId)}` : ''}
+        size="sm"
+      >
+        <p className="hint">Насколько опасным был момент?</p>
+        <div className="danger-list">
+          {dangerLevels.map((level, index) => (
+            <button
+              key={level.xg}
+              type="button"
+              className={`danger-option danger-option--${index + 1}`}
+              onClick={() => {
+                if (!shot) return
+                queue.record(shot.type, shot.teamId, level.xg)
+                setShot(null)
+              }}
+            >
+              <span>{level.label}</span>
+              <span className="danger-option-xg">{formatXg(level.xg)}</span>
+            </button>
+          ))}
+        </div>
+      </Modal>
     </>
   )
 }

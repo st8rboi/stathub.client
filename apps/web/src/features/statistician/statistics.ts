@@ -1,6 +1,20 @@
 import type { MatchEvent, NewMatchEvent, StatType, StateMatch, TeamStats } from './types'
 
-export const statButtons: { type: StatType; label: string; key: keyof TeamStats }[] = [
+/** Шкала опасности удара: статистик выбирает уровень, в протокол уходит его xG. */
+export const dangerLevels: { label: string; xg: number }[] = [
+  { label: 'Совсем не опасно', xg: 0.05 },
+  { label: 'Не опасно', xg: 0.15 },
+  { label: 'Средне', xg: 0.25 },
+  { label: 'Опасно', xg: 0.45 },
+  { label: 'Очень опасно', xg: 0.65 },
+]
+
+export const isShotType = (type: string): boolean => type === 'Shot' || type === 'ShotOnTarget'
+
+/** xG с двумя знаками: «0.60», как принято на флешскоре. */
+export const formatXg = (value: number): string => value.toFixed(2)
+
+export const statButtons: { type: StatType; label: string; key: Exclude<keyof TeamStats, 'expectedGoals'> }[] = [
   { type: 'Shot', label: 'Удар', key: 'shots' },
   { type: 'ShotOnTarget', label: 'В створ', key: 'shotsOnTarget' },
   { type: 'Foul', label: 'Фол', key: 'fouls' },
@@ -17,7 +31,7 @@ export const statLabels: Record<StatType, string> = {
 export const isStatType = (type: string): type is StatType =>
   type === 'Shot' || type === 'ShotOnTarget' || type === 'Foul' || type === 'Corner'
 
-type CountedEvent = Pick<MatchEvent, 'id' | 'type' | 'teamId' | 'targetEventId'>
+type CountedEvent = Pick<MatchEvent, 'id' | 'type' | 'teamId' | 'targetEventId' | 'expectedGoals'>
 
 /** События сервера + очередь браузера, без повторов: принятое сервером событие считается один раз. */
 export function mergeEvents(serverEvents: MatchEvent[], pending: NewMatchEvent[]): CountedEvent[] {
@@ -33,11 +47,12 @@ export function voidedIds(events: CountedEvent[]): Set<string> {
   )
 }
 
-const empty = (): TeamStats => ({ shots: 0, shotsOnTarget: 0, fouls: 0, corners: 0 })
+const empty = (): TeamStats => ({ shots: 0, shotsOnTarget: 0, fouls: 0, corners: 0, expectedGoals: 0 })
 
 /**
  * Счётчики по командам — те же правила, что на сервере (`MatchStatistics.Compute`): отменённые
- * не считаются, удар в створ входит и в «Удары». Считаем на клиенте, чтобы нажатие было видно сразу.
+ * не считаются, удар в створ входит и в «Удары», xG ударов суммируется. Считаем на клиенте,
+ * чтобы нажатие было видно сразу.
  */
 export function computeStats(match: StateMatch, events: CountedEvent[]): { home: TeamStats; away: TeamStats } {
   const voided = voidedIds(events)
@@ -57,7 +72,12 @@ export function computeStats(match: StateMatch, events: CountedEvent[]): { home:
     }
     if (event.type === 'Foul') side.fouls += 1
     if (event.type === 'Corner') side.corners += 1
+    if (isShotType(event.type)) side.expectedGoals += event.expectedGoals ?? 0
   }
+
+  // Сумма дробей в JS копит погрешность (0.1 + 0.2): округляем до сотых, как на сервере.
+  home.expectedGoals = Math.round(home.expectedGoals * 100) / 100
+  away.expectedGoals = Math.round(away.expectedGoals * 100) / 100
 
   return { home, away }
 }

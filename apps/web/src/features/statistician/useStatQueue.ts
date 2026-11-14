@@ -144,7 +144,9 @@ export function useStatQueue(matchId: string, state: MatchState | undefined) {
     }
   }, [flush])
 
-  const enqueue = (input: Pick<NewMatchEvent, 'type' | 'teamId' | 'targetEventId' | 'reason'>): NewMatchEvent => {
+  const enqueue = (
+    input: Pick<NewMatchEvent, 'type' | 'teamId' | 'targetEventId' | 'reason' | 'expectedGoals'>,
+  ): NewMatchEvent => {
     const serverMax = state?.events.reduce((max, event) => Math.max(max, event.sequenceNumber), 0) ?? 0
     const localMax = pendingRef.current.reduce((max, event) => Math.max(max, event.sequenceNumber), 0)
 
@@ -159,8 +161,9 @@ export function useStatQueue(matchId: string, state: MatchState | undefined) {
     return event
   }
 
-  const record = (type: StatType, teamId: string) => {
-    const event = enqueue({ type, teamId, targetEventId: null, reason: null })
+  /** Отметить событие; у удара — с xG выбранной опасности. */
+  const record = (type: StatType, teamId: string, expectedGoals: number | null = null) => {
+    const event = enqueue({ type, teamId, targetEventId: null, reason: null, expectedGoals })
     commitMine([...mineRef.current, event.id])
     void flush()
   }
@@ -177,7 +180,13 @@ export function useStatQueue(matchId: string, state: MatchState | undefined) {
 
   const undo = () => {
     if (!lastAction) return
-    enqueue({ type: 'EventVoided', teamId: null, targetEventId: lastAction.id, reason: 'отменено статистиком' })
+    enqueue({
+      type: 'EventVoided',
+      teamId: null,
+      targetEventId: lastAction.id,
+      reason: 'отменено статистиком',
+      expectedGoals: null,
+    })
     void flush()
   }
 
