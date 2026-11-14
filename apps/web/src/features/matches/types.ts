@@ -2,6 +2,8 @@ export type MatchStatus = 'Scheduled' | 'InProgress' | 'Pause' | 'Finished' | 'C
 
 export interface Match {
   id: string
+  /** Короткий сквозной номер (1, 2, 3…) — для ссылки на оверлей трансляции. */
+  number: number
   stageId: string
   homeTeamId: string
   awayTeamId: string

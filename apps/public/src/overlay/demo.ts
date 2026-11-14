@@ -1,6 +1,8 @@
 /**
- * Демо оверлея без сервера: /overlay.html?demo — идёт матч, каждые 12 секунд новое событие
- * (гол, жёлтая, красная, автогол). Удобно выставить положение оверлея в приложении трансляции.
+ * Демо оверлея без сервера: /overlay.html?demo — идёт первый тайм с 04:50, каждые 12 секунд новое
+ * событие (гол, жёлтая, красная, автогол), на 05:00 выезжает плашка статистики.
+ * Удобно выставить положение оверлея в приложении трансляции.
+ * ?demo&break — перерыв после первого тайма с окном статистики.
  * ?demo&bg — с подложкой-газоном, для скриншотов. Грузится отдельным чанком только в демо.
  */
 import type { PublicEvent, PublicMatchPage } from '@/api/types'
@@ -31,15 +33,16 @@ const SCRIPT: { type: string; team: typeof HOME; player: string; withPhoto: bool
 const STEP_MS = 12_000
 const PERIOD_MINUTES = 25
 
-export function createDemoSource(withBackground: boolean): MatchSource {
+export function createDemoSource(withBackground: boolean, halftime: boolean): MatchSource {
   if (withBackground) {
     document.body.style.background =
       'radial-gradient(ellipse at 50% 40%, transparent 30%, rgb(0 0 0 / 55%) 100%), repeating-linear-gradient(90deg, #2f7a3a 0 8rem, #34853f 8rem 16rem)'
   }
 
-  const startedMs = Date.now()
-  // Второй тайм идёт 13-ю минуту: часы покажут 37:xx.
-  const periodStartedMs = startedMs - (12 * 60 + 10) * 1000
+  const nowMs = Date.now()
+  // Перерыв: тайм отыгран полностью, пауза идёт уже минуту. Иначе первый тайм на 04:50.
+  const pausedMs = halftime ? nowMs - 60_000 : null
+  const periodStartedMs = halftime ? pausedMs! - PERIOD_MINUTES * 60_000 : nowMs - (4 * 60 + 50) * 1000
   const events: PublicEvent[] = []
   let listener: (() => void) | null = null
   let step = 0
@@ -70,20 +73,37 @@ export function createDemoSource(withBackground: boolean): MatchSource {
         awayTeamId: AWAY.id,
         awayTeamName: AWAY.name,
         awayTeamLogoUrl: AWAY.logo,
-        status: 'InProgress',
+        status: halftime ? 'Pause' : 'InProgress',
         homeScore,
         awayScore,
-        currentPeriod: 2,
+        currentPeriod: 1,
         periodsCount: 2,
-        scheduledTimeUtc: new Date(startedMs).toISOString(),
-        startedAtUtc: new Date(startedMs).toISOString(),
+        scheduledTimeUtc: new Date(periodStartedMs).toISOString(),
+        startedAtUtc: new Date(periodStartedMs).toISOString(),
         periodStartedAtUtc: new Date(periodStartedMs).toISOString(),
-        pausedAtUtc: null,
+        pausedAtUtc: pausedMs ? new Date(pausedMs).toISOString() : null,
         periodPausedMilliseconds: 0,
         periodDurationMinutes: PERIOD_MINUTES,
         divisionName: null,
       },
       events: [...events],
+      // Статистика растёт с каждым событием демо.
+      statistics: {
+        home: {
+          shots: 4 + step * 2,
+          shotsOnTarget: 2 + step,
+          fouls: 3 + step,
+          corners: 2 + (step >> 1),
+          expectedGoals: 0.4 + step * 0.27,
+        },
+        away: {
+          shots: 3 + step,
+          shotsOnTarget: 1 + (step >> 1),
+          fouls: 5 + step,
+          corners: 1 + (step >> 1),
+          expectedGoals: 0.2 + step * 0.11,
+        },
+      },
     }
   }
 
@@ -100,16 +120,20 @@ export function createDemoSource(withBackground: boolean): MatchSource {
       occurredAtUtc: new Date().toISOString(),
       isVoided: false,
       reason: null,
-      period: 2,
-      elapsedSeconds: Math.floor((Date.now() - periodStartedMs) / 1000),
+      period: 1,
+      elapsedSeconds: Math.floor(((pausedMs ?? Date.now()) - periodStartedMs) / 1000),
     })
     listener?.()
   }
+
+  // В перерыве события не идут: тайм уже сыгран, счёт и статистика накоплены заранее.
+  if (halftime) for (let i = 0; i < 5; i += 1) fire()
 
   return {
     load: async () => page(),
     subscribe(onChange) {
       listener = onChange
+      if (halftime) return
       setTimeout(fire, 2500)
       setInterval(fire, STEP_MS)
     },
