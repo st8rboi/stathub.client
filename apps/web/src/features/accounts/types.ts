@@ -1,4 +1,4 @@
-export type AccountRole = 'Organizer' | 'Admin' | 'Referee' | 'Coach'
+export type AccountRole = 'Organizer' | 'Admin' | 'Referee' | 'Coach' | 'Statistician'
 
 export type AccountUser = {
   id: string

@@ -22,7 +22,7 @@ export default function RefereesPage() {
   // Сколько матчей назначено каждому судье.
   const matchCounts = new Map<string, number>()
   for (const assignment of assignments.data ?? []) {
-    if (assignment.scopeType === 'Match') {
+    if (assignment.scopeType === 'Match' && assignment.role === 'Referee') {
       matchCounts.set(assignment.userId, (matchCounts.get(assignment.userId) ?? 0) + 1)
     }
   }

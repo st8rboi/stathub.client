@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { RefereeAssign } from '@/features/accounts/components/RefereeAssign'
+import { RefereeAssign, StatisticianAssign } from '@/features/accounts/components/RefereeAssign'
 import { useAssignments } from '@/features/accounts/hooks'
 import { useTournamentTeams } from '@/features/rosters/hooks'
 import { useTeamsByIds } from '@/features/teams/hooks'
@@ -69,7 +69,9 @@ export default function StageMatchesPage() {
 
   // Без доступа к назначениям (ошибка) не считаем «нет судьи» проблемой — мы этого просто не знаем.
   const refereeMatchIds = assignments.data
-    ? new Set(assignments.data.filter((a) => a.scopeType === 'Match').map((a) => a.scopeId))
+    ? new Set(
+        assignments.data.filter((a) => a.scopeType === 'Match' && a.role === 'Referee').map((a) => a.scopeId),
+      )
     : null
   const needsReferee = (match: Match) =>
     match.status === 'Scheduled' && refereeMatchIds !== null && !refereeMatchIds.has(match.id)
@@ -350,6 +352,7 @@ function MatchRow({
 
       <span className="match-referee" title={needsReferee ? 'Судья не назначен' : undefined}>
         <RefereeAssign matchId={match.id} />
+        <StatisticianAssign matchId={match.id} />
       </span>
 
       <span className="match-actions">

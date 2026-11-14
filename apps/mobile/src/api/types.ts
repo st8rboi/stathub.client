@@ -67,6 +67,11 @@ export type MatchEventType =
   | 'MatchResumed'
   | 'PeriodStarted'
   | 'MatchFinished'
+  // Командная статистика: отмечает статистик в админке, судье в протоколе не показывается.
+  | 'Shot'
+  | 'ShotOnTarget'
+  | 'Foul'
+  | 'Corner'
 
 export type MatchEvent = {
   id: string

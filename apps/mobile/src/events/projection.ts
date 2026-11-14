@@ -12,6 +12,10 @@ export const eventTypeLabels: Record<MatchEventType, string> = {
   MatchResumed: 'Игра продолжена',
   PeriodStarted: 'Начало периода',
   MatchFinished: 'Финальный свисток',
+  Shot: 'Удар',
+  ShotOnTarget: 'Удар в створ',
+  Foul: 'Фол',
+  Corner: 'Угловой',
 }
 
 export const isLifecycleEvent = (type: MatchEventType): boolean =>
@@ -20,6 +24,24 @@ export const isLifecycleEvent = (type: MatchEventType): boolean =>
   type === 'MatchResumed' ||
   type === 'PeriodStarted' ||
   type === 'MatchFinished'
+
+/** Удары, фолы и угловые ведёт статистик: на счёт и статус не влияют. */
+export const isStatisticEvent = (type: MatchEventType): boolean =>
+  type === 'Shot' || type === 'ShotOnTarget' || type === 'Foul' || type === 'Corner'
+
+/**
+ * Протокол для судьи: без событий статистика и без их отмен — это не его записи,
+ * и отменить их судья всё равно не должен.
+ */
+export function refereeProtocol(events: MatchEvent[]): MatchEvent[] {
+  const statisticIds = new Set(events.filter((event) => isStatisticEvent(event.type)).map((event) => event.id))
+
+  return events.filter(
+    (event) =>
+      !statisticIds.has(event.id) &&
+      !(event.type === 'EventVoided' && event.targetEventId !== null && statisticIds.has(event.targetEventId)),
+  )
+}
 
 /**
  * Статус матча с учётом ещё не отправленных событий: судья видит результат своего действия сразу.

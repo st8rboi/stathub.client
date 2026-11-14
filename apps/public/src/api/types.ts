@@ -145,9 +145,24 @@ export type PublicEvent = {
   playerPhotoUrl?: string | null
 }
 
+/** Командная статистика матча. shots — все удары, включая удары в створ. */
+export type PublicTeamStats = {
+  shots: number
+  shotsOnTarget: number
+  fouls: number
+  corners: number
+}
+
+export type PublicMatchStatistics = {
+  home: PublicTeamStats
+  away: PublicTeamStats
+}
+
 export type PublicMatchPage = {
   match: PublicMatch
   events: PublicEvent[]
+  /** null — статистику по матчу не вели; вкладку «Статистика» тогда не показываем. */
+  statistics?: PublicMatchStatistics | null
 }
 
 export type PublicStagePage = {

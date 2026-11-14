@@ -1,0 +1,280 @@
+/* ---------- Рабочее место статистика (/stats) ----------
+ * Отдельный каркас без меню админки: узкая колонка, крупные кнопки под палец —
+ * статистик работает с телефона или планшета у кромки поля.
+ */
+
+.stat-shell {
+  min-height: 100dvh;
+  background: var(--bg-soft);
+}
+
+.stat-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: calc(var(--topbar-height) + var(--safe-top));
+  padding: var(--safe-top) calc(var(--gutter) + var(--safe-right)) 0 calc(var(--gutter) + var(--safe-left));
+  color: var(--navy-text);
+  background: var(--navy);
+}
+
+.stat-topbar-user {
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--navy-muted);
+}
+
+.stat-topbar button.icon-button:hover:not(:disabled) {
+  background: var(--navy-raised);
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px calc(16px + var(--safe-right)) calc(40px + var(--safe-bottom)) calc(16px + var(--safe-left));
+}
+
+.stat-title {
+  margin: 0;
+  font-size: 22px;
+}
+
+.stat-back {
+  align-self: flex-start;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ---------- Список матчей ---------- */
+
+.stat-match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stat-match-card {
+  display: grid;
+  grid-template-areas:
+    'teams score'
+    'meta meta';
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 14px 16px;
+  color: var(--text);
+  text-decoration: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.stat-match-card:hover {
+  text-decoration: none;
+  border-color: var(--border-strong);
+}
+
+.stat-match-teams {
+  grid-area: teams;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.stat-match-teams span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stat-match-score {
+  grid-area: score;
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-match-meta {
+  grid-area: meta;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- Табло матча ---------- */
+
+.stat-board {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.stat-board-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stat-board-teams {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.stat-board-team {
+  font-size: 16px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.stat-board-team--away {
+  text-align: right;
+}
+
+.stat-board-score {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-board-note {
+  margin: 0;
+}
+
+/* ---------- Кнопки-счётчики: хозяева слева, гости справа ---------- */
+
+.stat-pad {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-pad-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+button.stat-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 76px;
+  padding: 12px 18px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  touch-action: manipulation;
+  user-select: none;
+  transition: transform 80ms ease;
+}
+
+button.stat-button:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+button.stat-button:active:not(:disabled) {
+  transform: scale(0.97);
+  background: var(--green-soft);
+  border-color: var(--green);
+}
+
+/* Полоска цвета стороны: глазом не перепутать колонки. */
+button.stat-button--home {
+  border-left: 4px solid var(--green);
+}
+
+button.stat-button--away {
+  border-left: 4px solid var(--blue);
+}
+
+.stat-button-label {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.stat-button-count {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.stat-sync {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.stat-sync--problem {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+.stat-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--amber);
+  background: var(--amber-soft);
+  border: 1px solid var(--amber-line);
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 720px) {
+  button.stat-button {
+    min-height: 68px;
+    padding: 10px 14px;
+  }
+
+  .stat-button-label {
+    font-size: 15px;
+  }
+
+  .stat-button-count {
+    font-size: 26px;
+  }
+
+  .stat-board-score {
+    font-size: 28px;
+  }
+}

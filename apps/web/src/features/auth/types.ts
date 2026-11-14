@@ -2,7 +2,7 @@ export interface Membership {
   tenantId: string
   tenantName: string
   tenantSlug: string
-  role: 'Organizer' | 'Admin' | 'Referee' | 'Coach'
+  role: 'Organizer' | 'Admin' | 'Referee' | 'Coach' | 'Statistician'
 }
 
 export interface UserProfile {

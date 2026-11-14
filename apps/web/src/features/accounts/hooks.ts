@@ -25,7 +25,8 @@ const useAccountMutation = <TVariables,>(mutationFn: (variables: TVariables) => 
 export const useCreateAccount = () =>
   useAccountMutation((body: CreateAccountBody) => accountsApi.createUser(body))
 
-export const useAssignReferee = () =>
+/** Назначение на матч: судья или статистик (роль — в теле запроса). */
+export const useAssignToMatch = () =>
   useAccountMutation((body: AssignBody) => accountsApi.assign(body))
 
 export const useRevokeAssignment = () =>

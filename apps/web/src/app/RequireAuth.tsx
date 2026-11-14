@@ -17,3 +17,15 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 
   return <>{children}</>
 }
+
+/**
+ * Админка — для организатора и сотрудников. Статистику в ней делать нечего (и API ему закрыт),
+ * поэтому после входа он попадает на своё рабочее место со списком назначенных матчей.
+ */
+export function RequireStaff({ children }: { children: ReactNode }) {
+  const { user } = useAuth()
+
+  if (user?.role === 'Statistician') return <Navigate to="/stats" replace />
+
+  return <>{children}</>
+}
