@@ -12,6 +12,27 @@ export interface TournamentTeam {
   createdAtUtc: string
 }
 
+/** Заявка команды в другом турнире, из которой можно скопировать состав. */
+export interface RosterSource {
+  tournamentTeamId: string
+  tournamentId: string
+  tournamentName: string
+  divisionId: string
+  divisionName: string
+  leagueName: string
+  status: TournamentTeamStatus
+  /** Сколько игроков будет скопировано. */
+  activePlayers: number
+  createdAtUtc: string
+}
+
+export interface AddTournamentTeamResult {
+  id: string
+  copiedPlayers: number
+  /** Игроки источника, уже заявленные за другую команду этого турнира. */
+  skippedPlayerIds: string[]
+}
+
 export interface PlayerRegistration {
   id: string
   playerId: string

@@ -1,5 +1,5 @@
 import { request } from '@/shared/api/client'
-import type { TournamentTeam, TournamentTeamDetails } from './types'
+import type { AddTournamentTeamResult, RosterSource, TournamentTeam, TournamentTeamDetails } from './types'
 
 /**
  * Заявки принадлежат дивизиону: команда заявляется один раз и играет во всех его этапах.
@@ -9,8 +9,11 @@ export const rostersApi = {
   listTeams: (stageId: string) => request<TournamentTeam[]>('GET', `/stages/${stageId}/teams`),
   getTeam: (stageId: string, tournamentTeamId: string) =>
     request<TournamentTeamDetails>('GET', `/stages/${stageId}/teams/${tournamentTeamId}`),
-  addTeam: (divisionId: string, teamId: string) =>
-    request<{ id: string }>('POST', `/divisions/${divisionId}/teams`, { teamId }),
+  /** С `copyFromTournamentTeamId` команда заявляется сразу с составом из другой своей заявки. */
+  addTeam: (divisionId: string, teamId: string, copyFromTournamentTeamId: string | null = null) =>
+    request<AddTournamentTeamResult>('POST', `/divisions/${divisionId}/teams`, { teamId, copyFromTournamentTeamId }),
+  listRosterSources: (divisionId: string, teamId: string) =>
+    request<RosterSource[]>('GET', `/divisions/${divisionId}/roster-sources?teamId=${teamId}`),
   registerPlayer: (divisionId: string, tournamentTeamId: string, playerId: string) =>
     request<{ id: string }>('POST', `/divisions/${divisionId}/teams/${tournamentTeamId}/players`, { playerId }),
   releasePlayer: (divisionId: string, tournamentTeamId: string, registrationId: string) =>

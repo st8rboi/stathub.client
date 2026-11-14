@@ -6,7 +6,16 @@ export const rosterKeys = {
   teams: (stageId: string) => [...rosterKeys.all, 'teams', stageId] as const,
   team: (stageId: string, tournamentTeamId: string) =>
     [...rosterKeys.all, 'team', stageId, tournamentTeamId] as const,
+  sources: (divisionId: string, teamId: string) => [...rosterKeys.all, 'sources', divisionId, teamId] as const,
 }
+
+/** Прошлые заявки команды, из которых можно скопировать состав, новые первыми. */
+export const rosterSourcesQuery = (divisionId: string, teamId: string) => ({
+  queryKey: rosterKeys.sources(divisionId, teamId),
+  queryFn: () => rostersApi.listRosterSources(divisionId, teamId),
+})
+
+export const useRosterSources = (divisionId: string, teamId: string) => useQuery(rosterSourcesQuery(divisionId, teamId))
 
 /**
  * Команды дивизиона, в который входит этап. Заявка одна на дивизион, поэтому у всех его этапов
@@ -39,7 +48,7 @@ export const useTournamentTeamsForStages = (stageIds: string[]) =>
  * Любое изменение заявок инвалидирует и список участников, и карточку команды.
  * Изменения идут по дивизиону заявки (divisionId), чтение — по этапу.
  */
-function useRosterMutation<TVariables>(mutationFn: (variables: TVariables) => Promise<unknown>) {
+function useRosterMutation<TVariables, TResult = unknown>(mutationFn: (variables: TVariables) => Promise<TResult>) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn,
@@ -48,7 +57,9 @@ function useRosterMutation<TVariables>(mutationFn: (variables: TVariables) => Pr
 }
 
 export const useAddTournamentTeam = (divisionId: string) =>
-  useRosterMutation((teamId: string) => rostersApi.addTeam(divisionId, teamId))
+  useRosterMutation((input: { teamId: string; copyFrom: string | null }) =>
+    rostersApi.addTeam(divisionId, input.teamId, input.copyFrom),
+  )
 
 export const useWithdrawTournamentTeam = (divisionId: string, tournamentTeamId: string) =>
   useRosterMutation(() => rostersApi.withdrawTeam(divisionId, tournamentTeamId))
