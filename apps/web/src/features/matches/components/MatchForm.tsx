@@ -106,7 +106,7 @@ export function MatchForm({
         />
       </label>
 
-      <p className="hint">Регламент (периоды, доп. время, пенальти) сервер берёт из правил этапа при создании матча.</p>
+      <p className="hint">Регламент (таймы, доп. время, пенальти) сервер берёт из правил этапа при создании матча.</p>
 
       {formError && <p className="error">{formError}</p>}
       <ErrorText error={error} />

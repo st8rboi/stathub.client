@@ -1817,6 +1817,28 @@ td.stats-name {
   background: var(--green);
 }
 
+/* Незабитый пенальти: та же иконка пенальти («П»), но бледная и перечёркнутая красной линией. */
+.pe-ball--missed {
+  color: var(--muted);
+}
+
+.pe-goal-icon--missed .pe-goal-mark {
+  background: var(--muted);
+}
+
+.pe-goal-icon--missed::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--red);
+  box-shadow: 0 0 0 1px var(--bg);
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
 .pe-card {
   width: 9px;
   height: 12px;

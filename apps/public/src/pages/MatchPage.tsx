@@ -39,8 +39,8 @@ type EventRow = {
 /** Служебные события не показываем строками: начало периодов — заголовки, отмена — зачёркивание. */
 const HIDDEN_EVENTS = new Set(['EventVoided', 'MatchFinished', 'MatchPaused', 'MatchResumed'])
 
-function periodTitle(period: number, periodsCount: number): string {
-  return periodsCount === 2 && period <= 2 ? `${period}-й тайм` : `${period}-й период`
+function periodTitle(period: number): string {
+  return `${period}-й тайм`
 }
 
 function sideOf(event: PublicEvent, match: PublicMatch): Side {
@@ -143,7 +143,9 @@ function EventLine({ row }: { row: EventRow }) {
   // Как на флешскоре: «(пенальти)», «(автогол)»; у бонусного мяча — ещё и ассистент.
   const notes: ReactNode[] = []
   if (event.type === 'OwnGoal') notes.push('автогол')
-  if (kindLabel) notes.push(kindLabel.toLowerCase())
+  // Бонусный мяч в тексте не подписываем — его видно по метке «×2» на мяче.
+  if (event.type === 'Goal' && event.goalKind === 'Penalty') notes.push('пенальти')
+  if (event.type === 'PenaltyMissed') notes.push('незабитый пенальти')
   if ((event.type === 'Goal' || event.type === 'Substitution') && related) {
     notes.push(
       <PlayerLink key="related" playerId={event.relatedPlayerId}>
@@ -322,7 +324,7 @@ export default function MatchPage() {
           </div>
           {live && match.periodStartedAtUtc && (
             <div className="matchboard-clock">
-              {match.currentPeriod}-й период · {formatElapsed(match, now)}
+              {match.currentPeriod}-й тайм · {formatElapsed(match, now)}
             </div>
           )}
         </div>
@@ -375,7 +377,7 @@ export default function MatchPage() {
             {protocol.map((row) =>
               row.kind === 'period' ? (
                 <div key={row.key} className="protocol-period">
-                  <span>{periodTitle(row.period, match.periodsCount)}</span>
+                  <span>{periodTitle(row.period)}</span>
                   <span className="protocol-period-score">
                     {row.home} - {row.away}
                   </span>

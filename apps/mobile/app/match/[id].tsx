@@ -57,7 +57,7 @@ type Sheet =
 function clockHint(status: string): string {
   switch (status) {
     case 'InProgress':
-      return 'Игровое время периода'
+      return 'Игровое время тайма'
     case 'Pause':
       return 'Пауза — время остановлено'
     case 'Finished':
@@ -148,7 +148,7 @@ export default function MatchScreen() {
     if (event.type === 'EventVoided')
       return event.reason ? `Отмена: ${event.reason}` : 'Отмена события'
 
-    if (event.type === 'PeriodStarted') return `Начало периода ${periods.get(event.id) ?? ''}`.trim()
+    if (event.type === 'PeriodStarted') return `Начало тайма ${periods.get(event.id) ?? ''}`.trim()
     if (isLifecycleEvent(event.type)) return eventTypeLabels[event.type]
 
     const team =
@@ -401,8 +401,8 @@ export default function MatchScreen() {
 
       case 'next-period':
         return {
-          title: 'Следующий период',
-          message: `Матч перейдёт на период ${match.currentPeriod + 1} из ${match.periodsCount}.`,
+          title: 'Следующий тайм',
+          message: `Матч перейдёт на тайм ${match.currentPeriod + 1} из ${match.periodsCount}.`,
           options: [
             {
               label: 'Продолжить',
@@ -515,7 +515,7 @@ export default function MatchScreen() {
                 />
                 {canStartNextPeriod(match) ? (
                   <Button
-                    title={`Период ${match.currentPeriod + 1}`}
+                    title={`Тайм ${match.currentPeriod + 1}`}
                     variant="secondary"
                     compact
                     style={styles.controlButton}
@@ -542,7 +542,7 @@ export default function MatchScreen() {
                 />
                 {canStartNextPeriod(match) ? (
                   <Button
-                    title={`Период ${match.currentPeriod + 1}`}
+                    title={`Тайм ${match.currentPeriod + 1}`}
                     variant="secondary"
                     compact
                     style={styles.controlButton}

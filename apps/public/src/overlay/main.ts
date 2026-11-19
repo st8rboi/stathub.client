@@ -269,7 +269,7 @@ function renderPreview(next: PublicMatch): boolean {
 
 function periodLabel(current: PublicMatch): string {
   const period = Math.max(1, current.currentPeriod)
-  return current.periodsCount === 2 ? `${period}Т` : `${period} пер`
+  return `${period}Т`
 }
 
 /** Часы матча в секундах: время непрерывно, второй тайм 25-минутных периодов идёт с 25:00. */
@@ -374,12 +374,12 @@ function breakAfterPeriod(current: PublicMatch): number | null {
 }
 
 /**
- * В перерыве после первого периода итог матча и есть статистика тайма.
- * Сервер отдаёт только итог, поэтому после следующих периодов честно пишем «матча».
+ * В перерыве после первого тайма итог матча и есть статистика тайма.
+ * Сервер отдаёт только итог, поэтому после следующих таймов честно пишем «матча».
  */
-function halftimeTitle(period: number, periodsCount: number): string {
+function halftimeTitle(period: number): string {
   if (period !== 1) return 'Статистика матча'
-  return periodsCount === 2 ? 'Статистика 1-го тайма' : 'Статистика 1-го периода'
+  return 'Статистика 1-го тайма'
 }
 
 function renderStatsSchedule() {
@@ -388,7 +388,7 @@ function renderStatsSchedule() {
   const period = statistics ? breakAfterPeriod(match) : null
   if (period !== null) {
     hideStats()
-    setText(el.htTitle, halftimeTitle(period, match.periodsCount))
+    setText(el.htTitle, halftimeTitle(period))
   }
   el.halftime.classList.toggle('is-in', period !== null)
 
