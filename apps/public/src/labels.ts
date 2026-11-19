@@ -32,6 +32,12 @@ export const eventTypeLabels: Record<string, string> = {
   MatchFinished: 'Финальный свисток',
 }
 
+/** Подписи видов гола; у обычного гола подписи нет. */
+export const goalKindLabels: Record<string, string> = {
+  Penalty: 'Пенальти',
+  Bonus: 'Бонусный мяч',
+}
+
 export function formatTime(iso: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return '—'

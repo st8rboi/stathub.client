@@ -80,9 +80,22 @@ const CARD_TAGS: Record<CardKind, string> = {
   red: '<span class="l3-card"></span>Красная карточка',
 }
 
+/** Подпись гола по его виду; обычный гол и старые события без вида — просто «Гол». */
+const GOAL_KIND_TAGS: Record<string, string> = {
+  Penalty: `${BALL_ICON}Гол с пенальти`,
+  Bonus: `${BALL_ICON}Бонусный мяч ×2`,
+}
+
+function cardTag(kind: CardKind, event: PublicEvent): string {
+  if (kind === 'goal' && event.goalKind) return GOAL_KIND_TAGS[event.goalKind] ?? CARD_TAGS.goal
+  return CARD_TAGS[kind]
+}
+
 type Card = {
   id: string
   kind: CardKind
+  /** HTML подписи плашки: иконка и вид события (у гола — с учётом вида гола). */
+  tag: string
   firstName: string
   lastName: string
   teamName: string
@@ -432,14 +445,17 @@ function buildCards(page: PublicMatchPage): Map<string, Card> {
     if ((kind === 'goal' || kind === 'own-goal') && !event.isVoided) {
       // Автогол засчитывается сопернику команды игрока.
       const awayScores = kind === 'own-goal' ? !isAway : isAway
-      if (awayScores) away += 1
-      else home += 1
+      // Бонусный мяч идёт в счёт за два.
+      const weight = kind === 'goal' && event.goalKind === 'Bonus' ? 2 : 1
+      if (awayScores) away += weight
+      else home += weight
       score = `${home} : ${away}`
     }
 
     cards.set(event.id, {
       id: event.id,
       kind,
+      tag: cardTag(kind, event),
       ...splitName(event.playerName),
       teamName: event.teamName ?? (isAway ? m.awayTeamName : m.homeTeamName),
       teamLogoUrl: isAway ? m.awayTeamLogoUrl : m.homeTeamLogoUrl,
@@ -508,7 +524,7 @@ async function showNext() {
   const photo = card.photoUrl ?? card.teamLogoUrl ?? SILHOUETTE
   el.photo.src = photo
   el.photoBox.classList.toggle('is-logo', !card.photoUrl && !!card.teamLogoUrl)
-  el.tag.innerHTML = CARD_TAGS[card.kind]
+  el.tag.innerHTML = card.tag
   setText(el.firstName, card.firstName)
   setText(el.lastName, card.lastName)
 

@@ -11,14 +11,21 @@ const BALL_PATCHES =
 const BALL_SEAMS =
   'M12 8.3V4.4M15.52 10.86 19.23 9.65M14.17 14.99 16.47 18.15M9.83 14.99 7.53 18.15M8.48 10.86 4.77 9.65'
 
-/** Иконки событий протокола: мяч, карточки, замена — как на флешскоре. */
-export function MatchEventIcon({ type }: { type: string }) {
+/** Метка в углу мяча: у пенальти «П», у бонусного мяча «×2». */
+const GOAL_KIND_MARKS: Record<string, string> = { Penalty: 'П', Bonus: '×2' }
+
+/**
+ * Иконки событий протокола: мяч, карточки, замена — как на флешскоре.
+ * Вид гола показывается меткой на мяче, автогол — красным мячом.
+ */
+export function MatchEventIcon({ type, goalKind }: { type: string; goalKind?: string | null }) {
   const clipId = useId()
 
   switch (type) {
     case 'Goal':
-    case 'OwnGoal':
-      return (
+    case 'OwnGoal': {
+      const mark = type === 'Goal' && goalKind ? GOAL_KIND_MARKS[goalKind] : undefined
+      const ball = (
         <svg
           viewBox="0 0 24 24"
           className={type === 'OwnGoal' ? 'pe-ball pe-ball--own' : 'pe-ball'}
@@ -36,6 +43,17 @@ export function MatchEventIcon({ type }: { type: string }) {
           <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="1.6" />
         </svg>
       )
+      if (!mark) return ball
+
+      return (
+        <span className={`pe-goal-icon pe-goal-icon--${goalKind!.toLowerCase()}`}>
+          {ball}
+          <span className="pe-goal-mark" aria-hidden="true">
+            {mark}
+          </span>
+        </span>
+      )
+    }
     case 'YellowCard':
       return <span className="pe-card pe-card--yellow" aria-hidden="true" />
     case 'RedCard':
