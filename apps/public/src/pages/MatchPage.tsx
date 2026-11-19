@@ -3,6 +3,7 @@ import { Link, useLocation, useParams, useSearchParams } from 'react-router'
 import type { PublicEvent, PublicMatch, PublicMatchStatistics, PublicTeamStats } from '@/api/types'
 import type { MatchLinkState } from '@/components/FixtureRow'
 import { MatchEventIcon } from '@/components/MatchEventIcon'
+import { PlayerLink } from '@/components/PlayerLink'
 import { teamPath } from '@/components/TeamLink'
 import { Skeleton } from '@/components/Skeleton'
 import { publicKeys, useMatch, useNow } from '@/hooks'
@@ -134,7 +135,11 @@ function EventLine({ row }: { row: EventRow }) {
   const related = event.relatedPlayerName ? shortPlayerName(event.relatedPlayerName) : null
 
   const note =
-    event.type === 'OwnGoal' ? 'автогол' : event.type === 'Goal' || event.type === 'Substitution' ? related : null
+    event.type === 'OwnGoal' ? (
+      'автогол'
+    ) : (event.type === 'Goal' || event.type === 'Substitution') && related ? (
+      <PlayerLink playerId={event.relatedPlayerId}>{related}</PlayerLink>
+    ) : null
 
   const title = event.isVoided
     ? `Отменено судьёй${row.voidReason ? `: ${row.voidReason}` : ''}`
@@ -157,7 +162,13 @@ function EventLine({ row }: { row: EventRow }) {
         )}
       </span>
       <span className="pe-text">
-        <span className="pe-player">{player ?? eventTypeLabels[event.type] ?? event.type}</span>
+        <span className="pe-player">
+          {player ? (
+            <PlayerLink playerId={event.playerId}>{player}</PlayerLink>
+          ) : (
+            (eventTypeLabels[event.type] ?? event.type)
+          )}
+        </span>
         {note && <span className="pe-note">({note})</span>}
         {event.isVoided && <span className="visually-hidden">, отменено судьёй</span>}
       </span>

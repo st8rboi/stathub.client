@@ -1,10 +1,11 @@
 import { Link, useParams, useSearchParams } from 'react-router'
 import type { PublicMatch, PublicTeamPlayer, StandingsRow } from '@/api/types'
 import { FixtureRow } from '@/components/FixtureRow'
+import { PlayerLink } from '@/components/PlayerLink'
 import { Skeleton } from '@/components/Skeleton'
 import { StandingsTable } from '@/components/StandingsTable'
 import { useTeam } from '@/hooks'
-import { formatDateTime } from '@/labels'
+import { ageOf, formatDate, formatDateTime, registrationLeftLabels } from '@/labels'
 
 type FormResult = 'W' | 'D' | 'L'
 
@@ -15,28 +16,6 @@ function resultFor(match: PublicMatch, teamId: string): FormResult {
   const own = match.homeTeamId === teamId ? match.homeScore : match.awayScore
   const other = match.homeTeamId === teamId ? match.awayScore : match.homeScore
   return own > other ? 'W' : own < other ? 'L' : 'D'
-}
-
-function ageOf(birthDate: string | null): number | null {
-  if (!birthDate) return null
-  const born = new Date(birthDate)
-  if (Number.isNaN(born.getTime())) return null
-
-  const now = new Date()
-  let age = now.getFullYear() - born.getFullYear()
-  const beforeBirthday =
-    now.getMonth() < born.getMonth() || (now.getMonth() === born.getMonth() && now.getDate() < born.getDate())
-  return beforeBirthday ? age - 1 : age
-}
-
-const leftLabels: Record<string, string> = {
-  TransferredOut: 'Перешёл',
-  Released: 'Отзаявлен',
-}
-
-function formatDate(iso: string): string {
-  const date = new Date(iso)
-  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('ru-RU')
 }
 
 function PlayerCell({ player }: { player: PublicTeamPlayer }) {
@@ -53,10 +32,12 @@ function PlayerCell({ player }: { player: PublicTeamPlayer }) {
         </span>
       )}
       <span className="roster-text">
-        <span className="roster-name">{player.fullName}</span>
+        <PlayerLink playerId={player.playerId} className="roster-name">
+          {player.fullName}
+        </PlayerLink>
         <span className="roster-meta">
           {left
-            ? `${leftLabels[player.status] ?? 'Ушёл'}${player.leftOn ? ` ${formatDate(player.leftOn)}` : ''}`
+            ? `${registrationLeftLabels[player.status] ?? 'Ушёл'}${player.leftOn ? ` ${formatDate(player.leftOn)}` : ''}`
             : age !== null
               ? `${age} лет`
               : ''}

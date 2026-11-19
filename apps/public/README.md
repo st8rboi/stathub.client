@@ -13,6 +13,7 @@
 | `/leagues/:slug` | лига → турниры → этапы | `GET /public/leagues/{slug}` |
 | `/stages/:stageId` | матчи этапа и полная таблица | `GET /public/stages/{id}` |
 | `/matches/:matchId` | счёт, период, секундомер, протокол | `GET /public/matches/{id}` |
+| `/players/:playerId` | профиль игрока: фото, возраст, итоги и выступления по командам и турнирам | `GET /public/players/{id}` |
 | `/statistics` | статистика игроков по турниру: голы, автоголы, карточки, матчи | `GET /public/tournaments/{id}/statistics` |
 
 ## Дизайн

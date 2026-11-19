@@ -9,6 +9,7 @@ export const publicKeys = {
   stage: (stageId: string) => ['public', 'stage', stageId] as const,
   match: (matchId: string) => ['public', 'match', matchId] as const,
   team: (teamId: string, stageId: string) => ['public', 'team', teamId, stageId] as const,
+  player: (playerId: string) => ['public', 'player', playerId] as const,
   live: () => ['public', 'live'] as const,
   matchDays: (timeZone: string) => ['public', 'match-days', timeZone] as const,
   schedule: (fromUtc: string, toUtc: string) => ['public', 'schedule', fromUtc, toUtc] as const,
@@ -50,6 +51,9 @@ export const useTeam = (teamId: string, stageId: string) =>
     // Переключение этапа не мигает скелетоном: старые данные видны, пока грузятся новые.
     placeholderData: (previous) => (previous?.team.id === teamId ? previous : undefined),
   })
+
+export const usePlayer = (playerId: string) =>
+  useQuery({ queryKey: publicKeys.player(playerId), queryFn: () => publicApi.player(playerId), enabled: !!playerId })
 
 /**
  * Матч: пока идёт — дообновляем опросом раз в 15 секунд, даже если SignalR-пуш

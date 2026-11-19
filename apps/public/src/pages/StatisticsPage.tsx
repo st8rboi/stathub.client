@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { PlayerLink } from '@/components/PlayerLink'
 import { TeamLink } from '@/components/TeamLink'
 import type { PlayerStatisticsRow } from '@/api/types'
 import { Skeleton } from '@/components/Skeleton'
@@ -245,7 +246,9 @@ export default function StatisticsPage() {
                               </span>
                             )}
                             <span className="stats-text">
-                              <span className="stats-player">{row.playerName}</span>
+                              <PlayerLink playerId={row.playerId} className="stats-player">
+                                {row.playerName}
+                              </PlayerLink>
                               <TeamLink
                                 teamId={row.teamId}
                                 name={row.teamName}
