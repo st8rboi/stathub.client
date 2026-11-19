@@ -14,6 +14,7 @@ const defaults: StageBody = {
   extraTimeEnabled: false,
   penaltyShootoutEnabled: false,
   qualifiersCount: null,
+  eliminatedCount: null,
 }
 
 type Props = {
@@ -21,7 +22,7 @@ type Props = {
   submitLabel: string
   pending: boolean
   error: unknown
-  /** Правила только для чтения: турнир начат или в этапе есть матчи — менять можно лишь название и выход дальше. */
+  /** Правила только для чтения: турнир начат или в этапе есть матчи — менять можно лишь название и зоны таблицы. */
   rulesLocked?: boolean
   onSubmit: (body: StageBody, form: HTMLFormElement) => void
   onCancel?: () => void
@@ -29,7 +30,7 @@ type Props = {
 
 // Поля этапа: общие для добавления и правки.
 export function StageForm({ initial = defaults, submitLabel, pending, error, rulesLocked, onSubmit, onCancel }: Props) {
-  // Формат влияет на состав полей: выход дальше задаётся только у кругового этапа.
+  // Формат влияет на состав полей: зоны выхода и вылета задаются только у кругового этапа.
   const [formatType, setFormatType] = useState<StageFormatType>(initial.formatType)
 
   const submit = (e: SubmitEvent<HTMLFormElement>) => {
@@ -60,11 +61,21 @@ export function StageForm({ initial = defaults, submitLabel, pending, error, rul
           penaltyShootoutEnabled: form.get('penaltyShootoutEnabled') === 'on',
         }
 
-    // Пустое поле — этап никого дальше не выводит. У плей-офф поля нет вовсе.
-    const rawQualifiers = String(form.get('qualifiersCount') ?? '').trim()
-    const qualifiersCount = rules.formatType === 'Round' && rawQualifiers ? Number(rawQualifiers) : null
+    // Пустое поле — зоны нет. У плей-офф этих полей нет вовсе.
+    const zone = (field: string) => {
+      const raw = String(form.get(field) ?? '').trim()
+      return rules.formatType === 'Round' && raw ? Number(raw) : null
+    }
 
-    onSubmit({ ...rules, name: String(form.get('name')).trim(), qualifiersCount }, formElement)
+    onSubmit(
+      {
+        ...rules,
+        name: String(form.get('name')).trim(),
+        qualifiersCount: zone('qualifiersCount'),
+        eliminatedCount: zone('eliminatedCount'),
+      },
+      formElement,
+    )
   }
 
   return (
@@ -143,9 +154,25 @@ export function StageForm({ initial = defaults, submitLabel, pending, error, rul
           </span>
         </label>
       )}
+      {formatType === 'Round' && (
+        <label>
+          Вылетают
+          <input
+            name="eliminatedCount"
+            type="number"
+            min={1}
+            placeholder="никто"
+            defaultValue={initial.eliminatedCount ?? ''}
+          />
+          <span className="hint">
+            Сколько последних команд таблицы выбывает. Если в этапе есть группы — столько из каждой группы. Оставьте
+            пустым, если никто не вылетает.
+          </span>
+        </label>
+      )}
       {rulesLocked && (
         <p className="hint">
-          Турнир уже начат — правила этапа менять нельзя, только название и число выходящих дальше.
+          Турнир уже начат — правила этапа менять нельзя, только название и число выходящих дальше и вылетающих.
         </p>
       )}
       <ErrorText error={error} />

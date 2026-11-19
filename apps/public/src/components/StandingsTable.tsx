@@ -10,9 +10,10 @@ type Props = {
   compact?: boolean
 }
 
-/** Зона выхода — зелёная; в боковой панели без зоны по-прежнему выделяем первую тройку. */
+/** Зона выхода — зелёная, вылета — красная; в боковой панели без зон по-прежнему выделяем первую тройку. */
 function positionClass(row: StandingsRow, index: number, highlightTop: boolean): string {
   if (row.qualifies) return 'col-index standings-pos standings-pos--qualifies'
+  if (row.eliminated) return 'col-index standings-pos standings-pos--eliminated'
   if (highlightTop) return index < 3 ? 'col-index standings-pos standings-pos--top' : 'col-index standings-pos'
   return 'muted col-index'
 }
@@ -20,7 +21,7 @@ function positionClass(row: StandingsRow, index: number, highlightTop: boolean):
 /**
  * Турнирная таблица этапа: общая или по группам. Приходит готовой с сервера: она считается
  * на каждый GET из протокола матчей и нигде не кэшируется (documentation/doc.md §9.2).
- * Места в зоне выхода в следующий этап отмечены зелёным.
+ * Места в зоне выхода в следующий этап отмечены зелёным, в зоне вылета — красным.
  */
 export function StandingsTable({ rows, groups = [], highlightTeamId, compact = false }: Props) {
   if (rows.length === 0 && groups.length === 0) {
@@ -28,7 +29,9 @@ export function StandingsTable({ rows, groups = [], highlightTeamId, compact = f
   }
 
   const tables = groups.length > 0 ? groups : [{ groupId: '', name: '', rows }]
-  const hasZone = tables.some((table) => table.rows.some((row) => row.qualifies))
+  const hasQualifiers = tables.some((table) => table.rows.some((row) => row.qualifies))
+  const hasEliminated = tables.some((table) => table.rows.some((row) => row.eliminated))
+  const hasZone = hasQualifiers || hasEliminated
 
   return (
     <>
@@ -92,7 +95,13 @@ export function StandingsTable({ rows, groups = [], highlightTeamId, compact = f
           )}
         </div>
       ))}
-      {hasZone && <p className="standings-legend">Зелёным отмечены места, с которых команды выходят в следующий этап.</p>}
+      {hasZone && (
+        <p className="standings-legend">
+          {hasQualifiers && 'Зелёным отмечены места, с которых команды выходят в следующий этап.'}
+          {hasQualifiers && hasEliminated && ' '}
+          {hasEliminated && 'Красным — места, с которых команды вылетают.'}
+        </p>
+      )}
     </>
   )
 }

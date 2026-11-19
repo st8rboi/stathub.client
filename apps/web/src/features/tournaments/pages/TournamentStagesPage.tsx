@@ -135,6 +135,12 @@ export default function TournamentStagesPage() {
                   {stage.groups.length > 0 && ' из группы'}
                 </span>
               )}
+              {stage.eliminatedCount !== null && (
+                <span>
+                  вылетают {stage.eliminatedCount}
+                  {stage.groups.length > 0 && ' из группы'}
+                </span>
+              )}
             </span>
           </div>
           <Menu
