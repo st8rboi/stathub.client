@@ -143,7 +143,9 @@ function EventLine({ row }: { row: EventRow }) {
   // Как на флешскоре: «(пенальти)», «(автогол)»; у бонусного мяча — ещё и ассистент.
   const notes: ReactNode[] = []
   if (event.type === 'OwnGoal') notes.push('автогол')
-  if (kindLabel) notes.push(kindLabel.toLowerCase())
+  // Бонусный мяч в тексте не подписываем — его видно по метке «×2» на мяче.
+  if (event.type === 'Goal' && event.goalKind === 'Penalty') notes.push('пенальти')
+  if (event.type === 'PenaltyMissed') notes.push('незабитый пенальти')
   if ((event.type === 'Goal' || event.type === 'Substitution') && related) {
     notes.push(
       <PlayerLink key="related" playerId={event.relatedPlayerId}>

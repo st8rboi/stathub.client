@@ -11,8 +11,8 @@ const BALL_PATCHES =
 const BALL_SEAMS =
   'M12 8.3V4.4M15.52 10.86 19.23 9.65M14.17 14.99 16.47 18.15M9.83 14.99 7.53 18.15M8.48 10.86 4.77 9.65'
 
-/** Метка в углу мяча: у пенальти «П», у бонусного мяча «×2». */
-const GOAL_KIND_MARKS: Record<string, string> = { Penalty: 'П', Bonus: '×2' }
+/** Метка в углу мяча: у пенальти «П», у бонусного мяча «×2», у незабитого пенальти — красный крест. */
+const BALL_MARKS: Record<string, string> = { penalty: 'П', bonus: '×2', missed: '✕' }
 
 /**
  * Иконки событий протокола: мяч, карточки, замена — как на флешскоре.
@@ -23,12 +23,17 @@ export function MatchEventIcon({ type, goalKind }: { type: string; goalKind?: st
 
   switch (type) {
     case 'Goal':
-    case 'OwnGoal': {
-      const mark = type === 'Goal' && goalKind ? GOAL_KIND_MARKS[goalKind] : undefined
+    case 'OwnGoal':
+    case 'PenaltyMissed': {
+      const variant =
+        type === 'PenaltyMissed' ? 'missed' : type === 'Goal' && goalKind ? goalKind.toLowerCase() : null
+      const mark = variant ? BALL_MARKS[variant] : undefined
       const ball = (
         <svg
           viewBox="0 0 24 24"
-          className={type === 'OwnGoal' ? 'pe-ball pe-ball--own' : 'pe-ball'}
+          className={
+            type === 'OwnGoal' ? 'pe-ball pe-ball--own' : type === 'PenaltyMissed' ? 'pe-ball pe-ball--missed' : 'pe-ball'
+          }
           aria-hidden="true"
         >
           <clipPath id={clipId}>
@@ -46,7 +51,7 @@ export function MatchEventIcon({ type, goalKind }: { type: string; goalKind?: st
       if (!mark) return ball
 
       return (
-        <span className={`pe-goal-icon pe-goal-icon--${goalKind!.toLowerCase()}`}>
+        <span className={`pe-goal-icon pe-goal-icon--${variant}`}>
           {ball}
           <span className="pe-goal-mark" aria-hidden="true">
             {mark}

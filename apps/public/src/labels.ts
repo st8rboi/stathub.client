@@ -30,6 +30,7 @@ export const eventTypeLabels: Record<string, string> = {
   MatchStarted: 'Начало матча',
   PeriodStarted: 'Начало периода',
   MatchFinished: 'Финальный свисток',
+  PenaltyMissed: 'Незабитый пенальти',
 }
 
 /** Подписи видов гола; у обычного гола подписи нет. */

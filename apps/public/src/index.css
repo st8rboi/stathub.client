@@ -1817,6 +1817,16 @@ td.stats-name {
   background: var(--green);
 }
 
+/* Незабитый пенальти: бледный мяч и красный крест. */
+.pe-ball--missed {
+  color: var(--muted);
+}
+
+.pe-goal-icon--missed .pe-goal-mark {
+  background: var(--red);
+  color: #fff;
+}
+
 .pe-card {
   width: 9px;
   height: 12px;
