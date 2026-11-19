@@ -875,11 +875,15 @@ h2 {
   color: var(--green-dark);
 }
 
-/* Зона выхода в следующий этап: зелёная черта слева от места. */
+/* Зоны таблицы отмечены только цветом номера места: выход дальше — зелёный, вылет — красный. */
 .standings-table td.standings-pos--qualifies {
   font-weight: 700;
   color: var(--green-dark);
-  box-shadow: inset 3px 0 0 var(--green-dark);
+}
+
+.standings-table td.standings-pos--eliminated {
+  font-weight: 700;
+  color: var(--red);
 }
 
 .standings-group-name {

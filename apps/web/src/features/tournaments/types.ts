@@ -35,6 +35,8 @@ export interface Stage {
   penaltyShootoutEnabled: boolean
   /** Сколько первых команд выходит дальше (при группах — из каждой); null — никто. */
   qualifiersCount: number | null
+  /** Сколько последних команд вылетает (при группах — из каждой); null — никто. */
+  eliminatedCount: number | null
   groups: StageGroup[]
 }
 

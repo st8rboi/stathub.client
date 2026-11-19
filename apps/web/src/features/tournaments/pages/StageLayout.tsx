@@ -48,6 +48,7 @@ export default function StageLayout() {
               {stage.periodsCount} × {stage.periodDurationMinutes} мин
             </span>
             {stage.qualifiersCount !== null && <span>дальше выходят {stage.qualifiersCount}</span>}
+            {stage.eliminatedCount !== null && <span>вылетают {stage.eliminatedCount}</span>}
           </>
         }
       />

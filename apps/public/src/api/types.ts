@@ -14,6 +14,8 @@ export type StandingsRow = {
   position: number
   /** Команда в зоне выхода в следующий этап. */
   qualifies: boolean
+  /** Команда в зоне вылета. */
+  eliminated: boolean
 }
 
 /** Таблица одной группы кругового этапа. */
@@ -86,6 +88,8 @@ export type PublicStage = {
   divisionsCount: number
   /** Сколько первых команд выходит дальше (при группах — из каждой); null — никто. */
   qualifiersCount: number | null
+  /** Сколько последних команд вылетает (при группах — из каждой); null — никто. */
+  eliminatedCount: number | null
 }
 
 /** День с матчами в часовом поясе зрителя: `date` — «YYYY-MM-DD». */

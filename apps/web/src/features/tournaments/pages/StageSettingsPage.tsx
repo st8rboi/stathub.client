@@ -66,12 +66,18 @@ export default function StageSettingsPage() {
                   ? 'никто'
                   : `первые ${stage.qualifiersCount}${stage.groups.length > 0 ? ' из каждой группы' : ''}`}
               </dd>
+              <dt>Вылетают</dt>
+              <dd>
+                {stage.eliminatedCount === null
+                  ? 'никто'
+                  : `последние ${stage.eliminatedCount}${stage.groups.length > 0 ? ' из каждой группы' : ''}`}
+              </dd>
             </>
           )}
         </dl>
         {rulesLocked && (
           <p className="hint">
-            Турнир уже начат — правила этапа менять нельзя, только название и число выходящих дальше.
+            Турнир уже начат — правила этапа менять нельзя, только название и число выходящих дальше и вылетающих.
           </p>
         )}
       </Card>
