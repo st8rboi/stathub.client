@@ -127,6 +127,7 @@ export default function TournamentStagesPage() {
                 {stage.periodsCount} × {stage.periodDurationMinutes} мин
                 {stage.extraTimeEnabled && ', доп. время'}
                 {stage.penaltyShootoutEnabled && ', пенальти'}
+                {stage.bonusGoalEnabled && ', бонусный мяч'}
               </span>
               {stage.groups.length > 0 && <span>{plural(stage.groups.length, ['группа', 'группы', 'групп'])}</span>}
               {stage.qualifiersCount !== null && (

@@ -33,6 +33,8 @@ export interface Stage {
   periodsCount: number
   extraTimeEnabled: boolean
   penaltyShootoutEnabled: boolean
+  /** Разрешён ли бонусный мяч: гол идёт в счёт и в статистику за два. */
+  bonusGoalEnabled: boolean
   /** Сколько первых команд выходит дальше (при группах — из каждой); null — никто. */
   qualifiersCount: number | null
   /** Сколько последних команд вылетает (при группах — из каждой); null — никто. */
