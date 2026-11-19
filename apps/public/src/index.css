@@ -1792,6 +1792,31 @@ td.stats-name {
   color: var(--red);
 }
 
+/* Мяч с меткой вида гола в правом нижнем углу: «П» — пенальти, «×2» — бонусный мяч. */
+.pe-goal-icon {
+  position: relative;
+  display: inline-flex;
+}
+
+.pe-goal-mark {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  min-width: 9px;
+  padding: 0 2px;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 10px;
+  text-align: center;
+  color: var(--bg);
+  background: var(--text);
+}
+
+.pe-goal-icon--bonus .pe-goal-mark {
+  background: var(--green);
+}
+
 .pe-card {
   width: 9px;
   height: 12px;

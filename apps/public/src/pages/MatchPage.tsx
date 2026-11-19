@@ -1,3 +1,4 @@
+import { Fragment, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router'
 import type { PublicEvent, PublicMatch, PublicMatchStatistics, PublicTeamStats } from '@/api/types'
@@ -12,6 +13,7 @@ import {
   formatDateTime,
   formatElapsed,
   formatMinute,
+  goalKindLabels,
   isLiveMatch,
   matchStatusLabels,
   shortPlayerName,
@@ -94,13 +96,15 @@ function buildProtocol(match: PublicMatch, events: PublicEvent[]): (PeriodRow | 
     if ((event.type === 'Goal' || event.type === 'OwnGoal') && !event.isVoided) {
       // Автогол засчитывается сопернику команды игрока.
       const scoringSide = event.type === 'OwnGoal' ? (side === 'home' ? 'away' : 'home') : side
+      // Бонусный мяч идёт в счёт за два.
+      const weight = event.type === 'Goal' && event.goalKind === 'Bonus' ? 2 : 1
 
       if (scoringSide === 'home') {
-        home += 1
-        current.home += 1
+        home += weight
+        current.home += weight
       } else {
-        away += 1
-        current.away += 1
+        away += weight
+        current.away += weight
       }
 
       score = [home, away]
@@ -134,16 +138,23 @@ function EventLine({ row }: { row: EventRow }) {
   const player = event.playerName ? shortPlayerName(event.playerName) : null
   const related = event.relatedPlayerName ? shortPlayerName(event.relatedPlayerName) : null
 
-  const note =
-    event.type === 'OwnGoal' ? (
-      'автогол'
-    ) : (event.type === 'Goal' || event.type === 'Substitution') && related ? (
-      <PlayerLink playerId={event.relatedPlayerId}>{related}</PlayerLink>
-    ) : null
+  const kindLabel = event.type === 'Goal' && event.goalKind ? goalKindLabels[event.goalKind] : undefined
+
+  // Как на флешскоре: «(пенальти)», «(автогол)»; у бонусного мяча — ещё и ассистент.
+  const notes: ReactNode[] = []
+  if (event.type === 'OwnGoal') notes.push('автогол')
+  if (kindLabel) notes.push(kindLabel.toLowerCase())
+  if ((event.type === 'Goal' || event.type === 'Substitution') && related) {
+    notes.push(
+      <PlayerLink key="related" playerId={event.relatedPlayerId}>
+        {related}
+      </PlayerLink>,
+    )
+  }
 
   const title = event.isVoided
     ? `Отменено судьёй${row.voidReason ? `: ${row.voidReason}` : ''}`
-    : (eventTypeLabels[event.type] ?? event.type)
+    : (kindLabel ?? eventTypeLabels[event.type] ?? event.type)
 
   const isGoal = event.type === 'Goal' || event.type === 'OwnGoal'
   const className = ['pe', `pe--${row.side}`, isGoal ? 'pe--goal' : '', event.isVoided ? 'pe--voided' : '']
@@ -154,7 +165,7 @@ function EventLine({ row }: { row: EventRow }) {
     <div className={className} title={title}>
       <span className="pe-minute">{row.minute}</span>
       <span className="pe-badge">
-        <MatchEventIcon type={event.type} />
+        <MatchEventIcon type={event.type} goalKind={event.goalKind} />
         {row.score && (
           <span className="pe-score">
             {row.score[0]} - {row.score[1]}
@@ -169,7 +180,16 @@ function EventLine({ row }: { row: EventRow }) {
             (eventTypeLabels[event.type] ?? event.type)
           )}
         </span>
-        {note && <span className="pe-note">({note})</span>}
+        {notes.length > 0 && (
+          <span className="pe-note">
+            ({notes.map((note, index) => (
+              <Fragment key={index}>
+                {index > 0 && ', '}
+                {note}
+              </Fragment>
+            ))})
+          </span>
+        )}
         {event.isVoided && <span className="visually-hidden">, отменено судьёй</span>}
       </span>
     </div>

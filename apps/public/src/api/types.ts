@@ -152,7 +152,11 @@ export type PublicEvent = {
   /** Id автора события и второго игрока — для ссылок на профиль. */
   playerId?: string | null
   relatedPlayerId?: string | null
+  /** Вид гола — только у Goal; null у старых событий (обычный гол). */
+  goalKind?: GoalKind | null
 }
+
+export type GoalKind = 'Regular' | 'Penalty' | 'Bonus'
 
 /** Командная статистика матча. shots — все удары, включая удары в створ; expectedGoals — сумма xG ударов. */
 export type PublicTeamStats = {

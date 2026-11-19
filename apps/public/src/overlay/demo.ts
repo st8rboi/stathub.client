@@ -6,7 +6,7 @@
  * ?demo&pre — матч ещё не начат (превью снизу), через 10 секунд судья начинает его и выезжает табло.
  * ?demo&bg — с подложкой-газоном, для скриншотов. Грузится отдельным чанком только в демо.
  */
-import type { PublicEvent, PublicMatchPage } from '@/api/types'
+import type { GoalKind, PublicEvent, PublicMatchPage } from '@/api/types'
 import type { MatchSource } from './main'
 
 const svg = (body: string) => 'data:image/svg+xml,' + encodeURIComponent(body)
@@ -24,11 +24,19 @@ const photo = (shirt: string) =>
 const HOME = { id: 'home', name: 'Динамо', logo: crest('#1d4fa3', 'Д'), shirt: '#1d4fa3' }
 const AWAY = { id: 'away', name: 'Спартак-2', logo: crest('#c8102e', 'С'), shirt: '#c8102e' }
 
-const SCRIPT: { type: string; team: typeof HOME; player: string; withPhoto: boolean }[] = [
+const SCRIPT: {
+  type: string
+  team: typeof HOME
+  player: string
+  withPhoto: boolean
+  goalKind?: GoalKind
+}[] = [
   { type: 'Goal', team: HOME, player: 'Сажин Алексей Николаевич', withPhoto: true },
+  { type: 'Goal', team: AWAY, player: 'Ломов Артём', withPhoto: true, goalKind: 'Penalty' },
   { type: 'YellowCard', team: AWAY, player: 'Белоусов Никита', withPhoto: true },
   { type: 'RedCard', team: AWAY, player: 'Константинопольский Илья', withPhoto: false },
   { type: 'OwnGoal', team: AWAY, player: 'Ким Виктор', withPhoto: true },
+  { type: 'Goal', team: HOME, player: 'Орлов Денис', withPhoto: false, goalKind: 'Bonus' },
 ]
 
 const STEP_MS = 12_000
@@ -66,8 +74,10 @@ export function createDemoSource(withBackground: boolean, halftime: boolean, pre
       if (event.type !== 'Goal' && event.type !== 'OwnGoal') continue
       // Автогол засчитывается сопернику команды игрока.
       const homeScores = (event.teamId === HOME.id) === (event.type === 'Goal')
-      if (homeScores) homeScore += 1
-      else awayScore += 1
+      // Бонусный мяч идёт в счёт за два.
+      const weight = event.goalKind === 'Bonus' ? 2 : 1
+      if (homeScores) homeScore += weight
+      else awayScore += weight
     }
 
     return {
@@ -128,6 +138,7 @@ export function createDemoSource(withBackground: boolean, halftime: boolean, pre
       teamId: item.team.id,
       teamName: item.team.name,
       playerName: item.player,
+      goalKind: item.goalKind ?? null,
       playerPhotoUrl: item.withPhoto ? photo(item.team.shirt) : null,
       occurredAtUtc: new Date().toISOString(),
       isVoided: false,
