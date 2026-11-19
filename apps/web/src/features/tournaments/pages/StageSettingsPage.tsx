@@ -58,6 +58,8 @@ export default function StageSettingsPage() {
           <dd>{yesNo(stage.extraTimeEnabled)}</dd>
           <dt>Серия пенальти</dt>
           <dd>{yesNo(stage.penaltyShootoutEnabled)}</dd>
+          <dt>Бонусный мяч</dt>
+          <dd>{yesNo(stage.bonusGoalEnabled)}</dd>
           {stage.formatType === 'Round' && (
             <>
               <dt>Выходят дальше</dt>

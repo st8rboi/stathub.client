@@ -13,6 +13,7 @@ const defaults: StageBody = {
   periodsCount: 2,
   extraTimeEnabled: false,
   penaltyShootoutEnabled: false,
+  bonusGoalEnabled: false,
   qualifiersCount: null,
   eliminatedCount: null,
 }
@@ -49,6 +50,7 @@ export function StageForm({ initial = defaults, submitLabel, pending, error, rul
           periodsCount: initial.periodsCount,
           extraTimeEnabled: initial.extraTimeEnabled,
           penaltyShootoutEnabled: initial.penaltyShootoutEnabled,
+          bonusGoalEnabled: initial.bonusGoalEnabled,
         }
       : {
           formatType,
@@ -59,6 +61,7 @@ export function StageForm({ initial = defaults, submitLabel, pending, error, rul
           periodsCount: Number(form.get('periodsCount')),
           extraTimeEnabled: form.get('extraTimeEnabled') === 'on',
           penaltyShootoutEnabled: form.get('penaltyShootoutEnabled') === 'on',
+          bonusGoalEnabled: form.get('bonusGoalEnabled') === 'on',
         }
 
     // Пустое поле — зоны нет. У плей-офф этих полей нет вовсе.
@@ -136,6 +139,10 @@ export function StageForm({ initial = defaults, submitLabel, pending, error, rul
         <label className="check">
           <input name="penaltyShootoutEnabled" type="checkbox" defaultChecked={initial.penaltyShootoutEnabled} /> Серия
           пенальти
+        </label>
+        <label className="check">
+          <input name="bonusGoalEnabled" type="checkbox" defaultChecked={initial.bonusGoalEnabled} /> Бонусный мяч
+          (гол за два)
         </label>
       </fieldset>
       {formatType === 'Round' && (
