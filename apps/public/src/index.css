@@ -1428,7 +1428,39 @@ td.stats-name {
   color: var(--text-soft);
 }
 
+/* ---------- Игрок ---------- */
+
+/* Имя игрока — ссылка на профиль; выглядит как прежний текст. */
+.player-link {
+  color: inherit;
+}
+
+.player-link:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.player-hero-photo {
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-soft);
+  font-size: 28px;
+}
+
+.career-league {
+  color: inherit;
+}
+
+.career-total td {
+  border-top: 1px solid var(--border);
+  font-weight: 700;
+}
+
 @media (hover: hover) {
+  .player-link:hover,
+  .career-league:hover,
+  a.roster-name:hover,
   .team-link:hover span:last-child,
   a.matchboard-team:hover .matchboard-name {
     text-decoration: underline;

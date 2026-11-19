@@ -4,6 +4,7 @@ import HomePage from '@/pages/HomePage'
 import LeaguePage from '@/pages/LeaguePage'
 import LeaguesPage from '@/pages/LeaguesPage'
 import MatchPage from '@/pages/MatchPage'
+import PlayerPage from '@/pages/PlayerPage'
 import StagePage from '@/pages/StagePage'
 import StatisticsPage from '@/pages/StatisticsPage'
 import TeamPage from '@/pages/TeamPage'
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="/stages/:stageId" element={<StagePage />} />
           <Route path="/matches/:matchId" element={<MatchPage />} />
           <Route path="/teams/:teamId" element={<TeamPage />} />
+          <Route path="/players/:playerId" element={<PlayerPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
           <Route
             path="*"

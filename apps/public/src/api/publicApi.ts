@@ -5,6 +5,7 @@ import type {
   PublicMatch,
   PublicMatchDay,
   PublicMatchPage,
+  PublicPlayerPage,
   PublicStagePage,
   PublicTeamPage,
   TournamentStatistics,
@@ -40,6 +41,8 @@ export const publicApi = {
   /** Страница команды; без stageId сервер выбирает самый свежий этап. */
   team: (teamId: string, stageId?: string) =>
     request<PublicTeamPage>(`/public/teams/${teamId}${query({ stageId })}`),
+  /** Профиль игрока: выступления в опубликованных лигах. */
+  player: (playerId: string) => request<PublicPlayerPage>(`/public/players/${playerId}`),
   live: () => request<PublicMatch[]>('/public/live'),
   /** Статистика игроков одного дивизиона турнира; без divisionId сервер отдаёт первый дивизион. */
   tournamentStatistics: (tournamentId: string, divisionId?: string) =>

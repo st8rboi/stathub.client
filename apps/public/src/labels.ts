@@ -117,3 +117,28 @@ export function shortPlayerName(fullName: string): string {
 export function competitionLabel(stageName: string, divisionName?: string | null): string {
   return divisionName ? `${divisionName} · ${stageName}` : stageName
 }
+
+/** Полных лет на сегодня; null, если дата рождения неизвестна. */
+export function ageOf(birthDate: string | null | undefined): number | null {
+  if (!birthDate) return null
+  const born = new Date(birthDate)
+  if (Number.isNaN(born.getTime())) return null
+
+  const now = new Date()
+  const age = now.getFullYear() - born.getFullYear()
+  const beforeBirthday =
+    now.getMonth() < born.getMonth() || (now.getMonth() === born.getMonth() && now.getDate() < born.getDate())
+  return beforeBirthday ? age - 1 : age
+}
+
+/** Дата без времени («01.09.2026»). */
+export function formatDate(iso: string): string {
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('ru-RU')
+}
+
+/** Как игрок покинул заявку команды. */
+export const registrationLeftLabels: Record<string, string> = {
+  TransferredOut: 'Перешёл',
+  Released: 'Отзаявлен',
+}

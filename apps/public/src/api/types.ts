@@ -145,6 +145,9 @@ export type PublicEvent = {
   elapsedSeconds?: number | null
   /** Фото игрока — для плашек трансляционного оверлея. */
   playerPhotoUrl?: string | null
+  /** Id автора события и второго игрока — для ссылок на профиль. */
+  playerId?: string | null
+  relatedPlayerId?: string | null
 }
 
 /** Командная статистика матча. shots — все удары, включая удары в створ; expectedGoals — сумма xG ударов. */
@@ -257,4 +260,49 @@ export type PublicTeamPage = {
   standings: StandingsRow[]
   players: PublicTeamPlayer[]
   standingsGroups: StandingsGroup[]
+}
+
+/** Шапка профиля игрока. */
+export type PublicPlayer = {
+  id: string
+  fullName: string
+  photoUrl: string | null
+  birthDate: string | null
+}
+
+/**
+ * Выступление игрока: заявка за команду в дивизион турнира со статистикой за эту команду.
+ * stageId — этап, на котором открывать страницу команды.
+ */
+export type PublicPlayerCareerRow = {
+  tournamentId: string
+  tournamentName: string
+  leagueName: string
+  leagueSlug: string
+  leagueLogoUrl: string | null
+  divisionId: string
+  /** null, если дивизион в турнире один. */
+  divisionName: string | null
+  stageId: string
+  teamId: string
+  teamName: string
+  teamLogoUrl: string | null
+  /** Active, TransferredOut или Released. */
+  status: string
+  joinedOn: string
+  leftOn: string | null
+  matches: number
+  goals: number
+  assists: number
+  ownGoals: number
+  yellowCards: number
+  redCards: number
+  penaltyGoals: number
+  penaltiesMissed: number
+}
+
+/** Профиль игрока: выступления в опубликованных лигах, свежие первыми. */
+export type PublicPlayerPage = {
+  player: PublicPlayer
+  career: PublicPlayerCareerRow[]
 }
