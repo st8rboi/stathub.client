@@ -1311,6 +1311,92 @@ td.stats-name {
   font-weight: 700;
 }
 
+/* ---------- Live-таблица: строки команд, которые играют прямо сейчас ---------- */
+
+.standings-row--live.standings-row--win td {
+  background: var(--green-soft);
+}
+
+.standings-row--live.standings-row--draw td {
+  background: var(--amber-soft);
+}
+
+.standings-row--live.standings-row--loss td {
+  background: var(--red-soft);
+}
+
+/* Полоска слева — чтобы live-строку было видно и на фоне «своей» команды. */
+.standings-row--live td:first-child {
+  box-shadow: inset 3px 0 0 var(--live-accent, var(--muted));
+}
+
+.standings-row--win {
+  --live-accent: var(--green);
+}
+
+.standings-row--draw {
+  --live-accent: var(--amber);
+}
+
+.standings-row--loss {
+  --live-accent: var(--red);
+}
+
+.standings-team-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.standings-team-cell .standings-team {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.standings-live-score {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  background: var(--live-accent, var(--muted));
+  text-decoration: none;
+}
+
+.standings-live-score--win {
+  --live-accent: var(--green-dark);
+}
+
+.standings-live-score--draw {
+  --live-accent: var(--amber);
+}
+
+.standings-live-score--loss {
+  --live-accent: var(--red);
+}
+
+a.standings-live-score:hover {
+  filter: brightness(1.1);
+}
+
+a.standings-live-score:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.standings-legend-live {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin: 0 -1px;
+  border-radius: 50%;
+  background: var(--red);
+  animation: live-pulse 1.4s ease-in-out infinite;
+}
+
 .team-header p {
   display: flex;
   flex-wrap: wrap;
@@ -1632,6 +1718,47 @@ td.stats-name {
   outline: 2px solid var(--green);
   outline-offset: -2px;
   border-radius: var(--radius-sm);
+}
+
+/* ---------- Таблица на странице матча ---------- */
+
+/* ПК: карточка матча слева не растягивается на весь экран, live-таблица — колонкой справа
+   на всю высоту окна (прилипает под шапкой, длинная таблица прокручивается внутри). */
+.match-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.8fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.match-side {
+  position: sticky;
+  top: calc(var(--topbar-height) + var(--safe-top) + 16px);
+  max-height: calc(100dvh - var(--topbar-height) - var(--safe-top) - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--radius);
+}
+
+.match-side .match-standings {
+  margin-bottom: 0;
+}
+
+.match-standings-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px 4px;
+}
+
+.match-standings-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.match-standings-link {
+  margin-left: auto;
 }
 
 /* ---------- Статистика матча (пропорции флешскора) ---------- */

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { publicApi } from './api/publicApi'
-import type { PublicMatch } from './api/types'
+import type { PublicMatch, StandingsRow } from './api/types'
 
 export const publicKeys = {
   leagues: (club: string, city: string) => ['public', 'leagues', club, city] as const,
@@ -23,8 +23,20 @@ export const useLeagues = (club: string, city: string) =>
 export const useLeague = (slug: string) =>
   useQuery({ queryKey: publicKeys.league(slug), queryFn: () => publicApi.league(slug), enabled: !!slug })
 
+/** Идёт ли сейчас хоть один матч таблицы — тогда она live и меняется после каждого гола. */
+export const hasLiveRows = (rows: StandingsRow[] | undefined) => !!rows?.some((row) => row.live)
+
+/** Запасной опрос live-таблицы, если SignalR-пуш не дошёл (документация §9). */
+const LIVE_STANDINGS_REFETCH_MS = 15_000
+
 export const useStage = (stageId: string) =>
-  useQuery({ queryKey: publicKeys.stage(stageId), queryFn: () => publicApi.stage(stageId), enabled: !!stageId })
+  useQuery({
+    queryKey: publicKeys.stage(stageId),
+    queryFn: () => publicApi.stage(stageId),
+    enabled: !!stageId,
+    refetchInterval: (queryState) =>
+      hasLiveRows(queryState.state.data?.standings) ? LIVE_STANDINGS_REFETCH_MS : false,
+  })
 
 /** Матчи за интервал — на главной это сутки, выбранные в полосе дат. */
 export const useSchedule = (from: Date, to: Date, enabled = true) =>
@@ -48,6 +60,8 @@ export const useTeam = (teamId: string, stageId: string) =>
     queryKey: publicKeys.team(teamId, stageId),
     queryFn: () => publicApi.team(teamId, stageId || undefined),
     enabled: !!teamId,
+    refetchInterval: (queryState) =>
+      hasLiveRows(queryState.state.data?.standings) ? LIVE_STANDINGS_REFETCH_MS : false,
     // Переключение этапа не мигает скелетоном: старые данные видны, пока грузятся новые.
     placeholderData: (previous) => (previous?.team.id === teamId ? previous : undefined),
   })
@@ -98,4 +112,17 @@ export function useNow(enabled: boolean, intervalMs = 1000): number {
   }, [enabled, intervalMs])
 
   return now
+}
+
+/** Совпадает ли медиазапрос сейчас; перерисовывает компонент при смене (поворот, ресайз окна). */
+export function useMediaQuery(query: string): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      const list = window.matchMedia(query)
+      list.addEventListener('change', onChange)
+      return () => list.removeEventListener('change', onChange)
+    },
+    () => window.matchMedia(query).matches,
+    () => false,
+  )
 }

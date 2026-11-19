@@ -4,10 +4,11 @@ import { Link, useLocation, useParams, useSearchParams } from 'react-router'
 import type { PublicEvent, PublicMatch, PublicMatchStatistics, PublicTeamStats } from '@/api/types'
 import type { MatchLinkState } from '@/components/FixtureRow'
 import { MatchEventIcon } from '@/components/MatchEventIcon'
+import { MatchStandings, stageHasTable } from '@/components/MatchStandings'
 import { PlayerLink } from '@/components/PlayerLink'
 import { teamPath } from '@/components/TeamLink'
 import { Skeleton } from '@/components/Skeleton'
-import { publicKeys, useMatch, useNow } from '@/hooks'
+import { publicKeys, useMatch, useMediaQuery, useNow, useStage } from '@/hooks'
 import {
   eventTypeLabels,
   formatDateTime,
@@ -249,7 +250,10 @@ function MatchStatistics({ statistics }: { statistics: PublicMatchStatistics }) 
   )
 }
 
-type Tab = 'protocol' | 'stats'
+type Tab = 'protocol' | 'stats' | 'table'
+
+/** С этой ширины таблица стоит колонкой справа, а не отдельной вкладкой (совпадает с index.css). */
+const SIDE_TABLE_QUERY = '(min-width: 981px)'
 
 export default function MatchPage() {
   const { matchId = '' } = useParams()
@@ -257,10 +261,15 @@ export default function MatchPage() {
   const location = useLocation()
   const queryClient = useQueryClient()
   const matchQuery = useMatch(matchId)
+  const stageId = matchQuery.data?.match.stageId ?? ''
+  const stageQuery = useStage(stageId)
+  const wide = useMediaQuery(SIDE_TABLE_QUERY)
 
   // Пуш — сигнал «перечитай состояние»; сам счёт всегда берётся из REST (doc §4, §9).
-  useRealtime({ matchId }, () => {
+  // Подписка и на этап: live-таблица меняется и от голов в соседних матчах.
+  useRealtime({ matchId, stageId: stageId || undefined }, () => {
     void queryClient.invalidateQueries({ queryKey: publicKeys.match(matchId) })
+    if (stageId) void queryClient.invalidateQueries({ queryKey: publicKeys.stage(stageId) })
   })
 
   const status = matchQuery.data?.match.status
@@ -275,14 +284,19 @@ export default function MatchPage() {
 
   const { match, events, statistics } = matchQuery.data
   const protocol = buildProtocol(match, events)
+  const stage = stageHasTable(stageQuery.data) ? stageQuery.data : undefined
+  // На ПК таблица всегда видна справа, вкладка «Таблица» нужна только на узком экране.
+  const tableTab = !!stage && !wide
 
   // Вкладка — в адресе (replace): ссылку на статистику можно отправить, «назад» не засоряется.
-  const tab: Tab = params.get('tab') === 'stats' && statistics ? 'stats' : 'protocol'
+  const tabParam = params.get('tab')
+  const tab: Tab =
+    tabParam === 'stats' && statistics ? 'stats' : tabParam === 'table' && tableTab ? 'table' : 'protocol'
   const selectTab = (next: Tab) =>
     setParams(
       (current) => {
-        if (next === 'stats') current.set('tab', 'stats')
-        else current.delete('tab')
+        if (next === 'protocol') current.delete('tab')
+        else current.set('tab', next)
         return current
       },
       { replace: true, state: location.state },
@@ -293,107 +307,128 @@ export default function MatchPage() {
   const fromHome = from === '/' || from?.startsWith('/?')
 
   return (
-    <>
-      <p className="crumb">
-        {fromHome ? (
-          <>
-            <Link to={from!}>← Матчи</Link> · <Link to={`/leagues/${match.leagueSlug}`}>{match.leagueName}</Link>
-          </>
-        ) : (
-          <Link to={`/leagues/${match.leagueSlug}`}>← {match.leagueName}</Link>
-        )}{' '}
-        · <Link to={`/stages/${match.stageId}`}>{competitionLabel(match.stageName, match.divisionName)}</Link>
-      </p>
-
-      <div className="matchboard">
-        <Link to={teamPath(match.homeTeamId)} className="matchboard-team team-link">
-          {match.homeTeamLogoUrl ? (
-            <img src={match.homeTeamLogoUrl} alt="" className="team-logo team-logo--lg" />
+    <div className={stage && wide ? 'match-layout' : undefined}>
+      <div className="match-main">
+        <p className="crumb">
+          {fromHome ? (
+            <>
+              <Link to={from!}>← Матчи</Link> · <Link to={`/leagues/${match.leagueSlug}`}>{match.leagueName}</Link>
+            </>
           ) : (
-            <span className="team-logo team-logo--lg team-logo--empty" />
-          )}
-          <span className="matchboard-name">{match.homeTeamName}</span>
-        </Link>
+            <Link to={`/leagues/${match.leagueSlug}`}>← {match.leagueName}</Link>
+          )}{' '}
+          · <Link to={`/stages/${match.stageId}`}>{competitionLabel(match.stageName, match.divisionName)}</Link>
+        </p>
 
-        <div className="matchboard-center">
-          <div className="matchboard-score">
-            {match.homeScore} : {match.awayScore}
-          </div>
-          <div className={match.status === 'InProgress' ? 'matchboard-status live' : 'matchboard-status'}>
-            {matchStatusLabels[match.status] ?? match.status}
-          </div>
-          {live && match.periodStartedAtUtc && (
-            <div className="matchboard-clock">
-              {match.currentPeriod}-й тайм · {formatElapsed(match, now)}
+        <div className="matchboard">
+          <Link to={teamPath(match.homeTeamId)} className="matchboard-team team-link">
+            {match.homeTeamLogoUrl ? (
+              <img src={match.homeTeamLogoUrl} alt="" className="team-logo team-logo--lg" />
+            ) : (
+              <span className="team-logo team-logo--lg team-logo--empty" />
+            )}
+            <span className="matchboard-name">{match.homeTeamName}</span>
+          </Link>
+
+          <div className="matchboard-center">
+            <div className="matchboard-score">
+              {match.homeScore} : {match.awayScore}
             </div>
-          )}
+            <div className={match.status === 'InProgress' ? 'matchboard-status live' : 'matchboard-status'}>
+              {matchStatusLabels[match.status] ?? match.status}
+            </div>
+            {live && match.periodStartedAtUtc && (
+              <div className="matchboard-clock">
+                {match.currentPeriod}-й тайм · {formatElapsed(match, now)}
+              </div>
+            )}
+          </div>
+
+          <Link to={teamPath(match.awayTeamId)} className="matchboard-team matchboard-team--away team-link">
+            {match.awayTeamLogoUrl ? (
+              <img src={match.awayTeamLogoUrl} alt="" className="team-logo team-logo--lg" />
+            ) : (
+              <span className="team-logo team-logo--lg team-logo--empty" />
+            )}
+            <span className="matchboard-name">{match.awayTeamName}</span>
+          </Link>
         </div>
 
-        <Link to={teamPath(match.awayTeamId)} className="matchboard-team matchboard-team--away team-link">
-          {match.awayTeamLogoUrl ? (
-            <img src={match.awayTeamLogoUrl} alt="" className="team-logo team-logo--lg" />
-          ) : (
-            <span className="team-logo team-logo--lg team-logo--empty" />
-          )}
-          <span className="matchboard-name">{match.awayTeamName}</span>
-        </Link>
-      </div>
+        <p className="match-meta">
+          {match.tournamentName} · {formatDateTime(match.scheduledTimeUtc)} ·{' '}
+          {competitionLabel(match.stageName, match.divisionName)}
+        </p>
 
-      <p className="match-meta">
-        {match.tournamentName} · {formatDateTime(match.scheduledTimeUtc)} ·{' '}
-        {competitionLabel(match.stageName, match.divisionName)}
-      </p>
-
-      <div className="match-tabs" role="tablist" aria-label="Разделы матча">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'protocol'}
-          className={tab === 'protocol' ? 'match-tab active' : 'match-tab'}
-          onClick={() => selectTab('protocol')}
-        >
-          Протокол
-        </button>
-        {statistics && (
+        <div className="match-tabs" role="tablist" aria-label="Разделы матча">
           <button
             type="button"
             role="tab"
-            aria-selected={tab === 'stats'}
-            className={tab === 'stats' ? 'match-tab active' : 'match-tab'}
-            onClick={() => selectTab('stats')}
+            aria-selected={tab === 'protocol'}
+            className={tab === 'protocol' ? 'match-tab active' : 'match-tab'}
+            onClick={() => selectTab('protocol')}
           >
-            Статистика
+            Протокол
           </button>
+          {statistics && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'stats'}
+              className={tab === 'stats' ? 'match-tab active' : 'match-tab'}
+              onClick={() => selectTab('stats')}
+            >
+              Статистика
+            </button>
+          )}
+          {tableTab && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'table'}
+              className={tab === 'table' ? 'match-tab active' : 'match-tab'}
+              onClick={() => selectTab('table')}
+            >
+              Таблица
+            </button>
+          )}
+        </div>
+
+        {tab === 'table' && stage ? (
+          <MatchStandings match={match} stage={stage} />
+        ) : tab === 'stats' && statistics ? (
+          <MatchStatistics statistics={statistics} />
+        ) : protocol.length === 0 ? (
+          <p className="notice">Событий пока нет.</p>
+        ) : (
+          <div className="competition competition--plain protocol-card">
+            <div className="protocol">
+              {protocol.map((row) =>
+                row.kind === 'period' ? (
+                  <div key={row.key} className="protocol-period">
+                    <span>{periodTitle(row.period)}</span>
+                    <span className="protocol-period-score">
+                      {row.home} - {row.away}
+                    </span>
+                  </div>
+                ) : (
+                  <EventLine key={row.key} row={row} />
+                ),
+              )}
+            </div>
+          </div>
         )}
+
+        <p className="footnote">
+          Счёт обновляется автоматически. Если обновление задерживается, обновите страницу —
+          данные придут из REST-состояния матча. Зачёркнутые события отменены судьёй.
+        </p>
       </div>
 
-      {tab === 'stats' && statistics ? (
-        <MatchStatistics statistics={statistics} />
-      ) : protocol.length === 0 ? (
-        <p className="notice">Событий пока нет.</p>
-      ) : (
-        <div className="competition competition--plain protocol-card">
-          <div className="protocol">
-            {protocol.map((row) =>
-              row.kind === 'period' ? (
-                <div key={row.key} className="protocol-period">
-                  <span>{periodTitle(row.period)}</span>
-                  <span className="protocol-period-score">
-                    {row.home} - {row.away}
-                  </span>
-                </div>
-              ) : (
-                <EventLine key={row.key} row={row} />
-              ),
-            )}
-          </div>
-        </div>
+      {stage && wide && (
+        <aside className="match-side">
+          <MatchStandings match={match} stage={stage} />
+        </aside>
       )}
-
-      <p className="footnote">
-        Счёт обновляется автоматически. Если обновление задерживается, обновите страницу —
-        данные придут из REST-состояния матча. Зачёркнутые события отменены судьёй.
-      </p>
-    </>
+    </div>
   )
 }

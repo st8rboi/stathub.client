@@ -1,11 +1,13 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import type { PublicMatch, StandingsGroup } from '@/api/types'
 import { FixtureRow } from '@/components/FixtureRow'
 import { Skeleton } from '@/components/Skeleton'
 import { StandingsTable } from '@/components/StandingsTable'
-import { useStage } from '@/hooks'
+import { publicKeys, useStage } from '@/hooks'
 import { stageFormatLabels } from '@/labels'
+import { useRealtime } from '@/realtime'
 import { currentRound, roundDates, splitIntoRounds, type Round } from '@/rounds'
 
 const ALL = 'all'
@@ -24,6 +26,12 @@ export default function StagePage() {
   const { stageId = '' } = useParams()
   const [params, setParams] = useSearchParams()
   const stage = useStage(stageId)
+  const queryClient = useQueryClient()
+
+  // Live-таблица: пуш после каждого гола любого матча этапа — сигнал «перечитай этап» (doc §4).
+  useRealtime({ stageId, enabled: !!stageId }, () => {
+    void queryClient.invalidateQueries({ queryKey: publicKeys.stage(stageId) })
+  })
 
   const matches = stage.data?.matches
   const groups = stage.data?.standingsGroups ?? []

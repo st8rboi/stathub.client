@@ -2,20 +2,27 @@ import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import { useEffect, useRef } from 'react'
 
 type Subscription = {
-  /** Если задан — подписка на группу матча, иначе на ленту «сейчас играют». */
+  /** Подписка на группу матча. */
   matchId?: string
+  /** Подписка на этап: live-таблица меняется после каждого гола любого его матча. */
+  stageId?: string
+  /** false — не подключаться (например, этап ещё не загружен). */
+  enabled?: boolean
 }
 
 /**
  * Однонаправленный SignalR-канал зрителя (documentation/doc.md §4).
+ * Без matchId и stageId — подписка на ленту «сейчас играют».
  * Сообщения — только сигнал «данные изменились»: настоящий источник истины REST,
  * поэтому пуш ничего не ломает, если пришёл с опозданием или вовсе не пришёл.
  */
-export function useRealtime({ matchId }: Subscription, onChange: () => void) {
+export function useRealtime({ matchId, stageId, enabled = true }: Subscription, onChange: () => void) {
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
 
   useEffect(() => {
+    if (!enabled) return
+
     const connection = new HubConnectionBuilder()
       .withUrl('/hubs/matches')
       .withAutomaticReconnect()
@@ -30,13 +37,15 @@ export function useRealtime({ matchId }: Subscription, onChange: () => void) {
         if (disposed) return
 
         if (matchId) await connection.invoke('SubscribeMatch', matchId)
-        else await connection.invoke('SubscribeLive')
+        if (stageId) await connection.invoke('SubscribeStage', stageId)
+        if (!matchId && !stageId) await connection.invoke('SubscribeLive')
       } catch {
         // Push недоступен (хаб не поднят, сеть) — страница обновится опросом.
       }
     }
 
     connection.on('MatchUpdated', () => onChangeRef.current())
+    connection.on('StageUpdated', () => onChangeRef.current())
     connection.on('LiveFeedChanged', () => onChangeRef.current())
     connection.onreconnected(() => void subscribe())
 
@@ -46,5 +55,5 @@ export function useRealtime({ matchId }: Subscription, onChange: () => void) {
       disposed = true
       void connection.stop()
     }
-  }, [matchId])
+  }, [matchId, stageId, enabled])
 }
