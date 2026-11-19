@@ -1,4 +1,4 @@
-import type { Match, MatchEvent, MatchEventType, NewMatchEvent } from '../api/types'
+import type { GoalKind, Match, MatchEvent, MatchEventType, NewMatchEvent } from '../api/types'
 
 export const eventTypeLabels: Record<MatchEventType, string> = {
   Goal: 'Гол',
@@ -16,7 +16,21 @@ export const eventTypeLabels: Record<MatchEventType, string> = {
   ShotOnTarget: 'Удар в створ',
   Foul: 'Фол',
   Corner: 'Угловой',
+  PenaltyMissed: 'Незабитый пенальти',
 }
+
+export const goalKindLabels: Record<GoalKind, string> = {
+  Regular: 'Гол',
+  Penalty: 'Гол с пенальти',
+  Bonus: 'Бонусный мяч',
+}
+
+/** Название события для протокола: у гола — с учётом вида (пенальти, бонусный мяч). */
+export const eventLabel = (event: Pick<MatchEvent, 'type' | 'goalKind'>): string =>
+  event.type === 'Goal' && event.goalKind ? goalKindLabels[event.goalKind] : eventTypeLabels[event.type]
+
+/** Сколько гол добавляет к счёту: бонусный мяч — два, остальные — один (как `MatchEvent.ScoreValue` на сервере). */
+export const goalValue = (goalKind: GoalKind | null | undefined): number => (goalKind === 'Bonus' ? 2 : 1)
 
 export const isLifecycleEvent = (type: MatchEventType): boolean =>
   type === 'MatchStarted' ||
@@ -139,6 +153,7 @@ export function toLocalEvent(event: NewMatchEvent, matchId: string): MatchEvent 
     relatedPlayerId: event.relatedPlayerId ?? null,
     targetEventId: event.targetEventId ?? null,
     reason: event.reason ?? null,
+    goalKind: event.goalKind ?? null,
     clientTimestampUtc: event.clientTimestampUtc,
     occurredAtUtc: event.clientTimestampUtc,
     reviewNote: null,
@@ -187,8 +202,8 @@ export function computeScore(match: Match, events: MatchEvent[]): { home: number
   for (const event of events) {
     if (voidedEventIds.has(event.id)) continue
 
-    if (event.type === 'Goal' && event.teamId === match.homeTeamId) home += 1
-    else if (event.type === 'Goal' && event.teamId === match.awayTeamId) away += 1
+    if (event.type === 'Goal' && event.teamId === match.homeTeamId) home += goalValue(event.goalKind)
+    else if (event.type === 'Goal' && event.teamId === match.awayTeamId) away += goalValue(event.goalKind)
     else if (event.type === 'OwnGoal' && event.teamId === match.homeTeamId) away += 1
     else if (event.type === 'OwnGoal' && event.teamId === match.awayTeamId) home += 1
   }

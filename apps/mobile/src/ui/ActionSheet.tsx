@@ -1,11 +1,14 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { colors, fontSize, radius, spacing } from '../theme'
+import { PlayerAvatar } from './PlayerAvatar'
 
 export type ActionSheetOption = {
   label: string
   description?: string
   destructive?: boolean
+  /** Игрок в списке выбора — слева показывается его фото (или инициалы). */
+  player?: { name: string; photoUrl?: string | null }
   onPress: () => void
 }
 
@@ -47,14 +50,23 @@ export function ActionSheet({ title, message, options, onClose }: Props) {
                 key={option.label}
                 accessibilityRole="button"
                 onPress={option.onPress}
-                style={({ pressed }) => [styles.option, pressed && styles.pressed]}
+                style={({ pressed }) => [
+                  styles.option,
+                  option.player && styles.optionWithAvatar,
+                  pressed && styles.pressed,
+                ]}
               >
-                <Text style={[styles.optionLabel, option.destructive && styles.destructive]}>
-                  {option.label}
-                </Text>
-                {option.description ? (
-                  <Text style={styles.optionDescription}>{option.description}</Text>
+                {option.player ? (
+                  <PlayerAvatar name={option.player.name} photoUrl={option.player.photoUrl} />
                 ) : null}
+                <View style={styles.optionText}>
+                  <Text style={[styles.optionLabel, option.destructive && styles.destructive]}>
+                    {option.label}
+                  </Text>
+                  {option.description ? (
+                    <Text style={styles.optionDescription}>{option.description}</Text>
+                  ) : null}
+                </View>
               </Pressable>
             ))}
           </ScrollView>
@@ -110,6 +122,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing(4),
     borderRadius: radius.md,
     backgroundColor: colors.surfaceMuted,
+  },
+  optionWithAvatar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: spacing(3),
+    paddingVertical: spacing(1.5),
+    paddingHorizontal: spacing(3),
+  },
+  optionText: {
+    flexShrink: 1,
+    gap: 2,
   },
   optionLabel: {
     fontSize: fontSize.input,
