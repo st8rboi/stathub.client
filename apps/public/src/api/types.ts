@@ -16,6 +16,16 @@ export type StandingsRow = {
   qualifies: boolean
   /** Команда в зоне вылета. */
   eliminated: boolean
+  /** Команда сейчас играет: строка уже учитывает текущий счёт этого матча; null — не играет. */
+  live: StandingsLiveMatch | null
+}
+
+/** Идущий матч глазами команды строки: её голы первыми. */
+export type StandingsLiveMatch = {
+  matchId: string | null
+  goalsFor: number
+  goalsAgainst: number
+  outcome: 'Win' | 'Draw' | 'Loss'
 }
 
 /** Таблица одной группы кругового этапа. */

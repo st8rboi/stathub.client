@@ -126,7 +126,8 @@ export default function MatchScreen() {
     ? queuedScore
     : { home: match.homeScore + queuedScore.home, away: match.awayScore + queuedScore.away }
   const periods = periodNumbers(mergedEvents)
-  const protocol = refereeProtocol(mergedEvents)
+  // Новые события сверху: отменить последнее можно без прокрутки вниз.
+  const protocol = refereeProtocol(mergedEvents).reverse()
   const pendingIds = new Set(events.pending.map((event) => event.id))
   const eventsLocked = match.status === 'Finished' || match.status === 'Cancelled'
 

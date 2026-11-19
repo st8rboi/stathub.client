@@ -1,11 +1,13 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useSearchParams } from 'react-router'
 import type { PublicMatch, PublicTeamPlayer, StandingsRow } from '@/api/types'
 import { FixtureRow } from '@/components/FixtureRow'
 import { PlayerLink } from '@/components/PlayerLink'
 import { Skeleton } from '@/components/Skeleton'
 import { StandingsTable } from '@/components/StandingsTable'
-import { useTeam } from '@/hooks'
+import { publicKeys, useTeam } from '@/hooks'
 import { ageOf, formatDate, formatDateTime, registrationLeftLabels } from '@/labels'
+import { useRealtime } from '@/realtime'
 
 type FormResult = 'W' | 'D' | 'L'
 
@@ -121,6 +123,13 @@ export default function TeamPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const stageParam = searchParams.get('stage') ?? ''
   const team = useTeam(teamId, stageParam)
+  const queryClient = useQueryClient()
+  const shownStageId = team.data?.stage.id
+
+  // Live-таблица выбранного этапа: пуш после каждого гола — сигнал «перечитай страницу команды».
+  useRealtime({ stageId: shownStageId, enabled: !!shownStageId }, () => {
+    void queryClient.invalidateQueries({ queryKey: publicKeys.team(teamId, stageParam) })
+  })
 
   if (team.error) return <p className="notice">Не удалось загрузить команду: {team.error.message}</p>
   if (!team.data) return <Skeleton rows={6} />
