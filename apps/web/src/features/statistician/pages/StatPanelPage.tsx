@@ -107,7 +107,7 @@ function StatPanel({ matchId }: { matchId: string }) {
           <Badge tone={matchStatusTones[match.status]}>{matchStatusLabels[match.status]}</Badge>
           {match.currentPeriod > 0 && !locked && (
             <span className="hint">
-              Период {match.currentPeriod} из {match.periodsCount}
+              Тайм {match.currentPeriod} из {match.periodsCount}
             </span>
           )}
         </div>

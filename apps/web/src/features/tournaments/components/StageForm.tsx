@@ -118,11 +118,11 @@ export function StageForm({ initial = defaults, submitLabel, pending, error, rul
         </div>
         <div className="row">
           <label>
-            Периодов
+            Таймов
             <input name="periodsCount" type="number" min={1} defaultValue={initial.periodsCount} required />
           </label>
           <label>
-            Минут в периоде
+            Минут в тайме
             <input
               name="periodDurationMinutes"
               type="number"

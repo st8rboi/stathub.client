@@ -39,8 +39,8 @@ type EventRow = {
 /** Служебные события не показываем строками: начало периодов — заголовки, отмена — зачёркивание. */
 const HIDDEN_EVENTS = new Set(['EventVoided', 'MatchFinished', 'MatchPaused', 'MatchResumed'])
 
-function periodTitle(period: number, periodsCount: number): string {
-  return periodsCount === 2 && period <= 2 ? `${period}-й тайм` : `${period}-й период`
+function periodTitle(period: number): string {
+  return `${period}-й тайм`
 }
 
 function sideOf(event: PublicEvent, match: PublicMatch): Side {
@@ -324,7 +324,7 @@ export default function MatchPage() {
           </div>
           {live && match.periodStartedAtUtc && (
             <div className="matchboard-clock">
-              {match.currentPeriod}-й период · {formatElapsed(match, now)}
+              {match.currentPeriod}-й тайм · {formatElapsed(match, now)}
             </div>
           )}
         </div>
@@ -377,7 +377,7 @@ export default function MatchPage() {
             {protocol.map((row) =>
               row.kind === 'period' ? (
                 <div key={row.key} className="protocol-period">
-                  <span>{periodTitle(row.period, match.periodsCount)}</span>
+                  <span>{periodTitle(row.period)}</span>
                   <span className="protocol-period-score">
                     {row.home} - {row.away}
                   </span>

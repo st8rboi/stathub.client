@@ -28,7 +28,7 @@ export const eventTypeLabels: Record<string, string> = {
   Substitution: 'Замена',
   EventVoided: 'Отмена события',
   MatchStarted: 'Начало матча',
-  PeriodStarted: 'Начало периода',
+  PeriodStarted: 'Начало тайма',
   MatchFinished: 'Финальный свисток',
   PenaltyMissed: 'Незабитый пенальти',
 }

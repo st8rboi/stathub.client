@@ -10,7 +10,7 @@ export const eventTypeLabels: Record<MatchEventType, string> = {
   MatchStarted: 'Начало матча',
   MatchPaused: 'Пауза',
   MatchResumed: 'Игра продолжена',
-  PeriodStarted: 'Начало периода',
+  PeriodStarted: 'Начало тайма',
   MatchFinished: 'Финальный свисток',
   Shot: 'Удар',
   ShotOnTarget: 'Удар в створ',
