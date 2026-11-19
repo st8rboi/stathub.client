@@ -96,11 +96,20 @@ export function StandingsTable({ rows, groups = [], highlightTeamId, compact = f
         </div>
       ))}
       {hasZone && (
-        <p className="standings-legend">
-          {hasQualifiers && 'Зелёным отмечены места, с которых команды выходят в следующий этап.'}
-          {hasQualifiers && hasEliminated && ' '}
-          {hasEliminated && 'Красным — места, с которых команды вылетают.'}
-        </p>
+        <ul className="standings-legend">
+          {hasQualifiers && (
+            <li>
+              <span className="standings-legend-mark standings-legend-mark--qualifies" aria-hidden="true" />
+              Выход в следующий этап
+            </li>
+          )}
+          {hasEliminated && (
+            <li>
+              <span className="standings-legend-mark standings-legend-mark--eliminated" aria-hidden="true" />
+              Вылет
+            </li>
+          )}
+        </ul>
       )}
     </>
   )
