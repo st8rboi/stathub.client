@@ -866,7 +866,6 @@ h2 {
 }
 
 .standings-pos {
-  text-align: center;
   color: var(--muted);
 }
 
@@ -906,6 +905,34 @@ h2 {
 
 .side-panel .standings-legend {
   padding: 8px 5px 0;
+}
+
+ul.standings-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: none;
+}
+
+ul.standings-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.standings-legend-mark {
+  flex: none;
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+}
+
+.standings-legend-mark--qualifies {
+  background: var(--green-dark);
+}
+
+.standings-legend-mark--eliminated {
+  background: var(--red);
 }
 
 .side-panel-head {
@@ -986,9 +1013,13 @@ th {
 
 /* Растягиваем текстовые колонки (игрок/команда), а номера и метрики прижимаем
    к содержимому: иначе свободное место уходит под «#» и строка выглядит пустой. */
+/* Выравнивание задаём здесь, а не в .standings-pos: иначе выделенные места
+   центрируются, а обычные остаются слева, и номера съезжают. */
 .standings-table .col-index {
   width: 1%;
   white-space: nowrap;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
 }
 
 .standings-table .num {
