@@ -3,6 +3,7 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import type { PublicMatch, StandingsGroup } from '@/api/types'
 import { FixtureRow } from '@/components/FixtureRow'
+import { LiveMark } from '@/components/LiveMark'
 import { Skeleton } from '@/components/Skeleton'
 import { StandingsTable } from '@/components/StandingsTable'
 import { publicKeys, useStage } from '@/hooks'
@@ -163,7 +164,9 @@ export default function StagePage() {
         {!playoff && (
           <section>
             <div className="section-head">
-              <h2>Таблица</h2>
+              <h2>
+                Таблица <LiveMark rows={standings} />
+              </h2>
             </div>
             <div className="competition competition--plain">
               <StandingsTable rows={standings} groups={standingsGroups} />
