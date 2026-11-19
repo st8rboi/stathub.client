@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useSearchParams } from 'react-router'
 import type { PublicMatch, PublicTeamPlayer, StandingsRow } from '@/api/types'
 import { FixtureRow } from '@/components/FixtureRow'
+import { LiveMark } from '@/components/LiveMark'
 import { PlayerLink } from '@/components/PlayerLink'
 import { Skeleton } from '@/components/Skeleton'
 import { StandingsTable } from '@/components/StandingsTable'
@@ -270,7 +271,9 @@ export default function TeamPage() {
         {!playoff && (
           <section>
             <div className="section-head">
-              <h2>Таблица</h2>
+              <h2>
+                Таблица <LiveMark rows={standings} />
+              </h2>
             </div>
             <div className="competition competition--plain">
               <StandingsTable rows={standings} groups={standingsGroups} highlightTeamId={info.id} />

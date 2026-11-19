@@ -1720,24 +1720,41 @@ a.standings-live-score:focus-visible {
   border-radius: var(--radius-sm);
 }
 
+/* ---------- Пометка live-таблицы: текст и мигающая точка, без подложки ---------- */
+
+.live-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  color: var(--red);
+  white-space: nowrap;
+}
+
+.live-mark::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: live-pulse 1.4s ease-in-out infinite;
+}
+
 /* ---------- Таблица на странице матча ---------- */
 
 /* ПК: карточка матча слева не растягивается на весь экран, live-таблица — колонкой справа
-   на всю высоту окна (прилипает под шапкой, длинная таблица прокручивается внутри). */
+   целиком, без своей прокрутки: страница прокручивается одним общим скроллом. */
 .match-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 0.8fr);
   gap: 24px;
   align-items: start;
-}
-
-.match-side {
-  position: sticky;
-  top: calc(var(--topbar-height) + var(--safe-top) + 16px);
-  max-height: calc(100dvh - var(--topbar-height) - var(--safe-top) - 32px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  border-radius: var(--radius);
 }
 
 .match-side .match-standings {

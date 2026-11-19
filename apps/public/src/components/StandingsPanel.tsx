@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { LiveMark } from '@/components/LiveMark'
 import { StandingsTable } from '@/components/StandingsTable'
 import type { PublicLeague } from '@/api/types'
 import { useLeague, useStage } from '@/hooks'
@@ -81,7 +82,9 @@ export function StandingsPanel({ leagues }: { leagues: PublicLeague[] }) {
         </div>
       )}
 
-      <p className="side-panel-subtitle">{stageName}</p>
+      <p className="side-panel-subtitle">
+        {stageName} <LiveMark rows={stage.data?.standings} />
+      </p>
 
       {isEmpty ? (
         <p className="muted side-panel-empty">Таблица появится после первых сыгранных матчей.</p>

@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 import type { PublicMatch, PublicStagePage } from '@/api/types'
+import { LiveMark } from '@/components/LiveMark'
 import { StandingsTable } from '@/components/StandingsTable'
-import { hasLiveRows } from '@/hooks'
 
 /** Есть ли у этапа таблица, которую стоит показать рядом с матчем: в плей-офф её нет. */
 export function stageHasTable(stage: PublicStagePage | undefined): stage is PublicStagePage {
@@ -28,13 +28,13 @@ export function MatchStandings({ match, stage, compact = false }: Props) {
     group.rows.some((row) => row.teamId === match.homeTeamId || row.teamId === match.awayTeamId),
   )
   const groups = ownGroup ? [ownGroup] : stage.standingsGroups
-  const live = hasLiveRows(stage.standings)
 
   return (
     <section className="competition competition--plain match-standings" aria-label="Турнирная таблица">
       <div className="match-standings-head">
-        <h2>Таблица</h2>
-        {live && <span className="badge live">Live</span>}
+        <h2>
+          Таблица <LiveMark rows={stage.standings} />
+        </h2>
         <Link to={`/stages/${match.stageId}`} className="section-link match-standings-link">
           Этап →
         </Link>
