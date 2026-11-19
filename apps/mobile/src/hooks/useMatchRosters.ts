@@ -6,6 +6,11 @@ import { usePersistedQuery } from './usePersistedQuery'
 export type RosterPlayer = {
   playerId: string
   fullName: string
+  /**
+   * Путь к фото как его отдаёт сервер. Храним относительный: если судья сменит адрес
+   * сервера, кэш составов останется верным. В старом кэше поля может не быть.
+   */
+  photoUrl?: string | null
 }
 
 export type MatchRosters = {
@@ -48,14 +53,18 @@ export async function fetchMatchRosters(match: Match): Promise<MatchRosters> {
   ]
 
   const players = playerIds.length > 0 ? await playersApi.byIds(playerIds) : []
-  const nameById = new Map(players.map((player) => [player.id, player.fullName]))
+  const playerById = new Map(players.map((player) => [player.id, player]))
 
   const toRoster = (registrations: PlayerRegistration[]): RosterPlayer[] =>
     registrations
-      .map((registration) => ({
-        playerId: registration.playerId,
-        fullName: nameById.get(registration.playerId) ?? 'Игрок',
-      }))
+      .map((registration) => {
+        const player = playerById.get(registration.playerId)
+        return {
+          playerId: registration.playerId,
+          fullName: player?.fullName ?? 'Игрок',
+          photoUrl: player?.photoUrl ?? null,
+        }
+      })
       // Номеров нет — судья ищет игрока по фамилии, поэтому по алфавиту.
       .sort((left, right) => left.fullName.localeCompare(right.fullName, 'ru'))
 

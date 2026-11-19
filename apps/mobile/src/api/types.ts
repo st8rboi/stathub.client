@@ -41,6 +41,8 @@ export type Match = {
   periodDurationMinutes: number
   extraTimeEnabled: boolean
   penaltyShootoutEnabled: boolean
+  /** Разрешён ли бонусный мяч (гол за два). У матчей из старого кэша поля нет — считаем, что нет. */
+  bonusGoalEnabled?: boolean
   /** 0 — матч ещё не начат */
   currentPeriod: number
   periodStartedAtUtc: string | null
@@ -72,6 +74,11 @@ export type MatchEventType =
   | 'ShotOnTarget'
   | 'Foul'
   | 'Corner'
+  // Нереализованный пенальти: на счёт не влияет, нужен для статистики пенальти.
+  | 'PenaltyMissed'
+
+/** Вид гола (только у `Goal`): с игры, с пенальти (без ассистента), бонусный (идёт в счёт за два). */
+export type GoalKind = 'Regular' | 'Penalty' | 'Bonus'
 
 export type MatchEvent = {
   id: string
@@ -90,6 +97,8 @@ export type MatchEvent = {
   sequenceNumber: number
   createdAtUtc: string
   isVoided: boolean
+  /** Вид гола; пусто у старых голов и у остальных событий — это гол с игры. */
+  goalKind?: GoalKind | null
 }
 
 /** Полное состояние матча: матч (со счётом-проекцией) и протокол. */
@@ -107,6 +116,7 @@ export type NewMatchEvent = {
   relatedPlayerId?: string | null
   targetEventId?: string | null
   reason?: string | null
+  goalKind?: GoalKind | null
   clientTimestampUtc: string
   sequenceNumber: number
 }
@@ -129,6 +139,8 @@ export type Player = {
   id: string
   fullName: string
   birthDate: string | null
+  /** Относительный путь (`/uploads/...`); абсолютный адрес — через resolveMediaUrl. */
+  photoUrl: string | null
   createdAtUtc: string
 }
 

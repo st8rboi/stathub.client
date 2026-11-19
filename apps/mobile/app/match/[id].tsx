@@ -7,6 +7,7 @@ import type { MatchEvent } from '../../src/api/types'
 import { useAuth } from '../../src/auth/AuthProvider'
 import {
   computeScore,
+  eventLabel,
   eventTypeLabels,
   formatEventTime,
   isLifecycleEvent,
@@ -30,11 +31,22 @@ import { Button } from '../../src/ui/Button'
 import { Card, MutedText, SectionTitle } from '../../src/ui/Card'
 import { Screen } from '../../src/ui/Screen'
 
+/**
+ * Что отмечает судья кнопкой «Гол»: вид гола, автогол или незабитый пенальти.
+ * Автогол и незабитый пенальти — отдельные типы событий, остальное — `Goal` с видом.
+ */
+type GoalChoice = 'Regular' | 'Penalty' | 'Bonus' | 'OwnGoal' | 'PenaltyMissed'
+
+/** Ассистента спрашиваем только у гола с игры и бонусного: у пенальти и автогола его нет. */
+const goalChoiceHasAssist = (choice: GoalChoice) => choice === 'Regular' || choice === 'Bonus'
+
 /** Диалоги на экране: Alert на web не работает, поэтому все подтверждения — нижним листом. */
 type Sheet =
-  | { kind: 'goal-team' }
-  | { kind: 'goal-player'; teamId: string }
-  | { kind: 'goal-assist'; teamId: string; scorerId: string }
+  | { kind: 'goal-kind' }
+  | { kind: 'goal-team'; choice: GoalChoice }
+  // teamId — команда игрока события: у автогола это соперник команды, которой засчитан гол.
+  | { kind: 'goal-player'; teamId: string; choice: GoalChoice }
+  | { kind: 'goal-assist'; teamId: string; scorerId: string; choice: GoalChoice }
   | { kind: 'card-team' }
   | { kind: 'card-player'; teamId: string }
   | { kind: 'card-type'; teamId: string; playerId?: string }
@@ -149,7 +161,20 @@ export default function MatchScreen() {
     const player = event.playerId ? playerName(event.playerId) : ''
     const assist = event.relatedPlayerId ? `ассист: ${playerName(event.relatedPlayerId)}` : ''
 
-    return [eventTypeLabels[event.type], team, player, assist].filter(Boolean).join(' · ')
+    return [eventLabel(event), team, player, assist].filter(Boolean).join(' · ')
+  }
+
+  const opponentOf = (teamId: string) => (teamId === match.homeTeamId ? match.awayTeamId : match.homeTeamId)
+
+  const enqueueGoal = (choice: GoalChoice, teamId: string, playerId?: string, assistId?: string) => {
+    setSheet(null)
+
+    if (choice === 'OwnGoal' || choice === 'PenaltyMissed') {
+      void events.enqueue({ type: choice, teamId, playerId })
+      return
+    }
+
+    void events.enqueue({ type: 'Goal', teamId, playerId, relatedPlayerId: assistId, goalKind: choice })
   }
 
   const teamOptions = (onSelect: (teamId: string) => void) => [
@@ -159,48 +184,101 @@ export default function MatchScreen() {
 
   const sheetContent = (() => {
     switch (sheet?.kind) {
-      case 'goal-team':
+      case 'goal-kind':
         return {
           title: 'Гол',
-          message: 'Какая команда забила?',
-          options: teamOptions((teamId) => setSheet({ kind: 'goal-player', teamId })),
+          message: 'Что произошло?',
+          options: [
+            { label: 'Гол с игры', onPress: () => setSheet({ kind: 'goal-team', choice: 'Regular' }) },
+            {
+              label: 'Гол с пенальти',
+              description: 'Без ассистента',
+              onPress: () => setSheet({ kind: 'goal-team', choice: 'Penalty' }),
+            },
+            // Бонусный мяч есть не во всех лигах: включается в правилах этапа.
+            ...(match.bonusGoalEnabled
+              ? [
+                  {
+                    label: 'Бонусный мяч',
+                    description: 'Идёт в счёт за два гола, автору и ассистенту тоже за два',
+                    onPress: () => setSheet({ kind: 'goal-team', choice: 'Bonus' }),
+                  },
+                ]
+              : []),
+            {
+              label: 'Автогол',
+              description: 'Засчитывается сопернику игрока',
+              onPress: () => setSheet({ kind: 'goal-team', choice: 'OwnGoal' }),
+            },
+            {
+              label: 'Пенальти не забит',
+              description: 'Сейв или промах — на счёт не влияет',
+              onPress: () => setSheet({ kind: 'goal-team', choice: 'PenaltyMissed' }),
+            },
+          ],
         }
 
+      case 'goal-team': {
+        const { choice } = sheet
+
+        // Судья выбирает команду, которой засчитан гол; у автогола игрок — из команды соперника.
+        return {
+          title: choice === 'OwnGoal' ? 'Автогол' : choice === 'PenaltyMissed' ? 'Пенальти не забит' : 'Гол',
+          message:
+            choice === 'OwnGoal'
+              ? 'Какой команде засчитать гол?'
+              : choice === 'PenaltyMissed'
+                ? 'Чей пенальти?'
+                : 'Какая команда забила?',
+          options: teamOptions((teamId) =>
+            setSheet({ kind: 'goal-player', teamId: choice === 'OwnGoal' ? opponentOf(teamId) : teamId, choice }),
+          ),
+        }
+      }
+
       case 'goal-player': {
-        const { teamId } = sheet
+        const { teamId, choice } = sheet
         const roster = rosterFor(teamId)
 
         return {
-          title: 'Кто забил?',
+          title:
+            choice === 'OwnGoal'
+              ? 'Кто забил в свои ворота?'
+              : choice === 'PenaltyMissed'
+                ? 'Кто бил?'
+                : 'Кто забил?',
           message:
             roster.length > 0
               ? teamLabel(teamId)
               : rosters.isLoading
                 ? 'Загружаем состав…'
-                : 'Состав команды не найден — можно отметить гол без автора.',
+                : 'Состав команды не найден — можно отметить событие без игрока.',
           options: [
             ...roster.map((player) => ({
               label: playerLabel(player),
+              player: { name: player.fullName, photoUrl: player.photoUrl },
               onPress: () => {
                 // Ассистент необязателен, поэтому сначала спрашиваем второго игрока,
                 // но всегда даём выбор «без ассистента».
-                setSheet({ kind: 'goal-assist', teamId, scorerId: player.playerId })
+                if (goalChoiceHasAssist(choice))
+                  setSheet({ kind: 'goal-assist', teamId, scorerId: player.playerId, choice })
+                else enqueueGoal(choice, teamId, player.playerId)
               },
             })),
             {
               label: 'Без автора',
-              description: 'Гол в счёт команды, без привязки к игроку',
-              onPress: () => {
-                setSheet(null)
-                void events.enqueue({ type: 'Goal', teamId })
-              },
+              description:
+                choice === 'PenaltyMissed'
+                  ? 'Пенальти команды, без привязки к игроку'
+                  : 'Гол в счёт команды, без привязки к игроку',
+              onPress: () => enqueueGoal(choice, teamId),
             },
           ],
         }
       }
 
       case 'goal-assist': {
-        const { teamId, scorerId } = sheet
+        const { teamId, scorerId, choice } = sheet
         const roster = rosterFor(teamId).filter((player) => player.playerId !== scorerId)
 
         return {
@@ -212,22 +290,12 @@ export default function MatchScreen() {
           options: [
             ...roster.map((player) => ({
               label: playerLabel(player),
-              onPress: () => {
-                setSheet(null)
-                void events.enqueue({
-                  type: 'Goal',
-                  teamId,
-                  playerId: scorerId,
-                  relatedPlayerId: player.playerId,
-                })
-              },
+              player: { name: player.fullName, photoUrl: player.photoUrl },
+              onPress: () => enqueueGoal(choice, teamId, scorerId, player.playerId),
             })),
             {
               label: 'Без ассистента',
-              onPress: () => {
-                setSheet(null)
-                void events.enqueue({ type: 'Goal', teamId, playerId: scorerId })
-              },
+              onPress: () => enqueueGoal(choice, teamId, scorerId),
             },
           ],
         }
@@ -255,6 +323,7 @@ export default function MatchScreen() {
           options: [
             ...roster.map((player) => ({
               label: playerLabel(player),
+              player: { name: player.fullName, photoUrl: player.photoUrl },
               onPress: () => setSheet({ kind: 'card-type', teamId, playerId: player.playerId }),
             })),
             {
@@ -387,7 +456,7 @@ export default function MatchScreen() {
 
         {events.rejected.map(({ event, reason }) => (
           <Card key={event.id} style={styles.warningCard}>
-            <Text style={styles.warningTitle}>Сервер не принял: {eventTypeLabels[event.type]}</Text>
+            <Text style={styles.warningTitle}>Сервер не принял: {eventLabel(event)}</Text>
             <MutedText>{reason}</MutedText>
             <Button
               title="Понятно"
@@ -504,7 +573,7 @@ export default function MatchScreen() {
               compact
               style={styles.actionButton}
               disabled={eventsLocked}
-              onPress={() => setSheet({ kind: 'goal-team' })}
+              onPress={() => setSheet({ kind: 'goal-kind' })}
             />
             <Button
               title="Карточка"
@@ -561,6 +630,7 @@ export default function MatchScreen() {
           />
           <DetailRow label="Доп. время" value={match.extraTimeEnabled ? 'Да' : 'Нет'} />
           <DetailRow label="Пенальти" value={match.penaltyShootoutEnabled ? 'Да' : 'Нет'} />
+          <DetailRow label="Бонусный мяч" value={match.bonusGoalEnabled ? 'Да' : 'Нет'} />
           <DetailRow label="Этап" value={match.stageId} mono />
           <DetailRow label="Код матча" value={match.id} mono />
         </Card>

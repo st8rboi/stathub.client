@@ -54,6 +54,21 @@ export function getApiBaseUrl(): string {
   return baseUrl
 }
 
+/**
+ * Абсолютный адрес файла с сервера (фото игрока, логотип). В БД путь относительный
+ * (`/uploads/...`), а раздаётся он от корня хоста: в проде API живёт под `/api/`,
+ * но `/uploads/` — рядом, не под ним (см. deploy/nginx). Поэтому берём только origin.
+ */
+export function resolveMediaUrl(path: string | null | undefined): string | null {
+  if (!path) return null
+  if (/^https?:\/\//i.test(path)) return path
+
+  const origin = /^https?:\/\/[^/]+/i.exec(baseUrl)?.[0]
+  if (!origin) return null
+
+  return `${origin}${path.startsWith('/') ? '' : '/'}${path}`
+}
+
 type ProblemDetails = {
   detail?: string
   title?: string
