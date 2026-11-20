@@ -7,6 +7,7 @@ import LeagueLayout from '@/features/leagues/pages/LeagueLayout'
 import LeagueSettingsPage from '@/features/leagues/pages/LeagueSettingsPage'
 import LeagueTournamentsPage from '@/features/leagues/pages/LeagueTournamentsPage'
 import LeaguesPage from '@/features/leagues/pages/LeaguesPage'
+import MatchProtocolPage from '@/features/matches/pages/MatchProtocolPage'
 import StageMatchesPage from '@/features/matches/pages/StageMatchesPage'
 import PlayersPage from '@/features/players/pages/PlayersPage'
 import StatMatchesPage from '@/features/statistician/pages/StatMatchesPage'
@@ -83,6 +84,7 @@ export default function App() {
                     <Route path="settings" element={<StageSettingsPage />} />
                   </Route>
                   <Route path="teams/:tournamentTeamId" element={<TournamentTeamPage />} />
+                  <Route path="matches/:matchId" element={<MatchProtocolPage />} />
                 </Route>
               </Route>
             </Route>
