@@ -11,10 +11,10 @@ import { useConfirm } from '@/shared/ui/confirmContext'
 import { ErrorText } from '@/shared/ui/ErrorText'
 import { Icon } from '@/shared/ui/Icon'
 import { Badge, EmptyState, Loading } from '@/shared/ui/layout'
-import { Menu, MenuButton } from '@/shared/ui/Menu'
+import { Menu, MenuButton, MenuLink } from '@/shared/ui/Menu'
 import { Modal } from '@/shared/ui/Modal'
 import { MatchForm, type MatchFormValues } from '../components/MatchForm'
-import { useCreateMatch, useDeleteMatch, useStageMatches, useUpdateMatch } from '../hooks'
+import { useCancelMatch, useCreateMatch, useDeleteMatch, useStageMatches, useUpdateMatch } from '../hooks'
 import { matchStatusLabels, matchStatusTones } from '../labels'
 import type { Match, MatchStatus } from '../types'
 
@@ -48,6 +48,7 @@ export default function StageMatchesPage() {
   const create = useCreateMatch(stage.id)
   const update = useUpdateMatch(stage.id)
   const remove = useDeleteMatch(stage.id)
+  const cancel = useCancelMatch(stage.id)
 
   const [filter, setFilter] = useState<Filter | null>(null)
   const [creating, setCreating] = useState(false)
@@ -169,6 +170,17 @@ export default function StageMatchesPage() {
       if (ok) remove.mutate(match.id)
     })
 
+  const askCancel = (match: Match) =>
+    void confirm({
+      title: `Отменить матч ${teamName(match.homeTeamId)} — ${teamName(match.awayTeamId)}?`,
+      message:
+        'Для матча, который судья начал по ошибке или который не состоялся. Протокол сохранится, но матч уйдёт из live, таблицы и статистики, а новые события судьи приниматься не будут. Вернуть матч нельзя — настоящий матч создайте заново.',
+      confirmLabel: 'Отменить матч',
+      danger: true,
+    }).then((ok) => {
+      if (ok) cancel.mutate(match.id)
+    })
+
   const filters: { id: Filter; label: string }[] = [
     { id: 'upcoming', label: 'Предстоящие' },
     { id: 'finished', label: 'Сыгранные' },
@@ -178,7 +190,7 @@ export default function StageMatchesPage() {
 
   return (
     <>
-      <ErrorText error={matches.error ?? remove.error} />
+      <ErrorText error={matches.error ?? remove.error ?? cancel.error} />
       {matches.isPending && <Loading />}
 
       {matches.data?.length === 0 &&
@@ -251,8 +263,10 @@ export default function StageMatchesPage() {
                   <MatchRow
                     key={match.id}
                     match={match}
+                    protocolPath={`${basePath}/matches/${match.id}`}
                     teamName={teamName}
                     needsReferee={needsReferee(match)}
+                    onCancel={() => askCancel(match)}
                     onEdit={() => {
                       update.reset()
                       setEditingId(match.id)
@@ -325,17 +339,22 @@ export default function StageMatchesPage() {
 
 function MatchRow({
   match,
+  protocolPath,
   teamName,
   needsReferee,
   onEdit,
   onDelete,
+  onCancel,
   onCopyOverlay,
 }: {
   match: Match
+  /** Экран протокола: события, пометки «на разборе», исправление после свистка. */
+  protocolPath: string
   teamName: (teamId: string) => string
   needsReferee: boolean
   onEdit: () => void
   onDelete: () => void
+  onCancel: () => void
   onCopyOverlay: () => void
 }) {
   const live = LIVE_STATUSES.includes(match.status)
@@ -370,7 +389,11 @@ function MatchRow({
         {match.status !== 'Scheduled' && (
           <Badge tone={matchStatusTones[match.status]}>{matchStatusLabels[match.status]}</Badge>
         )}
-        {match.eventsForReview > 0 && <Badge tone="warning">На разборе: {match.eventsForReview}</Badge>}
+        {match.eventsForReview > 0 && (
+          <Link to={protocolPath} title="Открыть протокол и разобрать пометки">
+            <Badge tone="warning">На разборе: {match.eventsForReview}</Badge>
+          </Link>
+        )}
       </span>
 
       <span className="match-referee" title={needsReferee ? 'Судья не назначен' : undefined}>
@@ -380,6 +403,7 @@ function MatchRow({
 
       <span className="match-actions">
         <Menu triggerClassName="icon-button" triggerLabel={`Действия с матчем ${home} — ${away}`} trigger={<Icon name="more" />} align="end">
+          <MenuLink to={protocolPath} label="Протокол" />
           <MenuButton onClick={onCopyOverlay}>Ссылка на оверлей</MenuButton>
           {isEditable(match) && (
             <>
@@ -388,6 +412,11 @@ function MatchRow({
                 Удалить
               </MenuButton>
             </>
+          )}
+          {match.status !== 'Cancelled' && (
+            <MenuButton danger onClick={onCancel}>
+              Отменить матч
+            </MenuButton>
           )}
         </Menu>
       </span>

@@ -1699,3 +1699,8 @@ td .progress {
 .input-with-buttons input {
   flex: 1 1 200px;
 }
+
+/* Протокол матча: отменённое событие остаётся в списке зачёркнутым. */
+.event-voided {
+  text-decoration: line-through;
+}

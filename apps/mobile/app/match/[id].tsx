@@ -130,6 +130,8 @@ export default function MatchScreen() {
   const protocol = refereeProtocol(mergedEvents).reverse()
   const pendingIds = new Set(events.pending.map((event) => event.id))
   const eventsLocked = match.status === 'Finished' || match.status === 'Cancelled'
+  // До стартового свистка голы и карточки сервер отклоняет: судья, видимо, забыл начать матч.
+  const notStarted = match.status === 'Scheduled'
 
   const playerNameById = new Map(
     [...rosters.home, ...rosters.away].map((player) => [player.playerId, player.fullName]),
@@ -387,7 +389,7 @@ export default function MatchScreen() {
       case 'finish':
         return {
           title: 'Завершить матч?',
-          message: 'После завершения статус и протокол изменить нельзя. Без связи матч завершится на устройстве, а на сервер уйдёт вместе с очередью.',
+          message: 'После завершения судья не сможет изменить статус и протокол — исправить его сможет только организатор. Без связи матч завершится на устройстве, а на сервер уйдёт вместе с очередью.',
           options: [
             {
               label: 'Завершить матч',
@@ -550,18 +552,23 @@ export default function MatchScreen() {
                     onPress={() => setSheet({ kind: 'next-period' })}
                   />
                 ) : null}
+                <Button
+                  title="Завершить"
+                  variant="danger"
+                  compact
+                  style={styles.controlButton}
+                  onPress={() => setSheet({ kind: 'finish' })}
+                />
               </>
             ) : null}
           </View>
 
-          {match.status === 'Pause' ? (
-            <MutedText>
-              Завершить матч из паузы домен не разрешает: сначала продолжите матч.
-            </MutedText>
+          {match.status === 'Finished' ? (
+            <MutedText>Матч завершён — протокол закрыт. Исправить его может только организатор.</MutedText>
           ) : null}
 
-          {eventsLocked ? (
-            <MutedText>Матч завершён — протокол закрыт, события и статус изменить нельзя.</MutedText>
+          {match.status === 'Cancelled' ? (
+            <MutedText>Матч отменён организатором — события в него больше не принимаются.</MutedText>
           ) : null}
         </Card>
 
@@ -573,7 +580,7 @@ export default function MatchScreen() {
               title="Гол"
               compact
               style={styles.actionButton}
-              disabled={eventsLocked}
+              disabled={eventsLocked || notStarted}
               onPress={() => setSheet({ kind: 'goal-kind' })}
             />
             <Button
@@ -581,10 +588,14 @@ export default function MatchScreen() {
               variant="secondary"
               compact
               style={styles.actionButton}
-              disabled={eventsLocked}
+              disabled={eventsLocked || notStarted}
               onPress={() => setSheet({ kind: 'card-team' })}
             />
           </View>
+
+          {notStarted ? (
+            <MutedText>Сначала начните матч — до стартового свистка сервер голы и карточки не примет.</MutedText>
+          ) : null}
 
           <Text style={[styles.syncStatus, syncProblem ? styles.syncError : null]}>
             {syncStatus}

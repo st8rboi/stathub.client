@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError } from '@/shared/api/client'
 import { errorMessage } from '@/shared/lib/errors'
+import { createEventId } from '@/shared/lib/eventId'
 import { statisticianApi, statisticianKeys } from './api'
 import { isStatType, mergeEvents, voidedIds } from './statistics'
 import type { MatchState, NewMatchEvent, StatType } from './types'
@@ -28,16 +29,6 @@ function writeList(key: string, value: unknown[]): void {
   } catch {
     // Хранилище недоступно (приватный режим) — очередь живёт в памяти до закрытия вкладки.
   }
-}
-
-/** UUID события: randomUUID есть только в защищённом контексте (https/localhost). */
-function createEventId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
-
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
-    const random = (Math.random() * 16) | 0
-    return (char === 'x' ? random : (random & 0x3) | 0x8).toString(16)
-  })
 }
 
 export interface RejectedStat {

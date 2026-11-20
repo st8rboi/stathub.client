@@ -106,8 +106,11 @@ export function projectMatch(match: Match, pending: NewMatchEvent[], clockOffset
             }
           : current
 
+      // Как на сервере: свисток и из игры, и из паузы, но не раньше стартового.
       case 'MatchFinished':
-        return current.status === 'InProgress' ? { ...current, status: 'Finished', finishedAtUtc: at } : current
+        return isRunning && (!current.startedAtUtc || Date.parse(at) >= Date.parse(current.startedAtUtc))
+          ? { ...current, status: 'Finished', finishedAtUtc: at }
+          : current
 
       default:
         return current
