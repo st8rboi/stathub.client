@@ -342,7 +342,7 @@ body {
 
 .pre {
   position: absolute;
-  left: calc(50% + 4rem); /* смещение вправо на 64px */
+  left: calc(50% + 8rem); /* смещение вправо на 64px */
   bottom: 5rem;
   display: flex;
   flex-direction: column;
