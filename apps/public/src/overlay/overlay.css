@@ -88,44 +88,23 @@ body {
 
 /* ---------- Табло ---------- */
 
-.bug {
-  position: absolute;
-  left: 5.5rem;
-  top: 3.25rem;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  opacity: 0;
-  transform: translateY(-1rem);
-  transition:
-    opacity 0.5s var(--ease-out),
-    transform 0.5s var(--ease-out);
-}
-
-.bug.is-visible {
-  opacity: 1;
-  transform: none;
+.bug-team {
+  width: 15.5rem; /* было 13.5rem */
+  font-size: 1.9rem; /* было 1.6rem */
 }
 
 .bug-row {
-  display: flex;
-  height: 3rem;
-  box-shadow: 0 0.3rem 1rem rgb(0 0 0 / 30%);
+  height: 3.6rem; /* было 3rem */
 }
 
-.bug-team {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  width: 13.5rem;
-  padding: 0 1rem;
-  background: var(--panel) var(--gloss);
-  color: var(--ink);
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
+.bug-score {
+  min-width: 7rem; /* было 6rem */
+  font-size: 2.7rem; /* было 2.15rem */
+}
+
+.bug-clock {
+  min-width: 9rem; /* было 8rem */
+  font-size: 2rem; /* было 1.75rem */
 }
 
 .bug-team span {
